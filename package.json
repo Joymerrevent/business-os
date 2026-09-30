@@ -24,10 +24,12 @@
     "check:format": "prettier --check .",
     "check:lint": "eslint .",
     "check:types": "tsc --noEmit",
+    "check:test": "vitest run",
     "format": "prettier --write .",
     "fix:md": "markdownlint-cli2 --fix",
     "changeset": "changeset",
-    "prepare": "simple-git-hooks"
+    "prepare": "simple-git-hooks",
+    "test": "vitest run"
   },
   "simple-git-hooks": {
     "pre-commit": "node scripts/pre-commit.ts",
@@ -39,6 +41,7 @@
     "@commitlint/config-conventional": "^21.2.3",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.13.6",
+    "ajv": "^8.20.0",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
@@ -47,6 +50,8 @@
     "prettier": "^3.9.9",
     "simple-git-hooks": "^2.14.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.70.1"
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.1",
+    "yaml": "^2.9.1"
   }
 }

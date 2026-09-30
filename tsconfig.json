@@ -17,5 +17,10 @@
     "erasableSyntaxOnly": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["hooks/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
+  "include": [
+    "hooks/**/*.ts",
+    "scripts/**/*.ts",
+    "test/**/*.ts",
+    "vitest.config.ts"
+  ]
 }
