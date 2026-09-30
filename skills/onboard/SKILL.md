@@ -62,14 +62,20 @@ disable-model-invocation: true
 
 `templates/README.md` の「書き出し先」のとおりに書き出す。全ての `{{ }}` を埋め、行の雛形の直後にある HTML コメントを消す。
 
-- `CLAUDE.md`、`.claude/settings.json`、`.gitignore`、`.gitattributes`
-- `docs/charter/company.md`、`decision-rules.md`、`repositories.md`、`businesses/<事業 ID>.md`
-- `docs/operations/obligations.md`、`risks.md`、`state/<事業 ID>.md`
-- `.claude/settings.json` の `ask` にある MCP の規則（`mcp__*__send_*` など）は残したうえで、
-  この会話で使える MCP ツールのうち送信・投稿・作成・支払いにあたるものを具体名で追加する
-- `.leak-dict.json`：会社の呼び名、事業名、答えに出てきた人名・取引先名を `{"terms": [...]}` の形で書く（`.gitignore` 済み）
+**書き出す順番を守る。`.claude/settings.json` は最後に書く。**
+Claude Code は書き出された安全設定をその場で読み込み、`docs/charter/` への書き込みに権限の確認を出し始めるため、
+先に書くと、残りの憲章を作るたびに確認が出てしまう。
 
-保護対象（`CLAUDE.md`、`.claude/settings.json`、`docs/charter/`）の新規作成には確認が出ない。
+1. `.gitignore`、`.gitattributes`、`.leak-dict.json`
+   - `.leak-dict.json`：会社の呼び名、事業名、答えに出てきた人名・取引先名を `{"terms": [...]}` の形で書く（`.gitignore` 済み）
+2. `CLAUDE.md`
+3. `docs/charter/company.md`、`decision-rules.md`、`repositories.md`、`businesses/<事業 ID>.md`
+4. `docs/operations/obligations.md`、`risks.md`、`state/<事業 ID>.md`
+5. **最後に** `.claude/settings.json`
+   - `ask` にある MCP の規則（`mcp__*__send_*` など）は残したうえで、
+     この会話で使える MCP ツールのうち送信・投稿・作成・支払いにあたるものを具体名で追加する
+
+保護対象（`CLAUDE.md`、`.claude/settings.json`、`docs/charter/`）の新規作成には、器の hook は確認を出さない。
 中身は「3. 書き出す前の確認」で了承を得たとおりに書き、了承の無い内容を足さない。
 
 権限の確認で「No」を選ばれると、Claude Code は書き込みを取り消して会話を止める。止まったら、利用者の次の指示を待つ。
