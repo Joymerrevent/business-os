@@ -35,7 +35,7 @@ disable-model-invocation: true
 2. sandbox が使える環境か確かめる（native Windows では使えない）。使えない環境なら、次の事実を告げて、続けてよいか確認する
    - 「この環境では Claude Code の sandbox（OS による見張り）が動きません。憲章の保護は、器の hook と権限設定だけに頼ることになります。WSL での利用を勧めます」
 3. **最初の書き込みとして** `templates/business-os.json.tmpl` から `.business-os.json` を書き出す（`state: initializing`、`pluginVersion` は器のバージョン）。
-   これ以降、保護対象への書き込みは器の hook が人間に確認を求める
+   これ以降、器の hook は保護対象の新規作成を通し、既存ファイルの上書きだけ人間に確認を求める
 
 ### 2. インタビュー
 
@@ -69,13 +69,17 @@ disable-model-invocation: true
   この会話で使える MCP ツールのうち送信・投稿・作成・支払いにあたるものを具体名で追加する
 - `.leak-dict.json`：会社の呼び名、事業名、答えに出てきた人名・取引先名を `{"terms": [...]}` の形で書く（`.gitignore` 済み）
 
-保護対象（`CLAUDE.md`、`.claude/settings.json`、`docs/charter/`）を書くたびに、器の hook が人間に確認を求める。
-確認で「いいえ」と答えられたら、そのファイルの内容を直すか聞き、勝手に先へ進まない。
+保護対象（`CLAUDE.md`、`.claude/settings.json`、`docs/charter/`）の新規作成には確認が出ない。
+中身は「3. 書き出す前の確認」で了承を得たとおりに書き、了承の無い内容を足さない。
+
+権限の確認で「No」を選ばれると、Claude Code は書き込みを取り消して会話を止める。止まったら、利用者の次の指示を待つ。
+別の方法（Bash など）で書き込もうとしない。利用者が再開を指示したら、書き出し済みのファイルを確かめ、止まったところから続ける。
 
 ### 5. 仕上げ
 
 1. 書き出した全ファイルに `{{` が残っていないことを確かめる
-2. `.business-os.json` を `state: active`、`onboardedAt` を今日にする
+2. 書き出した内容の要点をもう一度示し、`.business-os.json` を `state: active`、`onboardedAt` を今日にする。
+   この書き換えで器の hook が人間に確認を求める。これが導入の確定の確認になる
 3. 共通規約どおり日報に実行記録を 1 行追記する
 4. コミットしてよいか聞き、よければ `git add` と `git commit` をする（push はしない）
 5. 次にすることを案内する：「毎朝 `/morning`、週末に `/weekly-review` と `/check`。初回の `/check` は必ず実行してください」
@@ -90,7 +94,7 @@ disable-model-invocation: true
 ## 人に何を聞くか
 
 - 上のインタビューの項目
-- 書き出す前の確認、保護対象の書き込みごとの確認（hook による）、コミットしてよいか
+- 書き出す前の確認、導入の確定（`state: active` への切り替え）の確認（hook による）、コミットしてよいか
 
 ## 完了条件
 

@@ -149,10 +149,14 @@ const judgeWrite = (input: HookInput, company: Company): Decision => {
   let protectedDecision: Decision = ALLOW;
   if (isProtected(key)) {
     if (company.state === "initializing") {
-      protectedDecision = {
-        decision: "ask",
-        reason: `初期化中（/onboard）の保護対象への書き込みです：${key}`,
-      };
+      // 導入前には守るべき憲章がまだ無いため、新規作成は通す。既存ファイルの上書き
+      // （最後の state: active への切り替えを含む）だけ人間に確認する
+      if (existsSync(path)) {
+        protectedDecision = {
+          decision: "ask",
+          reason: `初期化中（/onboard）に既存の保護対象を書き換えます：${key}`,
+        };
+      }
     } else {
       const missing = missingRules(company.root);
       if (missing.length > 0) {

@@ -123,7 +123,8 @@ const validDoc = (): string =>
 export const checkHookFiring = (company: Company): CheckResult[] => {
   const root = company.root;
   const category = "防衛の発火";
-  const protectedExpect = company.state === "active" ? "deny" : "ask";
+  // 初期化中は保護対象の新規作成を通す（プローブは新規ファイル）
+  const protectedExpect = company.state === "active" ? "deny" : "allow";
   const cases: HookCase[] = [
     {
       name: "提案の無い憲章への書き込みを止める",

@@ -1,5 +1,11 @@
 // PreToolUse hook の fail-closed テスト。合成した入力で deny（exit 2）/ ask / allow を確かめる。
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -66,13 +72,26 @@ describe("初期化中（state: initializing）", () => {
     setState(root, "initializing");
   });
 
-  it("保護対象への書き込みは ask", () => {
+  it("保護対象の新規作成は確認なしで通す", () => {
     expect(write("docs/charter/businesses/biz-c.md", validDoc("charter"))).toBe(
-      "ask",
+      "allow",
     );
+    rmSync(join(root, "CLAUDE.md"));
+    expect(write("CLAUDE.md", "# 地図\n")).toBe("allow");
+  });
+
+  it("既存の保護対象の上書きは ask（active への切り替えを含む）", () => {
     expect(write("CLAUDE.md", "# 地図\n")).toBe("ask");
     expect(write(".claude/settings.json", "{}")).toBe("ask");
     expect(write(".business-os.json", "{}")).toBe("ask");
+    const content = readFileSync(join(root, "docs/charter/company.md"), "utf8");
+    expect(write("docs/charter/company.md", content)).toBe("ask");
+  });
+
+  it("新規作成でもフロントマターが規約に合わなければ拒否", () => {
+    expect(write("docs/charter/businesses/biz-c.md", "# 本文だけ\n")).toBe(
+      "deny",
+    );
   });
 
   it("フロントマター検査は有効", () => {
@@ -361,9 +380,12 @@ describe("厳格モード", () => {
   it("初期化中は厳格モードにならない", () => {
     setState(root, "initializing");
     writeFileSync(join(root, ".claude/settings.json"), "{}");
+    // 厳格モードなら deny になるところ、初期化中は通常どおり（新規は allow、上書きは ask）
     expect(write("docs/charter/businesses/biz-c.md", validDoc("charter"))).toBe(
-      "ask",
+      "allow",
     );
+    const content = readFileSync(join(root, "docs/charter/company.md"), "utf8");
+    expect(write("docs/charter/company.md", content)).toBe("ask");
   });
 });
 
