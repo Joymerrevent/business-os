@@ -47,7 +47,13 @@ const isDate = (value: string | undefined): value is string =>
 const walkMarkdown = (dir: string): string[] => {
   if (!existsSync(dir)) return [];
   return readdirSync(dir).flatMap((name) => {
-    if (name === ".obsidian" || name === "node_modules") return [];
+    // .obsidian は Obsidian の設定、_templates は雛形の置き場（置き換え記号を含むため検査しない）
+    if (
+      name === ".obsidian" ||
+      name === "_templates" ||
+      name === "node_modules"
+    )
+      return [];
     const path = join(dir, name);
     if (statSync(path).isDirectory()) return walkMarkdown(path);
     return name.endsWith(".md") ? [path] : [];

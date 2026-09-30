@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Joymerrevent/business-os/templates/frontmatter.schema.json",
   "title": "business-os のフロントマター",
-  "description": "company/docs/** と器の docs/** の全 Markdown 文書が持つフロントマター。YAML の日付は文字列として読むこと（Date 型に変換しない）。",
+  "description": "company/docs/** と器の docs/** の全 Markdown 文書が持つフロントマター（雛形の置き場の company/docs/_templates/ を除く）。YAML の日付は文字列として読むこと（Date 型に変換しない）。",
   "type": "object",
   "required": [
     "type",
