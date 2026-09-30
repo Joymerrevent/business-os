@@ -1,0 +1,13 @@
+# レビューの一覧（週次・月次・四半期・振り返り・点検）。as_of は中身の数字・事実がいつ時点か
+filters:
+  and:
+    - file.inFolder("operations/reviews")
+    - 'type == "review"'
+views:
+  - type: table
+    name: レビュー
+    order:
+      - file.name
+      - created
+      - as_of
+      - updated

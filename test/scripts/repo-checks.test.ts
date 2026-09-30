@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  checkAdapters,
   checkAdrIndex,
   checkDocs,
   checkHooks,
@@ -35,6 +36,7 @@ describe("実際の器", () => {
     ["docs", checkDocs],
     ["adr", checkAdrIndex],
     ["usage", checkUsage],
+    ["adapters", checkAdapters],
   ] as [string, Check][])("%s に fail が無い", (_, check) => {
     expect(failsOf(check)).toEqual([]);
   });
@@ -46,6 +48,7 @@ describe("壊した器の一時コピー", () => {
     root = mkdtempSync(join(tmpdir(), "business-os-repo-"));
     for (const dir of [
       "skills",
+      "adapters",
       "hooks",
       "templates",
       "docs",
@@ -86,6 +89,18 @@ describe("壊した器の一時コピー", () => {
     ]) {
       expect(failsOf(check, root)).toEqual([]);
     }
+  });
+
+  it("ダッシュボードが第 9 節に無いプロパティを使うと fail、壊れた JSON も fail", () => {
+    edit(
+      "adapters/obsidian/bases/state.base",
+      "      - as_of",
+      "      - owner",
+    );
+    edit("adapters/obsidian/vault/app.json", "{", "{,");
+    const fails = failsOf(checkAdapters, root).map((r) => r.name);
+    expect(fails).toContain("adapters/obsidian/bases/state.base");
+    expect(fails).toContain("adapters/obsidian/vault/app.json");
   });
 
   it("Skill の節が欠けると fail", () => {

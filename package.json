@@ -33,6 +33,7 @@
     "check:docs": "node scripts/check-repo.ts docs",
     "check:adr": "node scripts/check-repo.ts adr",
     "check:usage": "node scripts/check-repo.ts usage",
+    "check:adapters": "node scripts/check-repo.ts adapters",
     "format": "prettier --write .",
     "fix:md": "markdownlint-cli2 --fix",
     "changeset": "changeset",

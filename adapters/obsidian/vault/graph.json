@@ -1,0 +1,15 @@
+{
+  "search": "-path:_templates -path:archive",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "colorGroups": [
+    { "query": "path:charter", "color": { "a": 1, "rgb": 14701138 } },
+    { "query": "path:proposals", "color": { "a": 1, "rgb": 15105570 } },
+    { "query": "path:decisions", "color": { "a": 1, "rgb": 10181046 } },
+    { "query": "path:operations", "color": { "a": 1, "rgb": 3447003 } },
+    { "query": "path:knowledge", "color": { "a": 1, "rgb": 3066993 } },
+    { "query": "path:inbox", "color": { "a": 1, "rgb": 9807270 } }
+  ]
+}

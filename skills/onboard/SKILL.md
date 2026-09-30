@@ -48,9 +48,16 @@ disable-model-invocation: true
 5. 各事業の実装リポジトリの場所（macOS と Windows のパス）。無ければ無しでよい
 6. 各事業で追いかける数字。事業の説明から候補を 3〜5 個挙げ、選んでもらう（AskUserQuestion の複数選択）
 7. 事業ごとのリスクの候補を CC が挙げ、残すものを選んでもらう
-8. ナレッジの閲覧に Obsidian を使うか
-   - 「使う」と答えた場合：「Obsidian の設定は次の版で用意します。今回は Obsidian 無しで導入します」と伝える。Obsidian 関連のファイルは一切書き出さない
-   - 「使わない」と答えた場合：Obsidian 関連のファイルは一切書き出さない
+8. ナレッジの閲覧に Obsidian を使うか（推奨だが任意。使わなくても器の動きは同じと伝える）
+   - native Windows なら、先に次の事実を告げる：「Windows で Obsidian を使うなら、Claude Code も WSL ではなく
+     Windows 上で直接動かす構成になり、Claude Code の sandbox が動きません。憲章の保護は hook と権限設定だけに頼ります」
+   - 「使わない」と答えた場合：Obsidian 関連のファイルは一切書き出さない（`docs/.obsidian/`、`docs/dashboards/`、`docs/_templates/` を作らない）
+   - 「使う」と答えた場合：**この時点で**インストールを確かめる（安全設定を書いた後は sandbox がインストールを止めるため）
+     1. 入っているか確かめる（macOS：`/Applications/Obsidian.app` があるか、Windows：`winget list --id Obsidian.Obsidian --exact`）
+     2. 無ければ、実行するコマンドを示して、インストールしてよいか聞く。了承されたときだけ実行する
+        - macOS：`brew install --cask obsidian`
+        - Windows：`winget install --id Obsidian.Obsidian --exact --accept-source-agreements --accept-package-agreements`
+     3. Homebrew / winget が無い、またはインストールが失敗したら、<https://obsidian.md/download> から手で入れるよう案内して先へ進む
 
 答えに迷う項目は「まだ決めていない」でよいと伝える。その文言をそのまま書き出す。
 
@@ -71,7 +78,12 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 2. `CLAUDE.md`
 3. `docs/charter/company.md`、`decision-rules.md`、`repositories.md`、`businesses/<事業 ID>.md`
 4. `docs/operations/obligations.md`、`risks.md`、`state/<事業 ID>.md`
-5. **最後に** `.claude/settings.json`
+5. Obsidian を使う場合だけ、器の `adapters/obsidian/` から次をコピーする（Bash の `cp` でそのまま複製してよい）
+   - `vault/` の中身 → `docs/.obsidian/`
+   - `bases/` の中身 → `docs/dashboards/`
+   - `templates/` の中身 → `docs/_templates/`（雛形の置き場。置き換え記号を含むため器の検査の対象外）
+   - `.gitignore` に `docs/.obsidian/workspace.json`、`docs/.obsidian/workspace-mobile.json`、`docs/.obsidian/cache/` を足す
+6. **最後に** `.claude/settings.json`
    - `ask` にある MCP の規則（`mcp__*__send_*` など）は残したうえで、
      この会話で使える MCP ツールのうち送信・投稿・作成・支払いにあたるものを具体名で追加する
 
@@ -83,12 +95,17 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 
 ### 5. 仕上げ
 
-1. 書き出した全ファイルに `{{` が残っていないことを確かめる
+1. 書き出した全ファイルに `{{` が残っていないことを確かめる（`docs/_templates/` の Obsidian の置き換え記号は除く）
 2. 書き出した内容の要点をもう一度示し、`.business-os.json` を `state: active`、`onboardedAt` を今日にする。
    この書き換えで器の hook が人間に確認を求める。これが導入の確定の確認になる
 3. 共通規約どおり日報に実行記録を 1 行追記する
 4. コミットしてよいか聞き、よければ `git add` と `git commit` をする（push はしない）
-5. 次にすることを案内する：「毎朝 `/morning`、週末に `/weekly-review` と `/check`。初回の `/check` は必ず実行してください」
+5. Obsidian を使う場合は、開き方を案内する（CC は Obsidian を起動しない。sandbox がアプリの起動を止めるため）
+   - 「入力欄で `! open -a Obsidian` を実行するか、Obsidian を手で起動してください」（Windows はスタートメニューから）
+   - 「最初の画面で『保管庫としてフォルダを開く（Open folder as vault）』を選び、`<company の絶対パス>/docs` を選んでください。
+     `company` そのものではなく、その中の `docs` です」
+   - 「初めて開くときの確認の画面は、あなたが押してください」
+6. 次にすることを案内する：「毎朝 `/morning`、週末に `/weekly-review` と `/check`。初回の `/check` は必ず実行してください」
 
 ## 導入済み（state: active）のとき
 
@@ -101,7 +118,7 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 
 - 初回：`.business-os.json`、`.gitignore`、`.gitattributes`、`.leak-dict.json`、`CLAUDE.md`、
   `docs/charter/`（会社概要・判断ルール・実装リポ・事業ごとの定義）、`docs/operations/`（期限・義務台帳、リスク台帳、事業別の現況）、
-  最後に `.claude/settings.json`
+  Obsidian を使う場合は `docs/.obsidian/`・`docs/dashboards/`・`docs/_templates/`、最後に `.claude/settings.json`
 - 導入済み：台帳（`docs/operations/`）と、保護対象の変更の提案（`docs/proposals/`）
 - 日報への実行記録（例：`- 10:00 /onboard — 初回の導入を完了（事業 2 件）`）
 
@@ -113,7 +130,8 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 ## 完了条件
 
 - `.business-os.json` が `state: active` で、`pluginVersion` が器のバージョンと一致している
-- 地図・憲章・台帳・現況・安全設定が書き出され、`{{` が残っていない
+- 地図・憲章・台帳・現況・安全設定が書き出され、`{{` が残っていない（`docs/_templates/` の Obsidian の置き換え記号は除く）
+- Obsidian を使わない場合、Obsidian 関連のファイルが 1 つも無い
 - `docs/` 配下の全文書がフロントマターの規約に合っている（器の hook が書き込み時に確かめている）
 - 日報に実行記録が 1 行ある
 - 導入済みの場合は、保護対象への変更が全て提案（`status: proposed`）になっている
