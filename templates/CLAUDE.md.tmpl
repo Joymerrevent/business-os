@@ -1,4 +1,4 @@
-# {{company_name}} — 経営 OS の地図
+# {{ company_name }} — 経営 OS の地図
 
 このリポジトリは 1 人で複数事業を運営する「会社」。
 Claude Code（CC）は business-os Plugin の Skill を通じて動く。
@@ -20,6 +20,7 @@ Claude Code（CC）は business-os Plugin の Skill を通じて動く。
 2. 外部に影響が出る行動（送信・投稿・支払い・公開）は、実行前に承認を求める
 3. 日付は `YYYY-MM-DD` のみ。全文書に created / updated / as_of / verified を持つ（該当なしは `n/a`）
 4. 古い情報で黙って判断しない。根拠の日付を示す
+5. git は commit と push だけ行う。pull・checkout・merge・stash・rebase など作業ツリーを変える操作は人間に頼む
 
 ## 毎セッションの入り方
 
@@ -31,4 +32,4 @@ Claude Code（CC）は business-os Plugin の Skill を通じて動く。
 
 `docs/charter/decision-rules.md` を読む。書いていなければ、提案を書いて人間に聞く。
 
-<!-- business-os {{plugin_version}} / onboarded {{onboarded_at}} -->
+<!-- business-os {{ plugin_version }} / onboarded {{ onboarded_at }} -->
