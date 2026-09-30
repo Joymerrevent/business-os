@@ -38,7 +38,14 @@ verified: n/a
 
 ## 日次
 
-朝、`company` で `claude` を開き `/morning`。出力は次の 5 項目です。
+朝、`claude` を開く前に、`company` で `git pull` を自分で実行してください。別の端末で変えた内容を取り込むためです。
+
+`git pull` のほか、`git checkout` `git merge` `git stash` `git rebase` のように作業中のファイルを書き換える
+git 操作は、CC に頼まずあなたが行ってください。CC の安全設定は、CC が起動するコマンドから憲章
+（`docs/charter/`）への書き込みを禁じているため、CC 経由ではこれらの操作が途中で失敗します。
+CC が行う git 操作は commit と push だけです。
+
+`company` で `claude` を開き `/morning`。出力は次の 5 項目です。
 
 - 全社サマリ（1 行）
 - 今日の優先事項（最大 3 件）

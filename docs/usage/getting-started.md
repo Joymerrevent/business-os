@@ -33,7 +33,7 @@ business-os は「何をやるべきか」を決めてくれません。決め�
 | Claude Code | Plugin に対応した版 |
 | Node.js 24 系 | hook と検査の実行に使います |
 | Git、GitHub アカウント | 事業データを自分のリポジトリで管理します |
-| macOS または Windows | Windows は WSL を推奨します（ネイティブでも動きます） |
+| macOS または Windows | Windows は WSL を推奨します（下の「Windows で使う場合」を参照） |
 | Obsidian | 任意。使うと便利ですが、無くても全機能が動きます |
 
 会社経営の知識は要りません。器が聞くことに答えていけば形になります。
@@ -120,8 +120,19 @@ company/
 
 Obsidian で開く場所は `company/docs/` です。`company/` そのものではありません。
 
-Windows で Obsidian を使う場合は、CC もネイティブ Windows で動かし、`company` を Windows 側に
-置いてください。WSL 上に置くと Obsidian の動作が不安定になります。
+Windows で Obsidian を使う場合は、下の「Windows で使う場合」を先に読んでください。
+
+## Windows で使う場合
+
+Windows では、WSL（Windows 上で Linux を動かす仕組み）の中で CC を動かす構成を勧めます。
+WSL では macOS と同じ手順で使え、安全装置もすべて働きます。ただし Obsidian は使いません。
+
+Obsidian を使いたい場合は、WSL を使わずに Windows 上で直接 CC を動かし、`company` を Windows 側に置く
+構成も選べます。WSL 上のファイルを Obsidian で開くと動作が不安定になるためです。
+この構成では、CC のコマンドを OS が見張る仕組み（sandbox）が Windows で動きません。
+憲章の保護は、器の見張り（hook）と CC の権限設定だけに頼ることになります。
+
+`/onboard` は sandbox が使えない環境を見つけると、そのことを伝えてから、続けてよいかを確認します。
 
 ## 困ったとき
 

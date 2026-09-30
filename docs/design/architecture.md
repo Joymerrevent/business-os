@@ -43,7 +43,7 @@ company/       事業データ。非公開。利用者ごとに 1 つ。/onboard
 |---|---|
 | Claude Code | Plugin 対応版（2026-09 時点の 2.1 系以降） |
 | Node.js | 24 系（TS の直接実行に必要。`.node-version` で固定） |
-| OS | macOS、Windows（WSL 推奨、ネイティブ可）、Linux |
+| OS | macOS、Linux、Windows（WSL 推奨。ネイティブは Obsidian を使う場合の選択肢で、防衛は三重になる。第 10.5 節） |
 | Git | 必須。GitHub CLI（`gh`）は推奨 |
 | Obsidian | 任意 |
 
@@ -267,6 +267,7 @@ CC は必要時に該当パスを `--add-dir` で読み込む。
 
 native Windows では sandbox が動かない（Claude Code の sandbox は macOS / Linux / WSL2 のみ対応）。
 native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セッション warn を出す。
+`/onboard` は sandbox が使えない環境を検出したら、その事実を告げて続行の確認を取る。
 
 <!-- 根拠: 20260929-05 -->
 
@@ -463,7 +464,7 @@ verified: YYYY-MM-DD | n/a  # charter は必須
 
 ```text
 adapters/obsidian/
-├── README.md              # 導入・Windows 構成・撤退
+├── README.md              # 導入・Windows 構成（第 10.5 節の方針）・撤退
 ├── vault/                 # company/docs/.obsidian/ にコピー
 │   ├── app.json  core-plugins.json  daily-notes.json  templates.json  graph.json  appearance.json
 ├── bases/                 # company/docs/dashboards/ にコピー
@@ -503,8 +504,15 @@ Bases の雛形は第 9 節のフロントマターだけを前提にする。
 
 ### 10.5 Windows
 
-Obsidian を使うなら CC もネイティブ Windows で動かし、`company` を Windows 側に置く
-（WSL のファイルシステム境界問題を避ける）。WSL 派には Obsidian なし構成を推奨する。
+| 構成 | 位置づけ | 防衛 | Obsidian |
+|---|---|---|---|
+| WSL（WSL2） | 既定の推奨。macOS と同一手順 | 四重 | 使わない |
+| ネイティブ Windows | Obsidian を使う場合の選択肢 | 三重（第一層の sandbox が無い） | 使う。`company` を Windows 側に置く |
+
+- ネイティブ Windows では OS レベルの防衛（第一層）が無く、憲章の保護は hook と permissions に依存する。
+  利用者向け文書と `adapters/obsidian/README.md` にこの事実を明示する
+- WSL 上の `company` を Windows の Obsidian で開く構成は案内しない（ファイルシステム境界の問題）
+- `/onboard` は sandbox が使えない環境を検出したら、その事実を告げて続行の確認を取る
 
 ### 10.6 撤退
 
