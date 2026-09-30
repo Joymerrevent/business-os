@@ -328,7 +328,7 @@ hook は入力の `cwd` から上位へ辿り、`.business-os.json` のあるデ
 | 状態 | 条件 | hook の振る舞い |
 |---|---|---|
 | 対象外 | `.business-os.json` が無い | 何も判定せず無言で通す（exit 0）。ログも書かない |
-| 初期化中 | `state: initializing` | 保護対象への書き込みは `permissionDecision: "ask"` で人間に確認。フロントマター検査と Bash 解析は有効 |
+| 初期化中 | `state: initializing` | 保護対象の新規作成は通す。既存ファイルの上書きは `permissionDecision: "ask"` で人間に確認（`active` への切り替えもこれで 1 回確認される）。フロントマター検査と Bash 解析は有効 |
 | 運用中 | `state: active` | 下の表のとおり（提案必須、deny、厳格モード） |
 
 `/onboard` は最初の行動として `.business-os.json` を `state: initializing` で作り、完了時に `active` にする。
