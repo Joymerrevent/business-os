@@ -67,7 +67,9 @@ describe("初期化中（state: initializing）", () => {
   });
 
   it("保護対象への書き込みは ask", () => {
-    expect(write("docs/charter/company.md", validDoc("charter"))).toBe("ask");
+    expect(write("docs/charter/businesses/biz-c.md", validDoc("charter"))).toBe(
+      "ask",
+    );
     expect(write("CLAUDE.md", "# 地図\n")).toBe("ask");
     expect(write(".claude/settings.json", "{}")).toBe("ask");
     expect(write(".business-os.json", "{}")).toBe("ask");
@@ -184,7 +186,7 @@ describe("運用中のフロントマター検査", () => {
     expect(
       write(
         path,
-        content.replace("created: 2026-10-01", "created: 2026-10-02"),
+        content.replace("created: 2026-09-28", "created: 2026-10-02"),
       ),
     ).toBe("deny");
   });
@@ -195,14 +197,14 @@ describe("運用中のフロントマター検査", () => {
       edit(path, "まだ記録が無い\n\n## 待ち", "A を進めている\n\n## 待ち"),
     ).toBe("allow");
     expect(edit(path, "verified: n/a\n", "")).toBe("deny");
-    expect(edit(path, "created: 2026-10-01", "created: 2026-09-01")).toBe(
+    expect(edit(path, "created: 2026-09-28", "created: 2026-09-01")).toBe(
       "deny",
     );
   });
 
   it("Edit の組み立てに失敗し、old_string がフロントマターに触れていれば ask", () => {
     const path = "docs/operations/state/biz-a.md";
-    expect(edit(path, "status: paused\ncreated: 2026-10-01", "x")).toBe("ask");
+    expect(edit(path, "status: paused\ncreated: 2026-09-28", "x")).toBe("ask");
   });
 
   it("Edit の組み立てに失敗しても、本文だけなら通す（Edit 自体が失敗する）", () => {
@@ -359,7 +361,9 @@ describe("厳格モード", () => {
   it("初期化中は厳格モードにならない", () => {
     setState(root, "initializing");
     writeFileSync(join(root, ".claude/settings.json"), "{}");
-    expect(write("docs/charter/company.md", validDoc("charter"))).toBe("ask");
+    expect(write("docs/charter/businesses/biz-c.md", validDoc("charter"))).toBe(
+      "ask",
+    );
   });
 });
 

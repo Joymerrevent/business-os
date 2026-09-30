@@ -68,15 +68,15 @@ describe("company", () => {
   });
 
   it("approving のまま 1 日以上たった提案を知らせる", () => {
-    const path = join(root, "docs/proposals/20261001-01-approving-company.md");
+    const path = join(root, "docs/proposals/20260928-01-approving-company.md");
     writeFileSync(
       path,
       readFileSync(path, "utf8").replace(
-        "updated: 2026-10-01",
+        "updated: 2026-09-28",
         "updated: 2000-01-01",
       ),
     );
-    expect(messageOf(start().stdout)).toContain("20261001-01");
+    expect(messageOf(start().stdout)).toContain("20260928-01");
   });
 
   it("器のバージョンが記録と違えば --migrate を促す", () => {

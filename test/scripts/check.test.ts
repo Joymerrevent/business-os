@@ -81,26 +81,26 @@ describe("壊れた company", () => {
     writeFileSync(
       state,
       readFileSync(state, "utf8").replace(
-        "updated: 2026-10-01",
+        "updated: 2026-09-28",
         "updated: 2026-09-01",
       ),
     );
     const proposal = join(
       root,
-      "docs/proposals/20261001-02-proposed-decision-rules.md",
+      "docs/proposals/20260928-02-proposed-decision-rules.md",
     );
     writeFileSync(
       proposal,
       readFileSync(proposal, "utf8").replace(
-        "id: 20261001-02",
-        "id: 20261001-09",
+        "id: 20260928-02",
+        "id: 20260928-09",
       ),
     );
     const fails = failsOf(runCompanyChecks(root, options)).map((r) => r.name);
     expect(fails).toContain("docs/operations/risks.md");
     expect(fails).toContain("docs/operations/state/biz-a.md");
     expect(fails).toContain(
-      "docs/proposals/20261001-02-proposed-decision-rules.md",
+      "docs/proposals/20260928-02-proposed-decision-rules.md",
     );
     expect(runCli().status).toBe(1);
   });
@@ -152,7 +152,7 @@ describe("鮮度", () => {
       .map((r) => r.name);
     expect(warns).toContain("docs/charter/company.md");
     expect(warns).toContain("docs/operations/state/biz-a.md");
-    expect(warns).toContain("docs/proposals/20261001-01-approving-company.md");
+    expect(warns).toContain("docs/proposals/20260928-01-approving-company.md");
   });
 });
 
