@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Joymerrevent/business-os/templates/frontmatter.schema.json",
+  "title": "business-os のフロントマター",
+  "description": "company/docs/** と器の docs/** の全 Markdown 文書が持つフロントマター。YAML の日付は文字列として読むこと（Date 型に変換しない）。",
+  "type": "object",
+  "required": [
+    "type",
+    "business",
+    "status",
+    "created",
+    "updated",
+    "as_of",
+    "verified"
+  ],
+  "properties": {
+    "type": {
+      "enum": [
+        "charter",
+        "proposal",
+        "decision",
+        "daily",
+        "review",
+        "state",
+        "ledger",
+        "knowledge",
+        "inbox"
+      ]
+    },
+    "business": {
+      "description": "portfolio（会社全体）、事業 ID、または n/a（器の文書のみ）。事業 ID は英小文字・数字・ハイフン",
+      "type": "string",
+      "pattern": "^(portfolio|n/a|[a-z0-9][a-z0-9-]*)$"
+    },
+    "status": {
+      "type": "string"
+    },
+    "created": {
+      "$ref": "#/$defs/date"
+    },
+    "updated": {
+      "$ref": "#/$defs/date"
+    },
+    "as_of": {
+      "$ref": "#/$defs/dateOrNa"
+    },
+    "verified": {
+      "$ref": "#/$defs/dateOrNa"
+    },
+    "id": {
+      "description": "YYYYMMDD-nn。ファイル名の先頭と一致させる",
+      "type": "string",
+      "pattern": "^[0-9]{8}-[0-9]{2}$"
+    },
+    "target": {
+      "description": "提案が変更する company 内のファイル（リポのルートからの相対パス）",
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(/|\\.\\./)"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "charter"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": ["active", "superseded"]
+          },
+          "verified": {
+            "$ref": "#/$defs/date"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "proposal"
+          }
+        }
+      },
+      "then": {
+        "required": ["id", "target"],
+        "properties": {
+          "id": {
+            "$ref": "#/properties/id"
+          },
+          "target": {
+            "$ref": "#/properties/target"
+          },
+          "status": {
+            "enum": ["proposed", "approving", "approved", "rejected"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "decision"
+          }
+        }
+      },
+      "then": {
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "$ref": "#/properties/id"
+          },
+          "status": {
+            "enum": ["proposed", "accepted", "rejected", "superseded"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "daily"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "active"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "review"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "active"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "state"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": ["active", "paused", "closed"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ledger"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "active"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "knowledge"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": ["draft", "active", "archived"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "inbox"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "unsorted"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "date": {
+      "description": "YYYY-MM-DD（絶対日付）",
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    },
+    "dateOrNa": {
+      "description": "YYYY-MM-DD か n/a（該当なし）。空欄は不可",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/date"
+        },
+        {
+          "const": "n/a"
+        }
+      ]
+    }
+  }
+}
