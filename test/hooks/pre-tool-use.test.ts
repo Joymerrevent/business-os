@@ -340,6 +340,50 @@ describe("Bash の解析（確認）", () => {
   });
 });
 
+describe("シェルで docs/ の文書を書き換える操作", () => {
+  beforeEach(() => ({ root, cleanup } = makeCompany()));
+
+  it.each([
+    "sed -i '' 's/a/b/' docs/operations/risks.md",
+    "sed -i.bak -e 's/a/b/' docs/operations/risks.md",
+    "perl -pi -e 's/a/b/' docs/operations/risks.md",
+    "echo x > docs/knowledge/x.md",
+    "echo x >> docs/operations/daily/2026-09-30.md",
+    "cat > docs/knowledge/x.md <<'EOF'\n本文\nEOF",
+    "echo x | tee docs/knowledge/x.md",
+    // cd による移動は追わない（既知の限界。書いた後の違反は /check が拾う）
+    "echo x > ./docs/knowledge/x.md",
+    "sh -c 'echo x > docs/knowledge/x.md'",
+  ])("%s は ask", (command) => {
+    expect(bash(command)).toBe("ask");
+  });
+
+  it.each([
+    "echo x > /tmp/x.md",
+    "ls 2>/dev/null",
+    "echo x >&2",
+    "cat docs/operations/risks.md",
+    "sed 's/a/b/' docs/operations/risks.md",
+    "echo x > notes.md",
+    "git diff > $TMPDIR/diff.txt",
+  ])("%s は通す", (command) => {
+    expect(bash(command)).toBe("allow");
+  });
+
+  it.each([
+    "Set-Content -Path docs/knowledge/x.md -Value x",
+    "'x' | Out-File docs/knowledge/x.md",
+    "'x' > docs/knowledge/x.md",
+    "Add-Content docs/operations/risks.md 'x'",
+  ])("PowerShell：%s は ask", (command) => {
+    expect(bash(command, "PowerShell")).toBe("ask");
+  });
+
+  it("PowerShell：2>$null は通す", () => {
+    expect(bash("git status 2>$null", "PowerShell")).toBe("allow");
+  });
+});
+
 describe("PowerShell の解析", () => {
   beforeEach(() => ({ root, cleanup } = makeCompany()));
 

@@ -180,7 +180,7 @@ const judgeWrite = (input: HookInput, company: Company): Decision => {
   return protectedDecision;
 };
 
-const judgeCommand = (input: HookInput): Decision => {
+const judgeCommand = (input: HookInput, company: Company): Decision => {
   const command = requireString(
     input.tool_input["command"],
     `${input.tool_name} の command`,
@@ -188,7 +188,14 @@ const judgeCommand = (input: HookInput): Decision => {
   const dialect = input.tool_name === "PowerShell" ? "pwsh" : "sh";
   const commands =
     dialect === "pwsh" ? parsePowerShell(command) : parseShell(command);
-  const verdict = judgeCommands(commands, dialect);
+  const verdict = judgeCommands(commands, dialect, {
+    isDocsPath: (arg) => {
+      // 変数やホームの展開を含むパスは解決できないため判定しない
+      if (arg === "" || /[$~%`]/.test(arg)) return false;
+      const key = relativeKey(company.root, resolve(input.cwd, arg));
+      return key !== undefined && needsFrontmatter(key);
+    },
+  });
   return verdict ?? ALLOW;
 };
 
@@ -209,7 +216,7 @@ const main = (): Decision | undefined => {
     result = judgeWrite(input, company);
   } else if (COMMAND_TOOLS.has(input.tool_name)) {
     target = asString(input.tool_input["command"]);
-    result = judgeCommand(input);
+    result = judgeCommand(input, company);
   }
   appendLog(root, {
     tool: input.tool_name,

@@ -5,6 +5,27 @@
 
 export type SimpleCommand = string[];
 
+/**
+ * 出力のリダイレクト（`> file` `>> file`）の書き込み先を表す擬似コマンドの名前。
+ * `[REDIRECT, "<書き込み先>"]` の形で、分解結果の末尾に足す。
+ */
+export const REDIRECT = "__redirect__";
+
+/** リダイレクト記号の後ろを読み、書き込み先の語が続くなら true を返す（`>&2` などの複製は false） */
+const readRedirect = (
+  src: string,
+  start: number,
+): { next: number; hasTarget: boolean } => {
+  let i = start + 1;
+  if (src[i] === ">" || src[i] === "|") i++;
+  if (src[i] === "&") {
+    i++;
+    while (/[0-9-]/.test(src[i] ?? "")) i++;
+    return { next: i, hasTarget: false };
+  }
+  return { next: i, hasTarget: true };
+};
+
 const MAX_DEPTH = 8;
 const SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh"]);
 const WRAPPERS = new Set([
@@ -53,12 +74,19 @@ export const parseShell = (src: string, depth = 0): SimpleCommand[] => {
   let word: string | undefined;
   const heredocs: { delimiter: string; stripTabs: boolean }[] = [];
 
+  const redirects: SimpleCommand[] = [];
+  let redirectNext = false;
   const endWord = () => {
-    if (word !== undefined) argv.push(word);
+    if (word !== undefined) {
+      if (redirectNext) redirects.push([REDIRECT, word]);
+      else argv.push(word);
+      redirectNext = false;
+    }
     word = undefined;
   };
   const endCommand = () => {
     endWord();
+    redirectNext = false;
     if (argv.length > 0) commands.push(argv);
     argv = [];
   };
@@ -122,7 +150,16 @@ export const parseShell = (src: string, depth = 0): SimpleCommand[] => {
       heredocs.push({ delimiter, stripTabs });
       continue;
     }
-    if (ch === "<" || ch === ">") {
+    if (ch === ">") {
+      // `2>` の 2 のようなファイル記述子の番号は引数にしない
+      if (word !== undefined && /^\d+$/.test(word)) word = undefined;
+      endWord();
+      const redirect = readRedirect(src, i);
+      redirectNext = redirect.hasTarget;
+      i = redirect.next;
+      continue;
+    }
+    if (ch === "<") {
       endWord();
       i++;
       continue;
@@ -190,7 +227,7 @@ export const parseShell = (src: string, depth = 0): SimpleCommand[] => {
     i++;
   }
   endCommand();
-  return [...expand(commands, depth, "sh"), ...inner];
+  return [...expand(commands, depth, "sh"), ...inner, ...redirects];
 };
 
 /** PowerShell の文字列を分解する */
@@ -199,12 +236,19 @@ export const parsePowerShell = (src: string, depth = 0): SimpleCommand[] => {
   const commands: SimpleCommand[] = [];
   let argv: string[] = [];
   let word: string | undefined;
+  const redirects: SimpleCommand[] = [];
+  let redirectNext = false;
   const endWord = () => {
-    if (word !== undefined) argv.push(word);
+    if (word !== undefined) {
+      if (redirectNext) redirects.push([REDIRECT, word]);
+      else argv.push(word);
+      redirectNext = false;
+    }
     word = undefined;
   };
   const endCommand = () => {
     endWord();
+    redirectNext = false;
     if (argv.length > 0) commands.push(argv);
     argv = [];
   };
@@ -229,6 +273,15 @@ export const parsePowerShell = (src: string, depth = 0): SimpleCommand[] => {
     if ("\n;|{}()".includes(ch) || (ch === "&" && next === "&")) {
       endCommand();
       i += ch === "&" ? 2 : 1;
+      continue;
+    }
+    if (ch === ">") {
+      // `2>` `*>` の番号や * は引数にしない
+      if (word !== undefined && /^(\d+|\*)$/.test(word)) word = undefined;
+      endWord();
+      const redirect = readRedirect(src, i);
+      redirectNext = redirect.hasTarget;
+      i = redirect.next;
       continue;
     }
     if (ch === "&" && word === undefined) {
@@ -295,7 +348,7 @@ export const parsePowerShell = (src: string, depth = 0): SimpleCommand[] => {
     i++;
   }
   endCommand();
-  return [...expand(commands, depth, "pwsh"), ...inner];
+  return [...expand(commands, depth, "pwsh"), ...inner, ...redirects];
 };
 
 /** 前置きの変数代入やラッパーを外し、`sh -c` `eval` などの内側を展開する */
