@@ -1,6 +1,8 @@
 ---
 id: 20260929-07
 title: 経営基盤 Skill は最初から、業務 Skill は育てる
+type: decision
+business: n/a
 status: proposed
 created: 2026-09-30
 updated: 2026-09-30

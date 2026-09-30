@@ -1,6 +1,8 @@
 ---
 id: 20260929-10
 title: 最初から公開 Plugin
+type: decision
+business: n/a
 status: proposed
 created: 2026-09-30
 updated: 2026-09-30

@@ -1,6 +1,6 @@
 ---
 type: knowledge
-business: portfolio
+business: n/a
 status: active
 created: 2026-09-30
 updated: 2026-09-30

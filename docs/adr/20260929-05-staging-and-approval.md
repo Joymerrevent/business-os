@@ -1,6 +1,8 @@
 ---
 id: 20260929-05
 title: ステージングと承認、四重防衛
+type: decision
+business: n/a
 status: proposed
 created: 2026-09-30
 updated: 2026-09-30
