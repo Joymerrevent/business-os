@@ -175,6 +175,7 @@ company/
 │   ├── knowledge/               # 調査・SOP・育つ知識
 │   ├── inbox/                   # 人間の入口。attachments/ を含む
 │   ├── dashboards/              # Bases 雛形（Obsidian 使用時）
+│   ├── _templates/              # Obsidian のテンプレート（Obsidian 使用時）。フロントマター検査の対象外
 │   └── archive/
 ├── data/                        # Markdown 以外（CSV 等）。Vault 外。必要時に作成
 └── scripts/                     # 事業固有の自動化。Vault 外。必要時に作成
@@ -228,7 +229,7 @@ CC は必要時に該当パスを `--add-dir` で読み込む。
 
 | Skill | 起動 | 読む | 書く（直接） | 提案（承認要） | 人に聞く |
 |---|---|---|---|---|---|
-| `/onboard` | 初回、事業追加、`--migrate` | 器の `templates/` | `CLAUDE.md`、`charter/*`、`operations/obligations.md`、`.claude/settings.json`、`.business-os.json`、（選択時）`docs/.obsidian/` `dashboards/` | — | 会社概要、事業一覧、承認範囲、期限・義務、実装リポの場所、Obsidian 使用可否、KPI 候補の選択 |
+| `/onboard` | 初回、事業追加、`--migrate` | 器の `templates/` | `CLAUDE.md`、`charter/*`、`operations/obligations.md`、`.claude/settings.json`、`.business-os.json`、（選択時）`docs/.obsidian/` `dashboards/` `_templates/` | — | 会社概要、事業一覧、承認範囲、期限・義務、実装リポの場所、Obsidian 使用可否、KPI 候補の選択 |
 | `/approve` | 人間が呼ぶ | `proposals/`（`status: proposed`） | 提案の status、承認内容を `charter/` へ反映（permissions の ask が最終確認） | — | 承認 / 却下 / 修正 |
 | `/check` | 週次 | 器の検査定義、`company` 全体 | `operations/reviews/check-YYYYMMDD.md` | 設定の修正 | 異常時のみ |
 | `/adr` | 判断時 | `charter/decision-rules.md`、関連 ADR | `decisions/YYYYMMDD-nn-*.md`（`proposed`） | — | 決定内容、accepted への変更 |
@@ -456,7 +457,8 @@ verified: YYYY-MM-DD | n/a  # charter は必須
 - 4 日付欄は省略しない。該当なしは `n/a`
 - `ledger` は台帳（`operations/obligations.md`、`operations/risks.md`）
 - 器の ADR（`docs/adr/`）は `type: decision`。器の文書は `business: n/a` を使える
-- 器の `templates/` は検査の対象外（`{{ }}` の変数を含むため）
+- 雛形の置き場（器の `templates/`、company の `docs/_templates/`）は検査の対象外（置き換え記号を含むため）。
+  hook のフロントマター検査、`/check`、器の `check:docs` のいずれも対象にしない
 - ID を持つ文書（decisions / proposals / 器の adr）は `id: YYYYMMDD-nn` を追加し、ファイル名と一致させる
 - リンクは標準 Markdown（`[text](relative/path.md)`）。`[[wikilink]]` は使わない
 
@@ -477,8 +479,9 @@ adapters/obsidian/
 │   ├── app.json  core-plugins.json  daily-notes.json  templates.json  graph.json  appearance.json
 ├── bases/                 # company/docs/dashboards/ にコピー
 │   ├── proposals.base  decisions.base  state.base  freshness.base  reviews.base
-└── templates/
-    └── inbox-note.md      # 人間が手で書くメモの雛形
+└── templates/             # company/docs/_templates/ にコピー
+    ├── inbox-note.md      # 人間が手で書くメモの雛形
+    └── daily-note.md      # Daily Notes の雛形（人間が先に日報を開いてもフロントマター付きになる）
 ```
 
 ### 10.3 主要設定
@@ -488,9 +491,10 @@ adapters/obsidian/
 | Vault root | `company/docs/` |
 | リンク形式 | 標準 Markdown、相対パス（`useMarkdownLinks: true`） |
 | 新規ノート | `inbox/` |
+| テンプレートの置き場 | `_templates/`（`templates.json`。検索とグラフからは除く） |
 | 添付ファイル | `inbox/attachments/` |
-| Daily Notes | `operations/daily/YYYY-MM-DD.md`（`/morning` と同じファイル。`/morning` は既存なら追記） |
-| コアプラグイン | file-explorer, search, switcher, graph, backlink, outgoing-link, tag-pane, properties, daily-notes, templates, bases, canvas, command-palette, outline, bookmarks |
+| Daily Notes | `operations/daily/YYYY-MM-DD.md`（`/morning` と同じファイル。`/morning` は既存なら追記）。雛形は `_templates/daily-note` |
+| コアプラグイン | file-explorer, global-search, switcher, graph, backlink, outgoing-link, tag-pane, properties, daily-notes, templates, bases, canvas, command-palette, outline, bookmarks |
 | コミュニティプラグイン | ゼロ（利用者が任意で追加） |
 | グラフの色 | フォルダ別（charter / proposals / decisions / operations / knowledge / inbox） |
 | Git 除外 | `.obsidian/workspace.json` `workspace-mobile.json` `cache/` |
@@ -502,13 +506,16 @@ Bases の雛形は第 9 節のフロントマターだけを前提にする。
 1. 「ナレッジの閲覧に Obsidian を使いますか？（推奨）」
 2. はい → OS 判定 → 未インストールなら承認を取り、macOS は `brew install --cask obsidian`、
    Windows は `winget install --id Obsidian.Obsidian --exact --accept-source-agreements --accept-package-agreements`。
-   Homebrew / winget が無ければ手動インストールを案内
-3. `vault/` を `docs/.obsidian/` に、`bases/` を `docs/dashboards/` にコピー。`.gitignore` に除外を追記
-4. Obsidian を起動し（macOS は `open -a Obsidian`）、「保管庫としてフォルダを開く（Open folder as vault）」で
-   `company/docs` を選ぶよう 1 回だけ案内する。`obsidian://open?path=` は未登録のフォルダを開けないため使わない
+   Homebrew / winget が無ければ手動インストールを案内。
+   **インストールはこの質問の直後に行う**（`.claude/settings.json` を書いた後は company の sandbox がインストールを止めるため）
+3. `vault/` を `docs/.obsidian/` に、`bases/` を `docs/dashboards/` に、`templates/` を `docs/_templates/` にコピー。
+   `.gitignore` に除外を追記。`.claude/settings.json` より前に書く
+4. 人間に Obsidian を起動してもらい（`! open -a Obsidian` か手で。sandbox がアプリの起動を止めるため CC は起動しない）、
+   「保管庫としてフォルダを開く（Open folder as vault）」で `company/docs` を選ぶよう 1 回だけ案内する。
+   `obsidian://open?path=` は未登録のフォルダを開けないため使わない
 5. 初回起動時の確認ダイアログは人間が押す
 
-「いいえ」を選んだ場合、Obsidian 関連ファイルを一切生成しない。
+「いいえ」を選んだ場合、Obsidian 関連ファイル（`docs/.obsidian/`・`docs/dashboards/`・`docs/_templates/`）を一切生成しない。
 
 ### 10.5 Windows
 
