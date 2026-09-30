@@ -20,7 +20,8 @@
    **CC が単独で `accepted` にしない。** メンテナが確認して変える
 2. bash スクリプトを追加しない。hook / scripts は TypeScript、Node 24 が直接実行する。
    `enum` `namespace` など Node が剥がせない構文は tsc が弾く
-3. シンボリックリンクを使わない。パスは相対、改行は LF
+3. シンボリックリンクを使わない。パスは相対、改行は LF。
+   Markdown のリンクは標準の inline 形式（`[text](path)`）。利用者個人の全体ルールよりこのリポの規約を優先する
 4. 文書のフロントマターに 4 日付欄（created / updated / as_of / verified）を必ず持つ。該当なしは `n/a`
 5. 検査は `pnpm check` が正典（`package.json` の `check:*`）。成否は終了コードで見る。Done の数を数えない
 6. 公開済みコミットの履歴を書き換えない。Conventional Commits

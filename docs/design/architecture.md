@@ -54,7 +54,8 @@ company/       事業データ。非公開。利用者ごとに 1 つ。/onboard
 ```text
 business-os/
 ├── .claude-plugin/
-│   └── plugin.json              # Plugin メタデータ。name / version / description(alpha)
+│   ├── plugin.json              # Plugin メタデータ。name / version / description(alpha)
+│   └── marketplace.json         # 器自身をマーケットプレイスとして公開する定義（/plugin marketplace add 用）
 ├── .claude/                     # 器を CC で開発するときの設定（配布しない）
 │   ├── settings.json            # 秘密・固有名詞の混入を防ぐ deny / sandbox
 │   ├── settings.local.json      # 個人設定（gitignore）
@@ -82,7 +83,8 @@ business-os/
 │   └── lib/                     # フロントマター検証、日付検証、シェル引数解析
 ├── scripts/
 │   ├── check.ts                 # 重い点検（company 向け）と check:*（器向け）の共有実装
-│   └── sync-plugin-version.ts   # changesets の version を plugin.json へ同期
+│   ├── sync-plugin-version.ts   # changesets の version を plugin.json へ同期
+│   └── pre-commit.ts            # 開発用。git の pre-commit（lint-staged と gitleaks）
 ├── templates/                   # company の雛形。/onboard が展開する
 │   ├── CLAUDE.md.tmpl
 │   ├── settings.json.tmpl
@@ -102,8 +104,9 @@ business-os/
 ├── README.md                    # Status: Alpha を冒頭に。「最短で動かす」まで
 ├── CHANGELOG.md  CONTRIBUTING.md  SECURITY.md  CODE_OF_CONDUCT.md  LICENSE
 ├── .editorconfig  .node-version  .gitignore  .gitattributes  .gitleaks.toml
-├── .markdownlint-cli2.jsonc  .prettierrc.json  eslint.config.mjs
+├── .markdownlint-cli2.jsonc  .prettierrc.json  .prettierignore  eslint.config.mjs
 ├── commitlint.config.js  lint-staged.config.mjs  tsconfig.json  vitest.config.ts
+├── pnpm-workspace.yaml          # pnpm の設定（依存の熟成期間など）
 └── package.json                 # check:* が検査の正典
 ```
 
@@ -382,7 +385,9 @@ status を変えるのは `/approve` だけ。`approving` のまま 24 時間超
 
 ### 7.6 Git 側の制御
 
-- `business-os`（公開）：GitHub ruleset で force push 禁止、`main` への直接 push 禁止
+- `business-os`（公開）：GitHub ruleset で force push 禁止、`main` への直接 push 禁止。
+  設定済み（2026-09-30）：ruleset `protect-main`（deletion / non_fast_forward / pull_request）、
+  PR 作成はコラボレーター限定、既定ブランチ `develop`、Secret Scanning と Push Protection 有効
 - `company`（非公開）：プランが許せば同じ ruleset。使えない場合は pre-push hook（Node）で補う
 - `company` は force push を必要としない運用。必要になったら CC を介さず人間が判断する
 
