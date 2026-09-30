@@ -1,6 +1,6 @@
 ---
 type: knowledge
-business: portfolio
+business: n/a
 status: active
 created: 2026-09-30
 updated: 2026-09-30
@@ -46,6 +46,8 @@ CC が「accepted に変えてよいか」と聞くのは構わない。勝手�
 ---
 id: 20260929-01
 title: シェル非依存
+type: decision
+business: n/a
 status: proposed
 created: 2026-09-30   # ファイルを書いた日
 updated: 2026-09-30   # 最後に内容を変えた日

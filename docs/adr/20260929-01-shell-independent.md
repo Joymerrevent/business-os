@@ -1,6 +1,8 @@
 ---
 id: 20260929-01
 title: シェル非依存
+type: decision
+business: n/a
 status: proposed
 created: 2026-09-30
 updated: 2026-09-30

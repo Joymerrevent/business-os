@@ -1,6 +1,8 @@
 ---
 id: 20260929-08
 title: 既製フレームワークは参考にし、fork しない
+type: decision
+business: n/a
 status: proposed
 created: 2026-09-30
 updated: 2026-09-30

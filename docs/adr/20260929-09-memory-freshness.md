@@ -1,6 +1,8 @@
 ---
 id: 20260929-09
 title: 記憶は腐る前提で組む
+type: decision
+business: n/a
 status: proposed
 created: 2026-09-30
 updated: 2026-09-30

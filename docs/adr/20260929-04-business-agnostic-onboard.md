@@ -1,6 +1,8 @@
 ---
 id: 20260929-04
 title: 器は事業非依存、/onboard で注入
+type: decision
+business: n/a
 status: proposed
 created: 2026-09-30
 updated: 2026-09-30

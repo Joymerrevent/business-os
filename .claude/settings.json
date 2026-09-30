@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git commit --no-verify:*)",
+      "Bash(git push --no-verify:*)"
+    ],
+    "ask": ["Bash(gh pr merge:*)", "Bash(gh release create:*)"]
+  },
+  "sandbox": {
+    "enabled": true,
+    "allowUnsandboxedCommands": false,
+    "excludedCommands": ["gh", "gh *"],
+    "filesystem": {
+      "denyRead": ["./.env", "./.env.*", "~/.ssh", "~/.aws"],
+      "allowWrite": [
+        "~/.npm",
+        "~/Library/pnpm",
+        "~/Library/Caches/pnpm",
+        "~/.local/share/pnpm",
+        "~/.cache/pnpm"
+      ]
+    },
+    "network": {
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "github.com",
+        "api.github.com",
+        "codeload.github.com",
+        "objects.githubusercontent.com"
+      ]
+    }
+  }
+}
