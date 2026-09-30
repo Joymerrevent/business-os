@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parsePowerShell, parseShell } from "../../hooks/lib/shell.ts";
+import {
+  parsePowerShell,
+  parseShell,
+  REDIRECT,
+} from "../../hooks/lib/shell.ts";
 
 describe("parseShell", () => {
   it("区切り（; && || | 改行）でコマンドを分ける", () => {
@@ -74,6 +78,16 @@ describe("parseShell", () => {
       ["git", "commit", "-F", "-"],
       ["git", "status"],
     ]);
+  });
+
+  it("出力のリダイレクト先を擬似コマンドとして拾う", () => {
+    expect(parseShell("echo x > a.md 2>/dev/null")).toEqual([
+      ["echo", "x"],
+      [REDIRECT, "a.md"],
+      [REDIRECT, "/dev/null"],
+    ]);
+    expect(parseShell("echo x >> a.md")).toContainEqual([REDIRECT, "a.md"]);
+    expect(parseShell("echo x >&2")).toEqual([["echo", "x"]]);
   });
 
   it("コメントを読み飛ばす", () => {

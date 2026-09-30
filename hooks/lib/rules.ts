@@ -1,6 +1,6 @@
 // 分解したコマンドの意味を判定する。拒否（deny）は取り消せない操作、確認（ask）は大きく消す操作。
 // 書き方ではなく意味（force か否か、再帰的に消すか否か）で判定する。
-import type { SimpleCommand } from "./shell.ts";
+import { REDIRECT, type SimpleCommand } from "./shell.ts";
 
 export type Verdict = { decision: "deny" | "ask"; reason: string } | undefined;
 
@@ -181,10 +181,58 @@ const judgePowerShellRemove = (argv: SimpleCommand): Verdict =>
     ? { decision: "ask", reason: "再帰的な削除（Remove-Item -Recurse）です" }
     : undefined;
 
+/** 判定に使う周辺の情報。isDocsPath は、引数のパスが docs/ 配下の文書かを返す */
+export type JudgeContext = { isDocsPath: (path: string) => boolean };
+
+const DOCS_BY_SHELL: Verdict = {
+  decision: "ask",
+  reason:
+    "シェルのコマンドで docs/ の文書を書き換えようとしています。フロントマターの検査を通すため、Write / Edit ツールで書いてください",
+};
+
+/** sed -i・tee・リダイレクト・Set-Content などで docs/ の文書に書く操作 */
+const judgeDocsWrite = (
+  argv: SimpleCommand,
+  name: string,
+  dialect: "sh" | "pwsh",
+  context: JudgeContext,
+): Verdict => {
+  const args = argv.slice(1);
+  const touchesDocs = args.some((arg) => context.isDocsPath(arg));
+  if (argv[0] === REDIRECT) return touchesDocs ? DOCS_BY_SHELL : undefined;
+  if (!touchesDocs) return undefined;
+  if (name === "sed" || name === "perl") {
+    const inPlace = args.some(
+      (arg) =>
+        arg === "--in-place" ||
+        arg.startsWith("--in-place=") ||
+        /^-[a-zA-Z]*i/.test(arg),
+    );
+    return inPlace ? DOCS_BY_SHELL : undefined;
+  }
+  if (name === "tee") return DOCS_BY_SHELL;
+  if (
+    dialect === "pwsh" &&
+    [
+      "set-content",
+      "add-content",
+      "out-file",
+      "sc",
+      "ac",
+      "new-item",
+      "ni",
+    ].includes(name)
+  ) {
+    return DOCS_BY_SHELL;
+  }
+  return undefined;
+};
+
 /** 全コマンドを判定し、最も強い結果を返す（deny > ask） */
 export const judgeCommands = (
   commands: SimpleCommand[],
   dialect: "sh" | "pwsh",
+  context: JudgeContext = { isDocsPath: () => false },
 ): Verdict => {
   let ask: Verdict;
   for (const argv of commands) {
@@ -194,6 +242,7 @@ export const judgeCommands = (
     else if (dialect === "pwsh" && POWERSHELL_REMOVE.has(name))
       verdict = judgePowerShellRemove(argv);
     else if (name === "rm") verdict = judgeRm(argv);
+    verdict ??= judgeDocsWrite(argv, name, dialect, context);
     if (verdict?.decision === "deny") return verdict;
     if (verdict?.decision === "ask" && ask === undefined) ask = verdict;
   }

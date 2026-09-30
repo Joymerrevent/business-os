@@ -57,4 +57,16 @@
 | `risk` `risk_signal` `risk_mitigation` `risk_status` | 事業の一覧から CC がリスクの候補を挙げ、利用者が選んだもの。選ばなければ「まだ無い」の 1 行 |
 | `state_running` `state_waiting` `state_blocked` | 「まだ記録が無い」 |
 | `proposal_id` `proposal_title` `business` `target` `today` `background` `change_summary` `diff` `sources` | 提案を書くときに CC が埋める（`/onboard` では使わない） |
-| 日報・レビュー・決定記録の変数（`date` `as_of` `week_id` など） | 各 Skill が書き出すときに埋める（`/onboard` では使わない） |
+
+## Skill が書き出す雛形の変数
+
+各 Skill が書き出すときに埋める（`/onboard` では使わない）。日付は全て `YYYY-MM-DD`。
+
+| 雛形 | 変数 |
+|---|---|
+| `operations/daily/_template.md` | `date` `summary` `priorities` `pending_approvals` `deadlines` `questions` |
+| `operations/reviews/weekly.md` | `date` `week_id` `week_start` `week_end` `achievements` `business_id` `hours` `note` `next_focus` `state_updates` |
+| `operations/reviews/monthly.md` | `date` `as_of` `month_id` `business_id` `revenue` `cost` `margin` `source` `cash` `payments` `deadlines` `kpi_notes` |
+| `operations/reviews/quarterly.md` | `date` `as_of` `quarter_id` `business_id` `trend` `decision` `reason` `risk_review` `charter_review` `proposals` |
+| `operations/reviews/retro.md` | `date` `period_start` `period_end` `skill` `count` `repeated_requests` `unused_skills` `rule_proposals` `proposals` |
+| `decisions/_template.md` | `decision_id` `business` `date` `as_of` `decision_title` `background` `decision` `rationale` `consequences` `sources` |
