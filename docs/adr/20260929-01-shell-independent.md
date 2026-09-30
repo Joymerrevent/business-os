@@ -33,6 +33,7 @@ Obsidian 等の GUI アプリと WSL を組み合わせるとファイルシス�
 4. パスは相対パス、改行は LF に固定（`.gitattributes`）
 5. CI は Linux と Windows の両方で回す
 6. Windows 利用者への案内は二段構え：WSL 推奨（Mac と完全同一手順）、ネイティブでも動作
+   - ネイティブでは CC の sandbox が動かないため、防衛は三重になる（20260929-05）。WSL2 を推奨する理由の一つ
 
 ## 根拠
 
@@ -55,8 +56,9 @@ Obsidian 等の GUI アプリと WSL を組み合わせるとファイルシス�
 - `erasableSyntaxOnly` により書ける TS の範囲が狭まる。hook・scripts の規模では実害はない
 - Node が TS を直接実行する挙動は 2025 年後半に安定化したものであり、**実装初日に
   Mac / Windows 双方で `node hooks/xxx.ts` が動くことを確認する**
-- GUI ツール（Obsidian 等）を Windows で使う場合は、CC もネイティブで動かし、
-  データを Windows 側に置く構成を推奨する（WSL のファイルシステム境界問題を避ける）
+- Windows の既定の推奨は WSL（防衛は四重、Obsidian なし）。GUI ツール（Obsidian 等）を使う場合の選択肢として、
+  CC もネイティブで動かし、データを Windows 側に置く構成を案内する（WSL のファイルシステム境界問題を避ける）。
+  この構成では第一層（sandbox）が無いことを利用者に明示する
 
 ## 参考
 

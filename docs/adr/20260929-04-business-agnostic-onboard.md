@@ -31,8 +31,10 @@ supersedes: n/a
      `.claude/settings.json`、（選択時）`docs/.obsidian/` を生成する
    - 利用者は Markdown を手で書かない。質問に答えるだけ
 3. 事業の追加・撤退も `/onboard` を再実行して行う。器は触らない
-4. 器リポには `check:leak` を置き、gitleaks に加えて `/onboard` で登録された固有名詞を
-   器リポ内で検索し、混入を検出する
+4. 器リポには `check:leak` を置き、固有名詞と秘密の混入を 2 層で検出する
+   - CI と公開：gitleaks と汎用パターン（メール、電話、法人接尾、通貨付き金額、私有ドメイン）。汎用パターンは warn
+   - ローカル：`/onboard` が `company/.leak-dict.json`（gitignore）に固有名詞の辞書を書く。
+     `check:leak` は環境変数 `BUSINESS_OS_LEAK_DICT` が指す辞書があれば読み、器リポ内を検索する
 5. 器と事業データは **リポを分ける**（`business-os` と `company`）。Plugin を更新しても事業データは触られない
 
 ## 根拠

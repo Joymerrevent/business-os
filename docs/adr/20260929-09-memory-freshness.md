@@ -72,12 +72,14 @@ CC 自身のメモは CC に統合させる。器側で二重管理しない。
 4 日付欄に加え、フォルダ横断で扱うための項目を持つ。
 
 ```yaml
-type: charter | proposal | decision | daily | review | state | knowledge | inbox
-business: portfolio | <事業ID>
+type: charter | proposal | decision | daily | review | state | ledger | knowledge | inbox
+business: portfolio | <事業ID> | n/a   # n/a は器の文書のみ
 status: <文書種別ごとに定義>
 ```
 
 定義は器の `templates/frontmatter.schema.json` に置き、`/check` が検証する。
+台帳（期限・義務、リスク）は `type: ledger`。器の ADR も同じスキーマで `type: decision` とする。
+器の `templates/` は検査の対象外。
 
 ## 根拠
 

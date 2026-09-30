@@ -58,7 +58,7 @@ porters-connect と同じ流儀で揃える。
 
 ### Phase 3：hooks とテスト
 
-- `hooks/hooks.json`、`hooks/session-start.ts`（軽い点検 8 項目、厳格モード）、
+- `hooks/hooks.json`、`hooks/session-start.ts`（軽い点検 10 項目、厳格モード）、
   `hooks/pre-tool-use.ts`（第 7.3 節の判定）、`hooks/lib/`
 - `test/`：hook の fail-closed テストを**先に**書く（合成入力で exit 2 / 0 を検証、例外注入で exit 2）
 - `test/fixtures/company/`：検証用の company 相当リポ
