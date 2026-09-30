@@ -1,0 +1,10 @@
+# 依存・ロックファイル
+node_modules
+coverage
+pnpm-lock.yaml
+
+# Markdown は markdownlint が見る。Prettier で整形すると日本語の表や文書が大きく書き換わるため対象外
+*.md
+
+# changesets が管理するファイル
+.changeset

@@ -1,0 +1,35 @@
+{
+  // markdownlint-cli2 設定。構造と内容を lint する（Markdown の整形に Prettier は使わない）。
+  "config": {
+    "default": true,
+    // 行長は日本語テキストに合わないため無効化
+    "MD013": false,
+    // 表の列揃えは強制しない
+    "MD060": false,
+    // HTML コメント（ADR の根拠を残す <!-- 根拠: … -->）等を許容
+    "MD033": false,
+    // フロントマターを持つ文書は先頭行が見出しにならない
+    "MD041": false,
+    // フロントマターの title を H1 と数えない（数えると title を持つ ADR が全部エラーになる）
+    "MD025": { "front_matter_title": "" },
+    // リンクは標準の inline 形式（[text](path)）に統一する。参照スタイルは使わない。
+    // 裸 URL は autolink <url> でよい。
+    "MD054": {
+      "autolink": true,
+      "inline": true,
+      "full": false,
+      "collapsed": false,
+      "shortcut": false,
+      "url_inline": true,
+    },
+  },
+  "globs": ["**/*.md"],
+  "gitignore": true,
+  "ignores": [
+    "node_modules",
+    "coverage",
+    // changesets が生成・管理するファイル
+    ".changeset",
+    "CHANGELOG.md",
+  ],
+}
