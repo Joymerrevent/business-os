@@ -129,6 +129,8 @@ Windows で Obsidian を使う場合は、CC もネイティブ Windows で動�
 - 「先に提案を書け」と言われた → 憲章はあなたが管理する領域です。CC は `docs/proposals/` に提案を書くので、
   `/approve` で確認して反映してください
 - 起動時に警告が出た → 表示された対処（多くは `/onboard` の再実行）に従ってください
+- `/morning` などで別の Skill が動いた → 同じ名前の Skill をあなたが持っています。`/business-os:morning` のように
+  `business-os:` を付けて呼んでください
 - 不具合・提案 → 器のリポジトリの Issues へ。事業データは絶対に貼らないでください
 
 ## やめるとき

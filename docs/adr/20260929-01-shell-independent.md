@@ -33,6 +33,7 @@ Obsidian 等の GUI アプリと WSL を組み合わせるとファイルシス�
 4. パスは相対パス、改行は LF に固定（`.gitattributes`）
 5. CI は Linux と Windows の両方で回す
 6. Windows 利用者への案内は二段構え：WSL 推奨（Mac と完全同一手順）、ネイティブでも動作
+   - ネイティブでは CC の sandbox が動かないため、防衛は三重になる（20260929-05）。WSL2 を推奨する理由の一つ
 
 ## 根拠
 

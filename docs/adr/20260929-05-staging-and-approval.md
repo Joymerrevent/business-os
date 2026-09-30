@@ -25,7 +25,7 @@ sandbox が整い、auto mode（多くの権限プロンプトを自動処理）
 ### 承認が要る範囲（2 種類だけ）
 
 1. **外部に影響が出る行動**：送信、投稿、支払い、公開、他人に見える変更
-2. **憲章（`docs/charter/`）と地図（`CLAUDE.md`）の変更**
+2. **憲章（`docs/charter/`）と地図（`CLAUDE.md`）、防衛設定（`.claude/settings.json`）、器の状態（`.business-os.json`）の変更**
 
 それ以外（`operations/` `knowledge/` `proposals/` `decisions/`、CC 自身のメモ）は AI が直接書いてよい。
 
@@ -33,12 +33,31 @@ sandbox が整い、auto mode（多くの権限プロンプトを自動処理）
 
 | 層 | 強制される場所 | 守るもの | 抜け穴 |
 |---|---|---|---|
-| 1. sandbox | OS | Bash とその全子プロセスからの `charter/` `CLAUDE.md` `settings.json` への書き込み、秘密の読み取り | 未設定、統合ルールの誤り |
-| 2. permissions | CC プロセス内 | 組み込みツール。`charter/` への Edit は **ask**（人間確認）、危険コマンドは deny | Bash 経由は文字列一致のみ |
+| 1. sandbox | OS | Bash とその全子プロセスからの保護対象への書き込み、秘密の読み取り | 未設定、統合ルールの誤り、native Windows 非対応 |
+| 2. permissions | CC プロセス内 | 組み込みツール。保護対象への Edit は **ask**（人間確認）、危険コマンドは deny | Bash 経由は文字列一致のみ |
 | 3. PreToolUse hook（TS） | CC プロセス内（自作） | 提案のない `charter/` Edit の拒否、フロントマター検査、Bash の意味解析。例外時は拒否（fail-closed） | hook 自身のバグ |
 | 4. `proposals/` | 運用 | 止めた後の出口、判断の履歴 | 承認疲れ |
 
 各層の抜け穴を別の層が埋める。1 層だけで済ませない。
+
+保護対象は `docs/charter/**`、`CLAUDE.md`、`.claude/settings.json`、`.business-os.json` の 4 つ。
+
+- permissions のファイル規則は `Edit(...)` で書く。`Edit` 規則が Write を含む全書き込みツールに効き、`Write(...)` 規則は判定に使われない
+- sandbox は `allowUnsandboxedCommands: false` とし、失敗したコマンドを sandbox の外で再実行する逃げ道を塞ぐ
+- native Windows では sandbox が動かない。第 2〜4 層の三重で動かし、軽い点検が毎セッション warn を出す
+
+### company の状態
+
+hook は `company` の `.business-os.json` の有無と `state` で振る舞いを変える。
+
+| 状態 | 条件 | 保護対象への書き込み |
+|---|---|---|
+| 対象外 | `.business-os.json` が無い | hook は無言で通す。軽い点検も走らない |
+| 初期化中 | `state: initializing` | hook が ask を返し、人間が確認する。フロントマター検査は有効 |
+| 運用中 | `state: active` | 提案必須（下の `/approve` の流れ）。厳格モードあり |
+
+`/onboard` は最初の行動として `.business-os.json` を `state: initializing` で作り、完了時に `active` にする。
+再実行（`--migrate`、事業追加）は運用中の扱いで、提案経由で行う。新規ファイルも提案の `target` にできる。
 
 ### `/approve` の流れ
 
@@ -86,6 +105,9 @@ verified: n/a
 
 - `company/.claude/settings.json` に sandbox と permissions の規則を持つ。`/onboard` が雛形から生成し、
   起動時セルフチェック（20260929-06）が欠落を検出する
+- 逃げ道を塞いだ sandbox の中では、保護対象を更新する `git pull` / `checkout` / `merge` が失敗する。
+  これらは CC を介さず人間が実行する
+- 他のリポジトリで CC を使っても器の hook は干渉しない（`.business-os.json` が無ければ対象外）
 - hook は TS で書き、fail-closed のテストを持つ（20260929-01、20260929-06）
 - Bash の文字列規則は粗い網として扱う（20260930-01）
 - 外部に影響が出る MCP ツールの ask 規則は、`/onboard` が接続済みツールを検出して具体名に置き換える

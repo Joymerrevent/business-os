@@ -43,7 +43,12 @@ deny 規則が権限プロンプトへフォールバックする挙動が報告
 4. `company` では **force push を一切必要としない運用**にする。履歴を書き換えたい状況が来たら、
    CC を介さず人間が手で判断する
 
-この方針は force push に限らない。`rm -rf` 等の破壊的コマンドも同じ構造で守る。
+この方針は force push に限らない。破壊的コマンドも同じ構造で守る。
+
+| 判定 | 対象 |
+|---|---|
+| 拒否（exit 2） | `git push` の force 系フラグと `+` 付き refspec、`--no-verify` |
+| 確認（ask） | `rm -r*`、`git reset --hard`、`git clean -f*`、`git branch -D` |
 
 ## 根拠
 
