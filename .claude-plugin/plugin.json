@@ -1,0 +1,13 @@
+{
+  "name": "business-os",
+  "version": "0.1.0",
+  "description": "(alpha) 1 人で複数事業を運営する人が Claude Code を経営の手足として使うための器。事業情報は /onboard で利用者のリポジトリに注入する",
+  "author": {
+    "name": "Joymerrevent",
+    "url": "https://joymerrevent.com/"
+  },
+  "homepage": "https://github.com/Joymerrevent/business-os#readme",
+  "repository": "https://github.com/Joymerrevent/business-os",
+  "license": "MIT",
+  "keywords": ["business", "operations", "approval", "adr", "obsidian"]
+}
