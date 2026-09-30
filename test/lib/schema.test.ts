@@ -141,6 +141,12 @@ describe("ajv との一致", () => {
       },
       { type: "proposal", status: "proposed", id: "20261001-01", target: "" },
       { type: "proposal", status: "proposed", id: "20261001-01" },
+      {
+        type: "proposal",
+        status: "proposed",
+        id: "20261001-01",
+        target: "docs/charter/a.md, docs/charter/b.md",
+      },
       { type: "decision", status: "accepted" },
     ];
     for (const extra of cases) {

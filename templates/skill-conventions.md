@@ -31,6 +31,8 @@ business-os の Skill（`/onboard` など 10 個）は、実行の最初にこ�
 1. 外部に影響が出る行動（送信、投稿、支払い、公開、他人に見える変更）：実行の前に人間に確認する
 2. 保護対象（`docs/charter/`、`CLAUDE.md`、`.claude/settings.json`、`.business-os.json`）の変更：
    `docs/proposals/` に提案を書き、人間が `/approve` で承認する。雛形は `templates/proposals/_template.md`
+   - 提案 1 件の `target` は 1 ファイルだけ。複数のファイルを変えるときは、ファイルごとに提案を分ける
+     （器の hook は `target` と書き込み先のファイルを 1 対 1 で照合するため）
 
 それ以外（日報、レビュー、台帳、調査メモ、提案、意思決定記録の起票）は CC が直接書いてよい。
 

@@ -322,7 +322,7 @@ export const checkDocuments = (
       continue;
     }
     const data = fm.data;
-    const errors = validate(schema, schema, data);
+    const errors = [...new Set(validate(schema, schema, data))];
     if (
       isDate(data["created"]) &&
       isDate(data["updated"]) &&

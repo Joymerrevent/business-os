@@ -195,6 +195,33 @@ describe("運用中のフロントマター検査", () => {
     ).toBe("deny");
   });
 
+  it("target が 2 ファイルの提案は拒否（1 件の提案につき 1 ファイル）", () => {
+    const proposal = (target: string) =>
+      [
+        "---",
+        "id: 20260930-01",
+        "type: proposal",
+        "business: portfolio",
+        "status: proposed",
+        `target: ${target}`,
+        "created: 2026-09-30",
+        "updated: 2026-09-30",
+        "as_of: n/a",
+        "verified: n/a",
+        "---",
+        "",
+      ].join("\n");
+    expect(
+      write(
+        "docs/proposals/20260930-01-x.md",
+        proposal("docs/charter/a.md, docs/charter/b.md"),
+      ),
+    ).toBe("deny");
+    expect(
+      write("docs/proposals/20260930-01-x.md", proposal("docs/charter/a.md")),
+    ).toBe("allow");
+  });
+
   it("docs の外の Markdown は検査しない", () => {
     expect(write("notes.md", "# メモ\n")).toBe("allow");
   });

@@ -116,7 +116,7 @@ const checkFrontmatter = (input: HookInput, path: string): Decision => {
     };
   }
   const schema = frontmatterSchema();
-  const errors = validate(schema, schema, fm.data);
+  const errors = [...new Set(validate(schema, schema, fm.data))];
   if (errors.length > 0) {
     return {
       decision: "deny",
