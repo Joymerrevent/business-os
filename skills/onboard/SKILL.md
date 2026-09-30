@@ -97,6 +97,14 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 - **`--migrate`**：器の雛形と company の文書を比べ、器の更新で増えた欄や規則を提案として書く。
   `.business-os.json` の `pluginVersion` の更新も提案にする。事業の中身は変えない
 
+## 何を書くか
+
+- 初回：`.business-os.json`、`.gitignore`、`.gitattributes`、`.leak-dict.json`、`CLAUDE.md`、
+  `docs/charter/`（会社概要・判断ルール・実装リポ・事業ごとの定義）、`docs/operations/`（期限・義務台帳、リスク台帳、事業別の現況）、
+  最後に `.claude/settings.json`
+- 導入済み：台帳（`docs/operations/`）と、保護対象の変更の提案（`docs/proposals/`）
+- 日報への実行記録（例：`- 10:00 /onboard — 初回の導入を完了（事業 2 件）`）
+
 ## 人に何を聞くか
 
 - 上のインタビューの項目
