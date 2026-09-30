@@ -83,6 +83,7 @@ business-os/
 │   └── lib/                     # フロントマター検証、日付検証、シェル引数解析
 ├── scripts/
 │   ├── check.ts                 # 重い点検（company 向け）と check:*（器向け）の共有実装
+│   ├── lib/                     # 点検の中身（company-checks.ts など）
 │   ├── sync-plugin-version.ts   # changesets の version を plugin.json へ同期
 │   └── pre-commit.ts            # 開発用。git の pre-commit（lint-staged と gitleaks）
 ├── templates/                   # company の雛形。/onboard が展開する
@@ -90,8 +91,10 @@ business-os/
 │   ├── settings.json.tmpl
 │   ├── frontmatter.schema.json
 │   ├── charter/                 # company.md / decision-rules.md / repositories.md / businesses/_template.md
-│   ├── operations/              # obligations.md / risks.md / state/_template.md
-│   └── proposals/_template.md
+│   ├── operations/              # obligations.md / risks.md / state/_template.md / daily/_template.md / reviews/*.md
+│   ├── decisions/_template.md   # company の意思決定記録
+│   ├── proposals/_template.md
+│   └── skill-conventions.md     # 器の Skill の共通規約（書き出さない）
 ├── adapters/
 │   └── obsidian/                # 第 10 節
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）

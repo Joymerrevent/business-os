@@ -26,6 +26,10 @@
 | `operations/obligations.md` `risks.md` | `docs/operations/` | `/onboard` |
 | `operations/state/_template.md` | `docs/operations/state/<事業 ID>.md` | `/onboard`（事業ごと） |
 | `proposals/_template.md` | `docs/proposals/<id>-<slug>.md` | CC が提案を書くとき |
+| `operations/daily/_template.md` | `docs/operations/daily/YYYY-MM-DD.md` | `/morning`。日報が無いときは他の Skill も作る |
+| `operations/reviews/weekly.md` `monthly.md` `quarterly.md` `retro.md` | `docs/operations/reviews/weekly-YYYY-Www.md` など | `/weekly-review` `/close` `/quarterly` `/retro` |
+| `decisions/_template.md` | `docs/decisions/<id>-<slug>.md` | `/adr` `/validate` |
+| `skill-conventions.md` | 書き出さない | 器の Skill が最初に読む共通規約 |
 | `frontmatter.schema.json` | 書き出さない | 器の検査と hook が参照する |
 
 ## 変数と `/onboard` の質問の対応
@@ -53,3 +57,4 @@
 | `risk` `risk_signal` `risk_mitigation` `risk_status` | 事業の一覧から CC がリスクの候補を挙げ、利用者が選んだもの。選ばなければ「まだ無い」の 1 行 |
 | `state_running` `state_waiting` `state_blocked` | 「まだ記録が無い」 |
 | `proposal_id` `proposal_title` `business` `target` `today` `background` `change_summary` `diff` `sources` | 提案を書くときに CC が埋める（`/onboard` では使わない） |
+| 日報・レビュー・決定記録の変数（`date` `as_of` `week_id` など） | 各 Skill が書き出すときに埋める（`/onboard` では使わない） |
