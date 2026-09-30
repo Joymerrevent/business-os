@@ -1,0 +1,2 @@
+# /onboard が company/.gitattributes として書き出す雛形。改行は LF に固定する
+* text=auto eol=lf
