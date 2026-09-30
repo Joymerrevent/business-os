@@ -1,0 +1,42 @@
+# Dependabot（version updates）。npm 依存と GitHub Actions の参照を定期的に PR にする。
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    # 依存更新の PR は develop に向ける
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # サプライチェーン対策の熟成期間。pnpm-workspace.yaml の minimumReleaseAge（7 日）とそろえる。
+    # 片方だけ緩めると、Dependabot の PR のロックファイル更新を pnpm が拒否して噛み合わなくなる
+    cooldown:
+      default-days: 7
+    # 更新はまとめて 1 つの PR にする。major は破壊的変更を伴うため個別の PR で受ける
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "ci"
