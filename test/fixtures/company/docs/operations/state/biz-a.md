@@ -2,9 +2,9 @@
 type: state
 business: biz-a
 status: active
-created: 2026-10-01
-updated: 2026-10-01
-as_of: 2026-10-01
+created: 2026-09-28
+updated: 2026-09-28
+as_of: 2026-09-28
 verified: n/a
 ---
 

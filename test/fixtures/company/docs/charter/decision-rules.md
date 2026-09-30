@@ -2,10 +2,10 @@
 type: charter
 business: portfolio
 status: active
-created: 2026-10-01
-updated: 2026-10-01
+created: 2026-09-28
+updated: 2026-09-28
 as_of: n/a
-verified: 2026-10-01
+verified: 2026-09-28
 ---
 
 # 判断ルール

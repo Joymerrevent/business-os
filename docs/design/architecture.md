@@ -83,6 +83,7 @@ business-os/
 │   └── lib/                     # フロントマター検証、日付検証、シェル引数解析
 ├── scripts/
 │   ├── check.ts                 # 重い点検（company 向け）と check:*（器向け）の共有実装
+│   ├── lib/                     # 点検の中身（company-checks.ts など）
 │   ├── sync-plugin-version.ts   # changesets の version を plugin.json へ同期
 │   └── pre-commit.ts            # 開発用。git の pre-commit（lint-staged と gitleaks）
 ├── templates/                   # company の雛形。/onboard が展開する
@@ -90,8 +91,10 @@ business-os/
 │   ├── settings.json.tmpl
 │   ├── frontmatter.schema.json
 │   ├── charter/                 # company.md / decision-rules.md / repositories.md / businesses/_template.md
-│   ├── operations/              # obligations.md / risks.md / state/_template.md
-│   └── proposals/_template.md
+│   ├── operations/              # obligations.md / risks.md / state/_template.md / daily/_template.md / reviews/*.md
+│   ├── decisions/_template.md   # company の意思決定記録
+│   ├── proposals/_template.md
+│   └── skill-conventions.md     # 器の Skill の共通規約（書き出さない）
 ├── adapters/
 │   └── obsidian/                # 第 10 節
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）
@@ -325,7 +328,7 @@ hook は入力の `cwd` から上位へ辿り、`.business-os.json` のあるデ
 | 状態 | 条件 | hook の振る舞い |
 |---|---|---|
 | 対象外 | `.business-os.json` が無い | 何も判定せず無言で通す（exit 0）。ログも書かない |
-| 初期化中 | `state: initializing` | 保護対象への書き込みは `permissionDecision: "ask"` で人間に確認。フロントマター検査と Bash 解析は有効 |
+| 初期化中 | `state: initializing` | 保護対象の新規作成は通す。既存ファイルの上書きは `permissionDecision: "ask"` で人間に確認（`active` への切り替えもこれで 1 回確認される）。フロントマター検査と Bash 解析は有効 |
 | 運用中 | `state: active` | 下の表のとおり（提案必須、deny、厳格モード） |
 
 `/onboard` は最初の行動として `.business-os.json` を `state: initializing` で作り、完了時に `active` にする。

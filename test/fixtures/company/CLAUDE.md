@@ -32,4 +32,4 @@ Claude Code（CC）は business-os Plugin の Skill を通じて動く。
 
 `docs/charter/decision-rules.md` を読む。書いていなければ、提案を書いて人間に聞く。
 
-<!-- business-os 0.1.0 / onboarded 2026-10-01 -->
+<!-- business-os 0.1.0 / onboarded 2026-09-28 -->

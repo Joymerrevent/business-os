@@ -1,5 +1,11 @@
 // PreToolUse hook の fail-closed テスト。合成した入力で deny（exit 2）/ ask / allow を確かめる。
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -66,11 +72,26 @@ describe("初期化中（state: initializing）", () => {
     setState(root, "initializing");
   });
 
-  it("保護対象への書き込みは ask", () => {
-    expect(write("docs/charter/company.md", validDoc("charter"))).toBe("ask");
+  it("保護対象の新規作成は確認なしで通す", () => {
+    expect(write("docs/charter/businesses/biz-c.md", validDoc("charter"))).toBe(
+      "allow",
+    );
+    rmSync(join(root, "CLAUDE.md"));
+    expect(write("CLAUDE.md", "# 地図\n")).toBe("allow");
+  });
+
+  it("既存の保護対象の上書きは ask（active への切り替えを含む）", () => {
     expect(write("CLAUDE.md", "# 地図\n")).toBe("ask");
     expect(write(".claude/settings.json", "{}")).toBe("ask");
     expect(write(".business-os.json", "{}")).toBe("ask");
+    const content = readFileSync(join(root, "docs/charter/company.md"), "utf8");
+    expect(write("docs/charter/company.md", content)).toBe("ask");
+  });
+
+  it("新規作成でもフロントマターが規約に合わなければ拒否", () => {
+    expect(write("docs/charter/businesses/biz-c.md", "# 本文だけ\n")).toBe(
+      "deny",
+    );
   });
 
   it("フロントマター検査は有効", () => {
@@ -174,6 +195,33 @@ describe("運用中のフロントマター検査", () => {
     ).toBe("deny");
   });
 
+  it("target が 2 ファイルの提案は拒否（1 件の提案につき 1 ファイル）", () => {
+    const proposal = (target: string) =>
+      [
+        "---",
+        "id: 20260930-01",
+        "type: proposal",
+        "business: portfolio",
+        "status: proposed",
+        `target: ${target}`,
+        "created: 2026-09-30",
+        "updated: 2026-09-30",
+        "as_of: n/a",
+        "verified: n/a",
+        "---",
+        "",
+      ].join("\n");
+    expect(
+      write(
+        "docs/proposals/20260930-01-x.md",
+        proposal("docs/charter/a.md, docs/charter/b.md"),
+      ),
+    ).toBe("deny");
+    expect(
+      write("docs/proposals/20260930-01-x.md", proposal("docs/charter/a.md")),
+    ).toBe("allow");
+  });
+
   it("docs の外の Markdown は検査しない", () => {
     expect(write("notes.md", "# メモ\n")).toBe("allow");
   });
@@ -184,7 +232,7 @@ describe("運用中のフロントマター検査", () => {
     expect(
       write(
         path,
-        content.replace("created: 2026-10-01", "created: 2026-10-02"),
+        content.replace("created: 2026-09-28", "created: 2026-10-02"),
       ),
     ).toBe("deny");
   });
@@ -195,14 +243,14 @@ describe("運用中のフロントマター検査", () => {
       edit(path, "まだ記録が無い\n\n## 待ち", "A を進めている\n\n## 待ち"),
     ).toBe("allow");
     expect(edit(path, "verified: n/a\n", "")).toBe("deny");
-    expect(edit(path, "created: 2026-10-01", "created: 2026-09-01")).toBe(
+    expect(edit(path, "created: 2026-09-28", "created: 2026-09-01")).toBe(
       "deny",
     );
   });
 
   it("Edit の組み立てに失敗し、old_string がフロントマターに触れていれば ask", () => {
     const path = "docs/operations/state/biz-a.md";
-    expect(edit(path, "status: paused\ncreated: 2026-10-01", "x")).toBe("ask");
+    expect(edit(path, "status: paused\ncreated: 2026-09-28", "x")).toBe("ask");
   });
 
   it("Edit の組み立てに失敗しても、本文だけなら通す（Edit 自体が失敗する）", () => {
@@ -359,7 +407,12 @@ describe("厳格モード", () => {
   it("初期化中は厳格モードにならない", () => {
     setState(root, "initializing");
     writeFileSync(join(root, ".claude/settings.json"), "{}");
-    expect(write("docs/charter/company.md", validDoc("charter"))).toBe("ask");
+    // 厳格モードなら deny になるところ、初期化中は通常どおり（新規は allow、上書きは ask）
+    expect(write("docs/charter/businesses/biz-c.md", validDoc("charter"))).toBe(
+      "allow",
+    );
+    const content = readFileSync(join(root, "docs/charter/company.md"), "utf8");
+    expect(write("docs/charter/company.md", content)).toBe("ask");
   });
 });
 
