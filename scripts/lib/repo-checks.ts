@@ -11,6 +11,7 @@ import {
 } from "../../hooks/lib/plugin.ts";
 import { validate } from "../../hooks/lib/schema.ts";
 import type { CheckResult, Level } from "./company-checks.ts";
+import { manifestVersion, packageVersion } from "./version.ts";
 
 const result = (
   category: string,
@@ -756,3 +757,39 @@ export const checkAdapters = (root: string = pluginRoot()): CheckResult[] => {
 };
 
 REPO_CHECKS["adapters"] = checkAdapters;
+
+// ---- 版 ----
+
+export const checkVersion = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "版";
+  try {
+    const pkg = packageVersion(root);
+    const manifest = manifestVersion(root);
+    return [
+      pkg === manifest
+        ? result(
+            category,
+            "package.json と plugin.json の version",
+            "pass",
+            pkg,
+          )
+        : result(
+            category,
+            "package.json と plugin.json の version",
+            "fail",
+            `package.json ${pkg}、plugin.json ${manifest}。node scripts/sync-plugin-version.ts で写してください`,
+          ),
+    ];
+  } catch (error) {
+    return [
+      result(
+        category,
+        "version",
+        "fail",
+        error instanceof Error ? error.message : String(error),
+      ),
+    ];
+  }
+};
+
+REPO_CHECKS["version"] = checkVersion;
