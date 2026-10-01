@@ -15,7 +15,7 @@ supersedes: n/a
 
 ## 背景
 
-CC のメモも、器の文書も、時間が経つと記憶が腐る。腐り方は 3 種類。
+CC のメモも、business-os の文書も、時間が経つと記憶が腐る。腐り方は 3 種類。
 
 - **矛盾**：3 月に「価格は 5,000 円」、6 月に「8,000 円に変更」と書き、両方残る
 - **相対日付**：「昨日決めた」「先週から」が、1 ヶ月後に読むと意味が変わる
@@ -25,7 +25,7 @@ CC 側には対策が入った。auto memory は既定で ON、Auto Dream がセ
 相対日付を絶対日付に変換し、矛盾した事実や古いメモリを削除する。gstack もセッション横断の
 決定メモリと dream ステージキャッシュを追加した。「記憶は統合しないと腐る」は業界の共通認識。
 
-CC ネイティブ層は自動で統合される。器が面倒を見るべきなのは、**人間が読む文書側**。
+CC ネイティブ層は自動で統合される。business-os が面倒を見るべきなのは、**人間が読む文書側**。
 
 ## 決定
 
@@ -67,7 +67,7 @@ CC が意思決定に関わる情報を読むとき、最終更新が期限よ�
 
 ### ルール 5：CC の Auto Dream を ON にする
 
-CC 自身のメモは CC に統合させる。器側で二重管理しない。
+CC 自身のメモは CC に統合させる。business-os 側で二重管理しない。
 
 ### 統一フロントマター
 
@@ -75,13 +75,13 @@ CC 自身のメモは CC に統合させる。器側で二重管理しない。
 
 ```yaml
 type: charter | proposal | decision | daily | review | state | ledger | knowledge | inbox
-business: portfolio | <事業ID> | n/a   # n/a は器の文書のみ
+business: portfolio | <事業ID> | n/a   # n/a は business-os の文書のみ
 status: <文書種別ごとに定義>
 ```
 
-定義は器の `templates/frontmatter.schema.json` に置き、`/check` が検証する。
-台帳（期限・義務、リスク）は `type: ledger`。器の ADR も同じスキーマで `type: decision` とする。
-雛形の置き場（器の `templates/`、company の `docs/_templates/`）は検査の対象外。
+定義は business-os の `templates/frontmatter.schema.json` に置き、`/check` が検証する。
+台帳（期限・義務、リスク）は `type: ledger`。business-os の ADR も同じスキーマで `type: decision` とする。
+雛形の置き場（business-os の `templates/`、company の `docs/_templates/`）は検査の対象外。
 雛形は `{{ }}` などの置き換え記号を含み、書き出された後の文書が検査を受けるため。
 
 ## 根拠

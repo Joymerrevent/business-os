@@ -10,7 +10,7 @@ verified: n/a
 
 # ADR（設計判断記録）の運用ルール
 
-このフォルダには business-os（器）の設計判断を記録する。
+このフォルダには business-os の設計判断を記録する。
 「なぜそう決めたか」を、決めた当時の文脈ごと残すのが目的。
 
 ## ID とファイル名
@@ -35,7 +35,7 @@ accepted → superseded（新しい ADR に置き換えられた）
 ```
 
 **個人や AI が単独で `accepted` にしない。** 起票は誰でも（CC を含む）できるが、
-`accepted` への変更はメンテナ（この器では JJ）が内容を確認して行う。
+`accepted` への変更はメンテナ（business-os では JJ）が内容を確認して行う。
 CC が「accepted に変えてよいか」と聞くのは構わない。勝手に変えるのは禁止。
 
 ## フロントマター
@@ -80,7 +80,7 @@ supersedes: n/a       # 置き換える ADR の id（あれば）
 | 20260929-01 | シェル非依存 | proposed |
 | 20260929-02 | CLAUDE.md は地図 | proposed |
 | 20260929-03 | 憲章と育つ文書の分離 | proposed |
-| 20260929-04 | 器は事業非依存、/onboard で注入 | proposed |
+| 20260929-04 | business-os は事業非依存、/onboard で注入 | proposed |
 | 20260929-05 | ステージングと承認、四重防衛 | proposed |
 | 20260929-06 | 起動時セルフチェック | proposed |
 | 20260929-07 | 経営基盤 Skill は最初から、業務 Skill は育てる | proposed |

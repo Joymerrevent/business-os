@@ -10,13 +10,13 @@ verified: n/a
 
 # business-os 構造仕様
 
-この文書は器（business-os）の構造を定義する。設計判断の「なぜ」は `docs/adr/` にあり、
+この文書は business-os の構造を定義する。設計判断の「なぜ」は `docs/adr/` にあり、
 ここでは「何をどう配置するか」を書く。実装者（CC と人間）が参照する正典。
 
 ## 1. 目的と範囲
 
 business-os は、1 人で複数事業を運営する人が Claude Code（CC）を「経営の手足」として使うための
-**器**である。器は事業に依存しない Plugin として配布し、利用者は自分の事業情報を `/onboard` で注入する。
+**Plugin** である。事業に依存しない形で配布し、利用者は自分の事業情報を `/onboard` で注入する。
 
 範囲に含むもの：Skill 10 個、hook、テンプレート、検査、Obsidian アダプタ、設計文書。
 範囲に含まないもの：事業固有の Skill、事業データ、実装リポの中身。
@@ -26,16 +26,16 @@ business-os は、1 人で複数事業を運営する人が Claude Code（CC）�
 ### 2.1 二つのリポジトリ
 
 ```text
-business-os/   器。公開 Plugin。事業情報ゼロ。MIT。
+business-os/   公開 Plugin。事業情報ゼロ。MIT。
 company/       事業データ。非公開。利用者ごとに 1 つ。/onboard が生成する。
 ```
 
 <!-- 根拠: 20260929-04, 20260929-10 -->
 
-- 日常で CC を起動するのは `company/`。器はユーザースコープの Plugin として読み込まれる
-- `business-os/` で CC を起動するのは、器そのものを改良するときだけ
+- 日常で CC を起動するのは `company/`。business-os はユーザースコープの Plugin として読み込まれる
+- `business-os/` で CC を起動するのは、business-os そのものを改良するときだけ
 - CC の auto memory はプロジェクト単位で `~/.claude/` 配下に保存されるため、`company/` に対応する記憶は
-  `company/` にも器にも入らない
+  `company/` にも business-os にも入らない
 
 ### 2.2 実行環境
 
@@ -55,8 +55,8 @@ company/       事業データ。非公開。利用者ごとに 1 つ。/onboard
 business-os/
 ├── .claude-plugin/
 │   ├── plugin.json              # Plugin メタデータ。name / version / description(alpha)
-│   └── marketplace.json         # 器自身をマーケットプレイスとして公開する定義（/plugin marketplace add 用）
-├── .claude/                     # 器を CC で開発するときの設定（配布しない）
+│   └── marketplace.json         # business-os 自身をマーケットプレイスとして公開する定義（/plugin marketplace add 用）
+├── .claude/                     # business-os を CC で開発するときの設定（配布しない）
 │   ├── settings.json            # 秘密・固有名詞の混入を防ぐ deny / sandbox
 │   ├── settings.local.json      # 個人設定（gitignore）
 │   └── skills/
@@ -82,7 +82,7 @@ business-os/
 │   ├── pre-tool-use.ts          # 書き込みガード、Bash 意味解析
 │   └── lib/                     # フロントマター検証、日付検証、シェル引数解析
 ├── scripts/
-│   ├── check.ts                 # 重い点検（company 向け）と check:*（器向け）の共有実装
+│   ├── check.ts                 # 重い点検（company 向け）と check:*（business-os 向け）の共有実装
 │   ├── lib/                     # 点検の中身（company-checks.ts など）
 │   ├── sync-plugin-version.ts   # changesets の version を plugin.json へ同期
 │   └── pre-commit.ts            # 開発用。git の pre-commit（lint-staged と gitleaks）
@@ -94,7 +94,7 @@ business-os/
 │   ├── operations/              # obligations.md / risks.md / state/_template.md / daily/_template.md / reviews/*.md
 │   ├── decisions/_template.md   # company の意思決定記録
 │   ├── proposals/_template.md
-│   └── skill-conventions.md     # 器の Skill の共通規約（書き出さない）
+│   └── skill-conventions.md     # business-os の Skill の共通規約（書き出さない）
 ├── adapters/
 │   └── obsidian/                # 第 10 節
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）
@@ -115,7 +115,7 @@ business-os/
 
 ### 3.1 配布物と開発物
 
-| 配布物（Plugin に含まれる） | 開発物（器の開発にだけ使う） |
+| 配布物（Plugin に含まれる） | 開発物（business-os の開発にだけ使う） |
 |---|---|
 | `.claude-plugin/` `skills/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `test/` `docs/` 設定ファイル群 |
 
@@ -153,9 +153,9 @@ company/
 ├── CLAUDE.md                    # 地図（第 5 節）。Vault 外
 ├── .claude/
 │   ├── settings.json            # sandbox / permissions（templates/settings.json.tmpl から生成）
-│   └── skills/                  # 業務 Skill（事業固有。器の外で育てる）
-├── .business-os.json            # 器の状態（initializing / active）、バージョン記録、onboard 実施日
-├── .leak-dict.json              # 固有名詞の辞書（器の check:leak が読む）。gitignore
+│   └── skills/                  # 業務 Skill（事業固有。business-os の外で育てる）
+├── .business-os.json            # business-os の状態（initializing / active）、バージョン記録、onboard 実施日
+├── .leak-dict.json              # 固有名詞の辞書（business-os の check:leak が読む）。gitignore
 ├── .gitignore  .gitattributes
 ├── docs/                        # Obsidian Vault root。人間が読むものは全部ここ
 │   ├── .obsidian/               # 任意アダプタ（使う人だけ）
@@ -218,7 +218,7 @@ CC は必要時に該当パスを `--add-dir` で読み込む。
 
 ### 5.2 `business-os/CLAUDE.md`（開発ガイド）
 
-器を改良する CC と、貢献する人向け。配布物と開発物の区別、設計原則の所在（ADR）、検査の正典、
+business-os を改良する CC と、貢献する人向け。配布物と開発物の区別、設計原則の所在（ADR）、検査の正典、
 ローカル検証、リリース手順、コミット規約。
 
 <!-- 根拠: 20260929-02 -->
@@ -229,15 +229,15 @@ CC は必要時に該当パスを `--add-dir` で読み込む。
 
 | Skill | 起動 | 読む | 書く（直接） | 提案（承認要） | 人に聞く |
 |---|---|---|---|---|---|
-| `/onboard` | 初回、事業追加、`--migrate` | 器の `templates/` | `CLAUDE.md`、`charter/*`、`operations/obligations.md`、`.claude/settings.json`、`.business-os.json`、（選択時）`docs/.obsidian/` `dashboards/` `_templates/` | — | 会社概要、事業一覧、承認範囲、期限・義務、実装リポの場所、Obsidian 使用可否、KPI 候補の選択 |
+| `/onboard` | 初回、事業追加、`--migrate` | business-os の `templates/` | `CLAUDE.md`、`charter/*`、`operations/obligations.md`、`.claude/settings.json`、`.business-os.json`、（選択時）`docs/.obsidian/` `dashboards/` `_templates/` | — | 会社概要、事業一覧、承認範囲、期限・義務、実装リポの場所、Obsidian 使用可否、KPI 候補の選択 |
 | `/approve` | 人間が呼ぶ | `proposals/`（`status: proposed`） | 提案の status、承認内容を `charter/` へ反映（permissions の ask が最終確認） | — | 承認 / 却下 / 修正 |
-| `/check` | 週次 | 器の検査定義、`company` 全体 | `operations/reviews/check-YYYYMMDD.md` | 設定の修正 | 異常時のみ |
+| `/check` | 週次 | business-os の検査定義、`company` 全体 | `operations/reviews/check-YYYYMMDD.md` | 設定の修正 | 異常時のみ |
 | `/adr` | 判断時 | `charter/decision-rules.md`、関連 ADR | `decisions/YYYYMMDD-nn-*.md`（`proposed`） | — | 決定内容、accepted への変更 |
 | `/morning` | 毎朝 | `charter/company.md`、`operations/state/*`、`obligations.md`、`proposals/`、前日の daily | `operations/daily/YYYY-MM-DD.md`（既存なら追記） | — | 優先順位 |
 | `/weekly-review` | 週末 | 今週の daily、`state/*`、`decisions/` | `operations/reviews/weekly-*.md`、`state/*` | 来週の優先順位変更 | 時間配分の実績、来週の重点 |
 | `/close` | 月初 | 今月の weekly、`data/`、`obligations.md` | `operations/reviews/monthly-*.md`（`as_of` 必須） | KPI 定義の見直し | 数値の入力・確認 |
 | `/quarterly` | 四半期初 | 3 ヶ月分の monthly、`charter/businesses/*`、`risks.md` | `operations/reviews/quarterly-*.md`（`as_of` 必須） | 各事業の継続 / 縮小 / 撤退、`charter/` の更新、`verified` の更新 | 各事業の判断 |
-| `/retro` | 週次 or 月次 | セッションログ、daily、reviews、Skill 実行回数 | `operations/reviews/retro-*.md` | 器への改善（Skill 化・削除・CLAUDE.md 追記）、運用ルール変更 | 提案の優先度 |
+| `/retro` | 週次 or 月次 | セッションログ、daily、reviews、Skill 実行回数 | `operations/reviews/retro-*.md` | business-os への改善（Skill 化・削除・CLAUDE.md 追記）、運用ルール変更 | 提案の優先度 |
 | `/validate` | 新施策前 | `charter/company.md`、`decision-rules.md`、`risks.md` | `decisions/` に検証結果（ADR 形式） | 施策の開始 / 見送り | 仮説、検証方法、撤退条件 |
 
 <!-- 根拠: 20260929-07 -->
@@ -254,7 +254,7 @@ CC は必要時に該当パスを `--add-dir` で読み込む。
 
 ### 6.3 業務 Skill
 
-事業固有の Skill は `company/.claude/skills/` に置く。器の更新で消えない。
+事業固有の Skill は `company/.claude/skills/` に置く。business-os の更新で消えない。
 `/retro` が「同じ依頼が 2 回あった」を検出して Skill 化を提案し、月次で使われていないものを剪定提案する。
 
 ### 6.4 周期 Skill の起動
@@ -269,7 +269,7 @@ CC は必要時に該当パスを `--add-dir` で読み込む。
 |---|---|---|
 | 1. sandbox | OS | `company/.claude/settings.json` |
 | 2. permissions | CC プロセス内 | 同上 |
-| 3. PreToolUse hook | CC プロセス内（器） | `business-os/hooks/pre-tool-use.ts` |
+| 3. PreToolUse hook | CC プロセス内（business-os） | `business-os/hooks/pre-tool-use.ts` |
 | 4. 承認パイプライン | 運用 | `company/docs/proposals/` と `/approve` |
 
 native Windows では sandbox が動かない（Claude Code の sandbox は macOS / Linux / WSL2 のみ対応）。
@@ -414,9 +414,9 @@ sandbox が使えない環境（native Windows 等）は厳格モードにせず
 範囲を指定しないと利用者の `~/.claude` 配下まで監査し、その中身がレポート経由で company に入るため。
 レポートには要約（件数と対象ファイル）だけを書く。所要時間は数分かかる。
 
-### 8.3 器のバージョン記録
+### 8.3 business-os のバージョン記録
 
-`/onboard` は `company/.business-os.json` に器の状態・バージョン・実施日を書く。
+`/onboard` は `company/.business-os.json` に business-os の状態・バージョン・実施日を書く。
 
 ```json
 { "state": "active", "pluginVersion": "0.1.0", "onboardedAt": "2026-10-01", "migratedAt": "n/a" }
@@ -428,12 +428,12 @@ sandbox が使えない環境（native Windows 等）は厳格モードにせず
 
 ## 9. フロントマター規約
 
-全 Markdown 文書（`company/docs/**`、器の `docs/**`）に以下を持つ。定義は `templates/frontmatter.schema.json`。
+全 Markdown 文書（`company/docs/**`、business-os の `docs/**`）に以下を持つ。定義は `templates/frontmatter.schema.json`。
 
 ```yaml
 ---
 type: charter | proposal | decision | daily | review | state | ledger | knowledge | inbox
-business: portfolio | <事業ID> | n/a   # n/a は器の文書のみ
+business: portfolio | <事業ID> | n/a   # n/a は business-os の文書のみ
 status: <type ごとに定義>
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -456,10 +456,10 @@ verified: YYYY-MM-DD | n/a  # charter は必須
 
 - 4 日付欄は省略しない。該当なしは `n/a`
 - `ledger` は台帳（`operations/obligations.md`、`operations/risks.md`）
-- 器の ADR（`docs/adr/`）は `type: decision`。器の文書は `business: n/a` を使える
-- 雛形の置き場（器の `templates/`、company の `docs/_templates/`）は検査の対象外（置き換え記号を含むため）。
-  hook のフロントマター検査、`/check`、器の `check:docs` のいずれも対象にしない
-- ID を持つ文書（decisions / proposals / 器の adr）は `id: YYYYMMDD-nn` を追加し、ファイル名と一致させる
+- business-os の ADR（`docs/adr/`）は `type: decision`。business-os の文書は `business: n/a` を使える
+- 雛形の置き場（business-os の `templates/`、company の `docs/_templates/`）は検査の対象外（置き換え記号を含むため）。
+  hook のフロントマター検査、`/check`、business-os の `check:docs` のいずれも対象にしない
+- ID を持つ文書（decisions / proposals / business-os の adr）は `id: YYYYMMDD-nn` を追加し、ファイル名と一致させる
 - リンクは標準 Markdown（`[text](relative/path.md)`）。`[[wikilink]]` は使わない
 
 <!-- 根拠: 20260929-09 -->
@@ -468,7 +468,7 @@ verified: YYYY-MM-DD | n/a  # charter は必須
 
 ### 10.1 位置づけ
 
-推奨だが任意。器の機能に関与しない。無くても、あっても、Skill と hook の挙動は同じ。
+推奨だが任意。business-os の機能に関与しない。無くても、あっても、Skill と hook の挙動は同じ。
 
 ### 10.2 `adapters/obsidian/` の構成
 
@@ -547,11 +547,11 @@ CI：GitHub Actions の ubuntu-latest / windows-latest / macos-latest（Node 24.
 | 3 | sandbox のキー名（`filesystem.denyWrite` 等）が現行仕様と一致するか | 第 7.2 節 | 合格（macOS）。`denyWrite` への書き込みと `denyRead` の読み取りが拒否された。native Windows は sandbox 非対応（公式）。逃げ道を塞ぐ `allowUnsandboxedCommands: false` を追加 |
 | 4 | permissions の `ask` が auto mode でも人間に確認を出すか | 第 7.5 節 | 合格。permissions の ask と hook の ask の両方で確認が出た。`Write(path)` 規則は判定に使われず `Edit(path)` が全書き込みツールに効く |
 | 5 | `claude plugin validate` が通るか | 第 3.3 節 | 合格（終了コード 0。`author` 欠落の warn のみ） |
-| 6 | `claude --plugin-dir .` でローカルの器を読み込めるか | CLAUDE.md（開発） | 合格 |
+| 6 | `claude --plugin-dir .` でローカルの business-os を読み込めるか | CLAUDE.md（開発） | 合格 |
 | 7 | `obsidian://open?path=` で未登録の Vault を開けるか | 第 10.4 節 | 不合格。未登録のフォルダは開けない（Vault 登録なしの初期状態でも同じ）。インストール直後は一度起動するまで URL 自体が登録されない。第 10.4 節を「Open folder as vault」の案内に変更 |
 | 8 | Windows ネイティブで `brew` 相当の `winget` インストールが承認プロンプト以外の操作を要求しないか | 第 10.4 節 | 部分確認（実機は保留）。CI（管理者権限）で、フラグなしは `msstore` ソースの規約同意で中止、`--accept-source-agreements --accept-package-agreements` 付きは確認なしで成功（ユーザー領域にインストール）。UAC の挙動は未確認 |
 | 9 | Node の TS 直接実行で `import` の拡張子（`.ts`）が必須か | 第 3.2 節 | 必須。拡張子なしは `ERR_MODULE_NOT_FOUND`。`enum` は Node と tsc の両方が拒否 |
-| 10 | Skill の呼び出し名と名前空間の挙動 | 第 6 節、利用者文書 | 条件付き合格。衝突がなければ短い名前で呼べる。利用者の Skill と同名なら利用者側が優先され、`/business-os:<name>` で器の Skill を呼べる |
+| 10 | Skill の呼び出し名と名前空間の挙動 | 第 6 節、利用者文書 | 条件付き合格。衝突がなければ短い名前で呼べる。利用者の Skill と同名なら利用者側が優先され、`/business-os:<name>` で business-os の Skill を呼べる |
 | 11 | `context: fork` 内からの質問と ask が人に届くか | 第 6.2 節 | ask は届く。AskUserQuestion は fork 内で使えない（バックグラウンド・フォアグラウンドとも）。第 6.2 節を変更 |
 | 12 | `/doctor prompt-audit` を非対話で実行できるか | 第 8.2 節 | 合格（2.1.283 以降）。`claude -p` で終了コード 0、ファイルは変更しない。範囲未指定だと `~/.claude` まで監査するため範囲を指定する。所要約 6 分 |
 
@@ -559,12 +559,12 @@ CI：GitHub Actions の ubuntu-latest / windows-latest / macos-latest（Node 24.
 
 | 用語 | 意味 |
 |---|---|
-| 器 | business-os。事業非依存の Plugin |
+| business-os | 事業非依存の Plugin。利用者ごとの company と対になる |
 | company | 利用者ごとの事業データリポ |
 | 憲章（charter） | 会社が何者で、何をどう決めるかを人間が定めた文書群 |
 | 提案（proposal） | AI が憲章の変更や外部行動を求める下書き。承認待ち |
-| ADR | 設計判断記録。器では `docs/adr/`、company では `docs/decisions/` |
+| ADR | 設計判断記録。business-os では `docs/adr/`、company では `docs/decisions/` |
 | 軽い点検 / 重い点検 | 毎セッションのセルフチェック / 週次の `/check` |
 | 厳格モード | 運用中の company で防衛設定の欠落を検出したとき、hook が保護対象への書き込みを全拒否する状態 |
-| 経営基盤 Skill / 業務 Skill | 事業非依存で器に含まれる 10 個 / 事業固有で company 側に育てるもの |
+| 経営基盤 Skill / 業務 Skill | 事業非依存で business-os に含まれる 10 個 / 事業固有で company 側に育てるもの |
 | 2 回ルール | 同じ依頼が 2 回目になったら Skill 化を検討する運用 |

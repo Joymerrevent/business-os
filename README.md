@@ -2,8 +2,8 @@
 
 > **Status: Alpha (0.x)** — 仕様は予告なく変わります。本番の経営判断に使う場合は自己責任でお願いします。
 
-1 人で複数の事業を運営する人が、Claude Code（CC）を「経営の手足」として使うための器です。
-CC の Plugin として配布します。器そのものには事業の情報を一切含めず、あなたの事業情報は
+1 人で複数の事業を運営する人が、Claude Code（CC）を「経営の手足」として使うための Plugin です。
+CC の Plugin として配布します。business-os そのものには事業の情報を一切含めず、あなたの事業情報は
 `/onboard` の質問に答える形で、あなた自身の非公開リポジトリに書き込まれます。
 
 - 毎朝、今日の優先事項・承認待ち・期限を 1 枚にまとめる
@@ -15,7 +15,7 @@ CC の Plugin として配布します。器そのものには事業の情報を
 
 必要なもの：Claude Code（Plugin 対応版）、Node.js 24 系、Git。Windows では WSL の中で動かすことを勧めます。
 
-1. CC を起動し、器を入れる
+1. CC を起動し、business-os を入れる
 
    ```text
    /plugin marketplace add Joymerrevent/business-os

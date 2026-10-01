@@ -1,7 +1,7 @@
 # Obsidian アダプタ
 
 company の文書（`company/docs/`）を Obsidian で読むための設定です。**任意**で、使っても使わなくても、
-器の Skill と安全装置の動きは同じです。`/onboard` で「使う」と答えたときだけ、ここのファイルが company にコピーされます。
+business-os の Skill と安全装置の動きは同じです。`/onboard` で「使う」と答えたときだけ、ここのファイルが company にコピーされます。
 「使わない」と答えた場合は、Obsidian 関連のファイルは一切作られません。
 
 ## 入るもの
@@ -26,7 +26,7 @@ company の文書（`company/docs/`）を Obsidian で読むための設定で�
 Obsidian で開いても company の git に差分が出ないようにするためです。
 
 `docs/_templates/` の雛形には Obsidian の置き換え記号（`{{date:YYYY-MM-DD}}` など）が入るため、
-器の検査（書き込みのガードと `/check`）の対象から外しています。
+business-os の検査（書き込みのガードと `/check`）の対象から外しています。
 
 ## 導入
 
@@ -63,7 +63,7 @@ Windows で Obsidian を使う場合は、Claude Code も WSL ではなく Windo
 WSL の中のファイルを Windows の Obsidian で開く構成は、動作が不安定になるため案内していません。
 
 Windows 上で直接動かす構成では、Claude Code の sandbox（OS による見張り）が動きません。
-憲章の保護は、器の hook と権限設定だけに頼ることになります。Obsidian を使わないなら、WSL で動かす構成を勧めます。
+憲章の保護は、business-os の hook と権限設定だけに頼ることになります。Obsidian を使わないなら、WSL で動かす構成を勧めます。
 
 ## やめるとき
 

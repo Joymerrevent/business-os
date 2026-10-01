@@ -35,7 +35,7 @@ supersedes: n/a
 | `operations/` | 台帳（期限・義務、リスク、事業別現況）、日報、レビュー | AI 主導 | 可 |
 | `knowledge/` | 調査、SOP、育つ知識 | AI 主導 | 可 |
 | `inbox/` | 人間の入口。未整理メモ、クリップ、添付 | 人間 | 整理を頼まれたときのみ |
-| `dashboards/` | Obsidian Bases の雛形（任意アダプタ） | 器が配置 | 可 |
+| `dashboards/` | Obsidian Bases の雛形（任意アダプタ） | business-os が配置 | 可 |
 | `archive/` | 完了・凍結したもの | — | 移動のみ |
 
 読み方の違い：
@@ -44,14 +44,14 @@ supersedes: n/a
 - `operations/` `knowledge/` は必要なときだけ検索して読む（多いから全部は読めない）
 
 CC 自身のメモ（auto memory）はこの分類の外。CC が自分のために `~/.claude/` 配下に持つもので、
-人間向け文書ではない。器は関与しない。
+人間向け文書ではない。business-os は関与しない。
 
 ## 根拠
 
 - 先行事例は一貫して「核心コンテキスト（稀に変わる）」と「参照文書・SOP（育つ）」を分けている。
   Workflowsio の Company OS starter kit、AgriciDaniel/claude-obsidian の `_raw/` と `wiki/` 分離、
   Karpathy の LLM Wiki パターン（`sources/` は不変、`wiki/` は AI 生成）
-- 2026 年 5 月版の器の `strategy/` と `wiki/` がこれに対応していた。名前を中身に合わせて改めた
+- 2026 年 5 月版の business-os の `strategy/` と `wiki/` がこれに対応していた。名前を中身に合わせて改めた
 - `core` という名前は「何の核か」が伝わらないため、**憲章（charter）**に改名した。
   「会社が何者で、何をどう決めるかを人間が定めた文書」という意味がそのまま
 - `ops` → `operations`、`meta` → `dashboards` も同じ理由（中身を知らない人が見て分かる名前）

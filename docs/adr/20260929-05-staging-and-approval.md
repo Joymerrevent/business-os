@@ -27,7 +27,7 @@ sandbox が整い、auto mode（多くの権限プロンプトを自動処理）
 ### 承認が要る範囲（2 種類だけ）
 
 1. **外部に影響が出る行動**：送信、投稿、支払い、公開、他人に見える変更
-2. **憲章（`docs/charter/`）と地図（`CLAUDE.md`）、防衛設定（`.claude/settings.json`）、器の状態（`.business-os.json`）の変更**
+2. **憲章（`docs/charter/`）と地図（`CLAUDE.md`）、防衛設定（`.claude/settings.json`）、business-os の状態（`.business-os.json`）の変更**
 
 それ以外（`operations/` `knowledge/` `proposals/` `decisions/`、CC 自身のメモ）は AI が直接書いてよい。
 
@@ -115,7 +115,7 @@ verified: n/a
   起動時セルフチェック（20260929-06）が欠落を検出する
 - 逃げ道を塞いだ sandbox の中では、保護対象を更新する `git pull` / `checkout` / `merge` が失敗する。
   これらは CC を介さず人間が実行する
-- 他のリポジトリで CC を使っても器の hook は干渉しない（`.business-os.json` が無ければ対象外）
+- 他のリポジトリで CC を使っても business-os の hook は干渉しない（`.business-os.json` が無ければ対象外）
 - hook は TS で書き、fail-closed のテストを持つ（20260929-01、20260929-06）
 - Bash の文字列規則は粗い網として扱う（20260930-01）
 - 外部に影響が出る MCP ツールの ask 規則は、`/onboard` が接続済みツールを検出して具体名に置き換える
