@@ -77,7 +77,9 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
    - `.leak-dict.json`：会社の呼び名、事業名、答えに出てきた人名・取引先名を `{"terms": [...]}` の形で書く（`.gitignore` 済み）
 2. `CLAUDE.md`
 3. `docs/charter/company.md`、`decision-rules.md`、`repositories.md`、`businesses/<事業 ID>.md`
-4. `docs/operations/obligations.md`、`risks.md`、`state/<事業 ID>.md`
+4. `docs/operations/obligations.md`、`risks.md`、`state/<事業 ID>.md`、
+   人間の入口 `docs/inbox/attachments/.gitkeep`（空のファイル。空のフォルダは git に残らないため置く。
+   Obsidian の新規ノートと添付の置き場でもあり、フォルダが無いと Obsidian は `docs/` の直下にノートを作る）
 5. Obsidian を使う場合だけ、器の `adapters/obsidian/` から次をコピーする（Bash の `cp` でそのまま複製してよい）
    - `vault/` の中身 → `docs/.obsidian/`
    - `bases/` の中身 → `docs/dashboards/`
