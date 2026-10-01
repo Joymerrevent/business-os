@@ -81,7 +81,8 @@ status: <文書種別ごとに定義>
 
 定義は器の `templates/frontmatter.schema.json` に置き、`/check` が検証する。
 台帳（期限・義務、リスク）は `type: ledger`。器の ADR も同じスキーマで `type: decision` とする。
-器の `templates/` は検査の対象外。
+雛形の置き場（器の `templates/`、company の `docs/_templates/`）は検査の対象外。
+雛形は `{{ }}` などの置き換え記号を含み、書き出された後の文書が検査を受けるため。
 
 ## 根拠
 

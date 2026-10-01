@@ -8,3 +8,8 @@ pnpm-lock.yaml
 
 # changesets が管理するファイル
 .changeset
+
+# Obsidian アダプタ。Obsidian が保存し直す形（改行の位置、末尾の改行なし）にそろえてあり、
+# 整形すると利用者が Obsidian を開くたびに company の git に差分が出る
+adapters/obsidian/vault
+adapters/obsidian/bases

@@ -651,3 +651,108 @@ export const REPO_CHECKS: Record<string, (root?: string) => CheckResult[]> = {
   adr: checkAdrIndex,
   usage: checkUsage,
 };
+
+// ---- Obsidian アダプタ ----
+
+/** Bases のダッシュボードが参照してよいノートのプロパティ（第 9 節のフロントマターだけ） */
+const BASE_PROPERTIES = new Set([
+  "type",
+  "business",
+  "status",
+  "created",
+  "updated",
+  "as_of",
+  "verified",
+  "id",
+  "target",
+]);
+
+export const checkAdapters = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "Obsidian アダプタ";
+  const dir = join(root, "adapters", "obsidian");
+  const results: CheckResult[] = [];
+  for (const file of walk(join(dir, "vault"), (path) =>
+    path.endsWith(".json"),
+  )) {
+    try {
+      JSON.parse(readFileSync(file, "utf8"));
+      results.push(result(category, rel(root, file), "pass"));
+    } catch (error) {
+      results.push(
+        result(
+          category,
+          rel(root, file),
+          "fail",
+          `JSON として読めません：${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
+    }
+  }
+  for (const file of walk(join(dir, "bases"), (path) =>
+    path.endsWith(".base"),
+  )) {
+    const text = readFileSync(file, "utf8");
+    const used = new Set<string>();
+    // order の項目と、比較の左辺に出てくるプロパティ名
+    for (const match of text.matchAll(/^\s*-\s+([a-z_.]+)\s*$/gm))
+      used.add(match[1] ?? "");
+    // 比較式は引用符で囲んでも囲まなくてもよい（Obsidian は保存し直すときに引用符を外す）
+    for (const match of text.matchAll(
+      /^\s*-\s+'?([a-z_.]+)\s*(?:==|!=|<=|>=|<|>)/gm,
+    ))
+      used.add(match[1] ?? "");
+    for (const match of text.matchAll(/property:\s*([a-z_.]+)/g))
+      used.add(match[1] ?? "");
+    const unknown = [...used].filter((name) => {
+      const bare = name.replace(/^note\./, "");
+      return (
+        !name.startsWith("file.") &&
+        !name.startsWith("formula.") &&
+        !BASE_PROPERTIES.has(bare)
+      );
+    });
+    const problems: string[] = [];
+    if (text.trim() === "") problems.push("中身が空です");
+    if (!/^views:/m.test(text)) problems.push("views がありません");
+    if (unknown.length > 0)
+      problems.push(
+        `第 9 節のフロントマターに無いプロパティを使っています：${unknown.join(", ")}`,
+      );
+    results.push(
+      problems.length === 0
+        ? result(category, rel(root, file), "pass")
+        : result(category, rel(root, file), "fail", problems.join("、")),
+    );
+  }
+  const schema = frontmatterSchema();
+  for (const file of walk(join(dir, "templates"), (path) =>
+    path.endsWith(".md"),
+  )) {
+    // Obsidian の置き換え記号に見本の値を入れてから、スキーマに照らす
+    const filled = readFileSync(file, "utf8")
+      .replace(/\{\{date(?::[^}]*)?\}\}/g, "2026-01-01")
+      .replace(/\{\{[a-z]+\}\}/g, "見本");
+    const fm = parseFrontmatter(filled);
+    const errors =
+      fm === undefined
+        ? ["フロントマターがありません"]
+        : [...new Set(validate(schema, schema, fm.data))];
+    results.push(
+      errors.length === 0
+        ? result(category, rel(root, file), "pass")
+        : result(category, rel(root, file), "fail", errors.join("、")),
+    );
+  }
+  if (results.length === 0)
+    results.push(
+      result(
+        category,
+        "adapters/obsidian",
+        "fail",
+        "アダプタのファイルがありません",
+      ),
+    );
+  return results;
+};
+
+REPO_CHECKS["adapters"] = checkAdapters;

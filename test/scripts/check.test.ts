@@ -63,6 +63,15 @@ describe("フィクスチャ（導入直後の company）", () => {
     expect(readFileSync(report, "utf8")).toContain("type: review");
   });
 
+  it("雛形の置き場（docs/_templates/）の置き換え記号は fail にしない", () => {
+    mkdirSync(join(root, "docs/_templates"), { recursive: true });
+    writeFileSync(
+      join(root, "docs/_templates/daily-note.md"),
+      "---\ntype: daily\ncreated: {{date:YYYY-MM-DD}}\n---\n[壊れたリンク](nowhere.md)\n",
+    );
+    expect(failsOf(runCompanyChecks(root, options))).toEqual([]);
+  });
+
   it("点検が憲章やプローブのファイルを残さない", () => {
     runCli();
     expect(

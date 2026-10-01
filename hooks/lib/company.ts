@@ -85,6 +85,14 @@ export const isProtected = (key: string): boolean =>
   key === MARKER ||
   key.startsWith("docs/charter/");
 
-/** フロントマター検査の対象：docs/ 配下の Markdown */
+/**
+ * 雛形の置き場（Obsidian のテンプレート）。置き換え記号（{{date}} など）を含むため、
+ * フロントマターの検査の対象外にする
+ */
+export const TEMPLATES_DIR = "docs/_templates/";
+
+/** フロントマター検査の対象：docs/ 配下の Markdown（雛形の置き場を除く） */
 export const needsFrontmatter = (key: string): boolean =>
-  key.startsWith("docs/") && key.endsWith(".md");
+  key.startsWith("docs/") &&
+  key.endsWith(".md") &&
+  !key.startsWith(TEMPLATES_DIR);

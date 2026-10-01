@@ -222,6 +222,15 @@ describe("運用中のフロントマター検査", () => {
     ).toBe("allow");
   });
 
+  it("雛形の置き場（docs/_templates/）は検査しない", () => {
+    expect(
+      write(
+        "docs/_templates/inbox-note.md",
+        "---\ntype: inbox\ncreated: {{date:YYYY-MM-DD}}\n---\n# {{title}}\n",
+      ),
+    ).toBe("allow");
+  });
+
   it("docs の外の Markdown は検査しない", () => {
     expect(write("notes.md", "# メモ\n")).toBe("allow");
   });

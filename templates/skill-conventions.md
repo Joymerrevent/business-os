@@ -17,6 +17,7 @@ business-os の Skill（`/onboard` など 10 個）は、実行の最初にこ�
 ## フロントマター
 
 - `docs/` 配下の全ての Markdown にフロントマターを付ける。定義は `templates/frontmatter.schema.json`
+  （雛形の置き場 `docs/_templates/` だけは例外。Obsidian の置き換え記号を含むため検査しない）
 - `type` `business` `status` と、4 つの日付欄（`created` `updated` `as_of` `verified`）を省略しない。該当しない欄は `n/a`
 - 既存の文書を変えたら `updated` を今日にする。`created` は書き換えない
 - 数字を扱う文書（月次・四半期のレビュー）は `as_of` に「その数字がいつ時点か」を必ず書く
