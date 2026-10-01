@@ -1,13 +1,13 @@
-// 器（Plugin）自身の場所と情報。hook のファイルの位置から求める（環境変数に頼らない）。
+// business-os（Plugin）自身の場所と情報。hook のファイルの位置から求める（環境変数に頼らない）。
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** 器のルート（hooks/lib/ の 2 つ上） */
+/** business-os のルート（hooks/lib/ の 2 つ上） */
 export const pluginRoot = (): string =>
   join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-/** 器の Skill（10 個、固定）。追加・削除は ADR で決める */
+/** business-os の Skill（10 個、固定）。追加・削除は ADR で決める */
 export const FOUNDATION_SKILLS = [
   "onboard",
   "approve",

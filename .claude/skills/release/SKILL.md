@@ -1,10 +1,10 @@
 ---
 name: release
-description: 器（business-os）の新しい版をリリースする開発専用の手順。積まれた changeset から版を上げ、plugin.json に同期し、CHANGELOG を作り、main へのリリース PR、タグ、GitHub の pre-release まで進める。「リリースして」「新しい版を出して」「/release」と言われたときに使う。
+description: business-os の新しい版をリリースする開発専用の手順。積まれた changeset から版を上げ、plugin.json に同期し、CHANGELOG を作り、main へのリリース PR、タグ、GitHub の pre-release まで進める。「リリースして」「新しい版を出して」「/release」と言われたときに使う。
 disable-model-invocation: true
 ---
 
-# /release（器の開発専用）
+# /release（business-os の開発専用）
 
 ## 何をするか
 

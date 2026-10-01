@@ -1,5 +1,5 @@
-// 器の検査（scripts/lib/repo-checks.ts）のテスト。実際の器で fail が無いことと、
-// 器の一時コピーを壊すと fail になることを確かめる。
+// business-os の検査（scripts/lib/repo-checks.ts）のテスト。実際の business-os で fail が無いことと、
+// business-os の一時コピーを壊すと fail になることを確かめる。
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
@@ -28,7 +28,7 @@ type Check = (root?: string) => { level: string; name: string }[];
 const failsOf = (check: Check, root?: string) =>
   check(root).filter((r) => r.level === "fail");
 
-describe("実際の器", () => {
+describe("実際の business-os", () => {
   it.each([
     ["skills", checkSkills],
     ["hooks", checkHooks],
@@ -42,7 +42,7 @@ describe("実際の器", () => {
   });
 });
 
-describe("壊した器の一時コピー", () => {
+describe("壊した business-os の一時コピー", () => {
   let root = "";
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), "business-os-repo-"));

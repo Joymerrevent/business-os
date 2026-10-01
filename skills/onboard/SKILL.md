@@ -1,6 +1,6 @@
 ---
 name: onboard
-description: 会社と事業の情報をインタビューで聞き取り、company リポジトリに地図（CLAUDE.md）・憲章・台帳・安全設定を書き出す。初回の導入、事業の追加・撤退、器の更新後の移行（--migrate）で使う。
+description: 会社と事業の情報をインタビューで聞き取り、company リポジトリに地図（CLAUDE.md）・憲章・台帳・安全設定を書き出す。初回の導入、事業の追加・撤退、business-os の更新後の移行（--migrate）で使う。
 disable-model-invocation: true
 ---
 
@@ -17,14 +17,14 @@ disable-model-invocation: true
 |---|---|
 | `.business-os.json` が無い | 初回の導入。下の「初回の手順」をすべて行う |
 | `state: initializing` | 前回の導入が途中で止まっている。書き出し済みのファイルを確かめ、足りないところから再開する |
-| `state: active` | 導入済み。事業の追加・撤退、または `--migrate`（器の更新の反映）。保護対象は直接書かず、提案として書く |
+| `state: active` | 導入済み。事業の追加・撤退、または `--migrate`（business-os の更新の反映）。保護対象は直接書かず、提案として書く |
 
 ## 何を読むか
 
 1. `${CLAUDE_SKILL_DIR}/../../templates/skill-conventions.md`（共通規約。最初に必ず読む）
 2. `${CLAUDE_SKILL_DIR}/../../templates/README.md`（雛形の変数と書き出し先、質問との対応）
 3. `${CLAUDE_SKILL_DIR}/../../templates/` の各雛形
-4. `${CLAUDE_SKILL_DIR}/../../.claude-plugin/plugin.json`（器のバージョン）
+4. `${CLAUDE_SKILL_DIR}/../../.claude-plugin/plugin.json`（business-os のバージョン）
 5. 導入済みなら、company の `docs/charter/` と `.business-os.json`
 
 ## 初回の手順
@@ -33,9 +33,9 @@ disable-model-invocation: true
 
 1. 作業ディレクトリが git リポジトリか確かめる。違えば `git init` してよいか聞く
 2. sandbox が使える環境か確かめる（native Windows では使えない）。使えない環境なら、次の事実を告げて、続けてよいか確認する
-   - 「この環境では Claude Code の sandbox（OS による見張り）が動きません。憲章の保護は、器の hook と権限設定だけに頼ることになります。WSL での利用を勧めます」
-3. **最初の書き込みとして** `templates/business-os.json.tmpl` から `.business-os.json` を書き出す（`state: initializing`、`pluginVersion` は器のバージョン）。
-   これ以降、器の hook は保護対象の新規作成を通し、既存ファイルの上書きだけ人間に確認を求める
+   - 「この環境では Claude Code の sandbox（OS による見張り）が動きません。憲章の保護は、business-os の hook と権限設定だけに頼ることになります。WSL での利用を勧めます」
+3. **最初の書き込みとして** `templates/business-os.json.tmpl` から `.business-os.json` を書き出す（`state: initializing`、`pluginVersion` は business-os のバージョン）。
+   これ以降、business-os の hook は保護対象の新規作成を通し、既存ファイルの上書きだけ人間に確認を求める
 
 ### 2. インタビュー
 
@@ -48,7 +48,7 @@ disable-model-invocation: true
 5. 各事業の実装リポジトリの場所（macOS と Windows のパス）。無ければ無しでよい
 6. 各事業で追いかける数字。事業の説明から候補を 3〜5 個挙げ、選んでもらう（AskUserQuestion の複数選択）
 7. 事業ごとのリスクの候補を CC が挙げ、残すものを選んでもらう
-8. ナレッジの閲覧に Obsidian を使うか（推奨だが任意。使わなくても器の動きは同じと伝える）
+8. ナレッジの閲覧に Obsidian を使うか（推奨だが任意。使わなくても business-os の動きは同じと伝える）
    - native Windows なら、先に次の事実を告げる：「Windows で Obsidian を使うなら、Claude Code も WSL ではなく
      Windows 上で直接動かす構成になり、Claude Code の sandbox が動きません。憲章の保護は hook と権限設定だけに頼ります」
    - 「使わない」と答えた場合：Obsidian 関連のファイルは一切書き出さない（`docs/.obsidian/`、`docs/dashboards/`、`docs/_templates/` を作らない）
@@ -80,16 +80,16 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 4. `docs/operations/obligations.md`、`risks.md`、`state/<事業 ID>.md`、
    人間の入口 `docs/inbox/attachments/.gitkeep`（空のファイル。空のフォルダは git に残らないため置く。
    Obsidian の新規ノートと添付の置き場でもあり、フォルダが無いと Obsidian は `docs/` の直下にノートを作る）
-5. Obsidian を使う場合だけ、器の `adapters/obsidian/` から次をコピーする（Bash の `cp` でそのまま複製してよい）
+5. Obsidian を使う場合だけ、business-os の `adapters/obsidian/` から次をコピーする（Bash の `cp` でそのまま複製してよい）
    - `vault/` の中身 → `docs/.obsidian/`
    - `bases/` の中身 → `docs/dashboards/`
-   - `templates/` の中身 → `docs/_templates/`（雛形の置き場。置き換え記号を含むため器の検査の対象外）
+   - `templates/` の中身 → `docs/_templates/`（雛形の置き場。置き換え記号を含むため business-os の検査の対象外）
    - `.gitignore` に `docs/.obsidian/workspace.json`、`docs/.obsidian/workspace-mobile.json`、`docs/.obsidian/cache/` を足す
 6. **最後に** `.claude/settings.json`
    - `ask` にある MCP の規則（`mcp__*__send_*` など）は残したうえで、
      この会話で使える MCP ツールのうち送信・投稿・作成・支払いにあたるものを具体名で追加する
 
-保護対象（`CLAUDE.md`、`.claude/settings.json`、`docs/charter/`）の新規作成には、器の hook は確認を出さない。
+保護対象（`CLAUDE.md`、`.claude/settings.json`、`docs/charter/`）の新規作成には、business-os の hook は確認を出さない。
 中身は「3. 書き出す前の確認」で了承を得たとおりに書き、了承の無い内容を足さない。
 
 権限の確認で「No」を選ばれると、Claude Code は書き込みを取り消して会話を止める。止まったら、利用者の次の指示を待つ。
@@ -99,7 +99,7 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 
 1. 書き出した全ファイルに `{{` が残っていないことを確かめる（`docs/_templates/` の Obsidian の置き換え記号は除く）
 2. 書き出した内容の要点をもう一度示し、`.business-os.json` を `state: active`、`onboardedAt` を今日にする。
-   この書き換えで器の hook が人間に確認を求める。これが導入の確定の確認になる
+   この書き換えで business-os の hook が人間に確認を求める。これが導入の確定の確認になる
 3. 共通規約どおり日報に実行記録を 1 行追記する
 4. コミットしてよいか聞き、よければ `git add` と `git commit` をする（push はしない）
 5. Obsidian を使う場合は、開き方を案内する（CC は Obsidian を起動しない。sandbox がアプリの起動を止めるため）
@@ -113,7 +113,7 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 
 - **事業の追加・撤退**：新しい事業の質問（上の 2・5・6・7）だけをし、`docs/charter/` と `CLAUDE.md` の変更は
   `docs/proposals/` に提案として書く（新規ファイルも提案の `target` にできる）。台帳（`docs/operations/`）は直接書いてよい。最後に `/approve` を案内する
-- **`--migrate`**：器の雛形と company の文書を比べ、器の更新で増えた欄や規則を提案として書く。
+- **`--migrate`**：business-os の雛形と company の文書を比べ、business-os の更新で増えた欄や規則を提案として書く。
   `.business-os.json` の `pluginVersion` の更新も提案にする。事業の中身は変えない
 
 ## 何を書くか
@@ -131,9 +131,9 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 
 ## 完了条件
 
-- `.business-os.json` が `state: active` で、`pluginVersion` が器のバージョンと一致している
+- `.business-os.json` が `state: active` で、`pluginVersion` が business-os のバージョンと一致している
 - 地図・憲章・台帳・現況・安全設定が書き出され、`{{` が残っていない（`docs/_templates/` の Obsidian の置き換え記号は除く）
 - Obsidian を使わない場合、Obsidian 関連のファイルが 1 つも無い
-- `docs/` 配下の全文書がフロントマターの規約に合っている（器の hook が書き込み時に確かめている）
+- `docs/` 配下の全文書がフロントマターの規約に合っている（business-os の hook が書き込み時に確かめている）
 - 日報に実行記録が 1 行ある
 - 導入済みの場合は、保護対象への変更が全て提案（`status: proposed`）になっている

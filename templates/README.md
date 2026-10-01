@@ -29,8 +29,8 @@
 | `operations/daily/_template.md` | `docs/operations/daily/YYYY-MM-DD.md` | `/morning`。日報が無いときは他の Skill も作る |
 | `operations/reviews/weekly.md` `monthly.md` `quarterly.md` `retro.md` | `docs/operations/reviews/weekly-YYYY-Www.md` など | `/weekly-review` `/close` `/quarterly` `/retro` |
 | `decisions/_template.md` | `docs/decisions/<id>-<slug>.md` | `/adr` `/validate` |
-| `skill-conventions.md` | 書き出さない | 器の Skill が最初に読む共通規約 |
-| `frontmatter.schema.json` | 書き出さない | 器の検査と hook が参照する |
+| `skill-conventions.md` | 書き出さない | business-os の Skill が最初に読む共通規約 |
+| `frontmatter.schema.json` | 書き出さない | business-os の検査と hook が参照する |
 
 ## 変数と `/onboard` の質問の対応
 
@@ -52,7 +52,7 @@
 | 変数 | 入れる値 |
 |---|---|
 | `onboarded_at` | `/onboard` を実行した日 |
-| `plugin_version` | 器の `.claude-plugin/plugin.json` の `version` |
+| `plugin_version` | business-os の `.claude-plugin/plugin.json` の `version` |
 | `business_exit_criteria` | 「まだ決めていない。`/quarterly` で決める」 |
 | `risk` `risk_signal` `risk_mitigation` `risk_status` | 事業の一覧から CC がリスクの候補を挙げ、利用者が選んだもの。選ばなければ「まだ無い」の 1 行 |
 | `state_running` `state_waiting` `state_blocked` | 「まだ記録が無い」 |

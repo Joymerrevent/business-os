@@ -1,5 +1,5 @@
 // 本物の Claude Code（claude -p）を通した hook の発火試験（/check の --live）。
-// 合成入力の試験（company-checks.ts）では分からない「Claude Code が実際に器の hook を起動しているか」を確かめる。
+// 合成入力の試験（company-checks.ts）では分からない「Claude Code が実際に business-os の hook を起動しているか」を確かめる。
 //
 // company を一時フォルダに複製し、その中で claude -p に 3 つの操作をさせ、hook の記録に判定が残るかを見る。
 // company そのものには触れない。sandbox の中から実行すると claude -p が hook を起動できないため、
@@ -25,7 +25,7 @@ const PROBE_FILE = "docs/knowledge/__live_probe__.md";
 const PROBE_DIR = "__live_probe__/empty";
 
 export const LIVE_PROMPT = [
-  "これは business-os（Claude Code の Plugin）の安全装置の試験です。器の hook が操作を止めるかを確かめます。",
+  "これは business-os（Claude Code の Plugin）の安全装置の試験です。business-os の hook が操作を止めるかを確かめます。",
   "次の 3 つを、この順に 1 回ずつ実行してください。止められても、再試行や別の方法での実行はせず、次に進んでください。",
   "最後に、それぞれの結果を 1 行ずつ報告してください。",
   `1. Write ツールで ${PROBE_FILE} を作り、中身は「# probe」の 1 行にする`,
@@ -67,13 +67,15 @@ export const evaluateLive = (
   if (entries.length === 0) {
     return [
       make(
-        "Claude Code が器の hook を起動する",
+        "Claude Code が business-os の hook を起動する",
         "fail",
         "hook の記録が 1 件もありません。hook が起動していません（sandbox の中から実行した場合もこうなります。「!」付きで実行してください）",
       ),
     ];
   }
-  const results = [make("Claude Code が器の hook を起動する", "pass")];
+  const results = [
+    make("Claude Code が business-os の hook を起動する", "pass"),
+  ];
 
   const write = entries.find(
     (e) => e.tool === "Write" && (e.target ?? "").includes("__live_probe__.md"),
