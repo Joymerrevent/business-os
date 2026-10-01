@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-01
 as_of: n/a
 verified: n/a
 ---
@@ -428,7 +428,8 @@ sandbox が使えない環境（native Windows 等）は厳格モードにせず
 
 ## 9. フロントマター規約
 
-全 Markdown 文書（`company/docs/**`、business-os の `docs/**`）に以下を持つ。定義は `templates/frontmatter.schema.json`。
+`company/docs/**` の全 Markdown 文書と、business-os の `docs/adr/`・`docs/design/` に以下を持つ。定義は `templates/frontmatter.schema.json`。
+business-os の利用者向けの文書（`docs/usage/`）と開発者向けの入口（`docs/README.md`）には付けない（GitHub が表として描き、マニュアルが読みにくくなるため）。
 
 ```yaml
 ---
@@ -456,7 +457,7 @@ verified: YYYY-MM-DD | n/a  # charter は必須
 
 - 4 日付欄は省略しない。該当なしは `n/a`
 - `ledger` は台帳（`operations/obligations.md`、`operations/risks.md`）
-- business-os の ADR（`docs/adr/`）は `type: decision`。business-os の文書は `business: n/a` を使える
+- business-os の ADR（`docs/adr/`）は `type: decision`。business-os の ADR と構造仕様は `business: n/a` を使える
 - 雛形の置き場（business-os の `templates/`、company の `docs/_templates/`）は検査の対象外（置き換え記号を含むため）。
   hook のフロントマター検査、`/check`、business-os の `check:docs` のいずれも対象にしない
 - ID を持つ文書（decisions / proposals / business-os の adr）は `id: YYYYMMDD-nn` を追加し、ファイル名と一致させる

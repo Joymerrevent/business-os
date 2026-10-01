@@ -1,13 +1,3 @@
----
-type: knowledge
-business: n/a
-status: active
-created: 2026-10-01
-updated: 2026-10-01
-as_of: n/a
-verified: n/a
----
-
 # docs — 開発者向けの入口
 
 business-os を改良する人と CC のための地図です。利用者向けの案内は [usage/](usage/getting-started.md) にあります。
@@ -40,7 +30,8 @@ business-os を改良する人と CC のための地図です。利用者向け�
 
 ## 文書の規約
 
-- `docs/` の全ての Markdown に、フロントマター（`type` `business` `status` と 4 つの日付欄）を付ける。business-os の文書の `business` は `n/a`
+- `docs/adr/` と `docs/design/` の文書に、フロントマター（`type` `business` `status` と 4 つの日付欄）を付ける。`business` は `n/a`
+- 利用者向けの `docs/usage/` と、この `docs/README.md` には付けない（GitHub が表として描き、読みにくくなるため）
 - `docs/usage/` には ADR の番号を書かない。根拠を残すときは HTML コメント（`<!-- 根拠: … -->`）に書く
 - リンクは標準の inline 形式（`[text](path)`）
 

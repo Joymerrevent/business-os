@@ -157,7 +157,8 @@ describe("ajv との一致", () => {
 
   it("business-os の文書とフィクスチャのフロントマター（ajv は YAML を文字列のまま読む）", () => {
     const files = [
-      ...walk(join(repoRoot, "docs")),
+      ...walk(join(repoRoot, "docs", "adr")),
+      ...walk(join(repoRoot, "docs", "design")),
       ...walk(join(fixtureCompany, "docs")),
     ];
     expect(files.length).toBeGreaterThan(0);
