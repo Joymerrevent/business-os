@@ -40,7 +40,7 @@
     "changeset": "changeset",
     "prepare": "simple-git-hooks",
     "test": "vitest run",
-    "release:version": "changeset version && node scripts/sync-plugin-version.ts"
+    "release:version": "changeset version && node scripts/sync-plugin-version.ts && prettier --write .claude-plugin/plugin.json"
   },
   "simple-git-hooks": {
     "pre-commit": "node scripts/pre-commit.ts",
