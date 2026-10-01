@@ -172,6 +172,15 @@ describe("壊した business-os の一時コピー", () => {
     expect(failsOf(checkUsage, root).length).toBe(1);
   });
 
+  it("利用者向けの docs/usage/ はフロントマターが無くても fail にしない", () => {
+    expect(
+      readFileSync(join(root, "docs/usage/operations.md"), "utf8").startsWith(
+        "---",
+      ),
+    ).toBe(false);
+    expect(failsOf(checkDocs, root)).toEqual([]);
+  });
+
   it("文書のリンク切れと、フロントマターの欠落は fail", () => {
     edit(
       "docs/usage/operations.md",

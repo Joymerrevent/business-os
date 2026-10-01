@@ -488,7 +488,12 @@ export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
 export const checkDocs = (root: string = pluginRoot()): CheckResult[] => {
   const results: CheckResult[] = [];
   const schema = frontmatterSchema();
-  for (const file of walk(join(root, "docs"), (path) => path.endsWith(".md"))) {
+  // フロントマターを持つのは ADR と構造仕様だけ（利用者向けの docs/usage/ と入口の docs/README.md は持たない）
+  const withFrontmatter = [
+    ...walk(join(root, "docs", "adr"), (path) => path.endsWith(".md")),
+    ...walk(join(root, "docs", "design"), (path) => path.endsWith(".md")),
+  ];
+  for (const file of withFrontmatter) {
     const path = rel(root, file);
     const problems: string[] = [];
     const fm = parseFrontmatter(readFileSync(file, "utf8"));

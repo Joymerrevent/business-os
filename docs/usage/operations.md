@@ -1,13 +1,3 @@
----
-type: knowledge
-business: n/a
-status: active
-created: 2026-09-30
-updated: 2026-10-01
-as_of: n/a
-verified: n/a
----
-
 # 日々の運用
 
 導入が終わった後、business-os をどう回すかを説明します。「はじめる」を先に読んでください。

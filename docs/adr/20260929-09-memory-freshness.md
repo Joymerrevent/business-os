@@ -5,7 +5,7 @@ type: decision
 business: n/a
 status: proposed
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-01
 as_of: n/a
 verified: n/a
 supersedes: n/a
@@ -80,7 +80,12 @@ status: <文書種別ごとに定義>
 ```
 
 定義は business-os の `templates/frontmatter.schema.json` に置き、`/check` が検証する。
-台帳（期限・義務、リスク）は `type: ledger`。business-os の ADR も同じスキーマで `type: decision` とする。
+台帳（期限・義務、リスク）は `type: ledger`。
+
+business-os のリポジトリでは、ADR（`docs/adr/`）と構造仕様（`docs/design/`）にだけ付ける。ADR は `type: decision`。
+利用者向けの文書（`docs/usage/`）と開発者向けの入口（`docs/README.md`）には付けない。
+人が GitHub で読む文書で、GitHub はフロントマターを表として冒頭に描くため読みにくくなる。
+4 日付欄は CC が company の文書の鮮度を判断するための規約で、マニュアルの更新日は git の履歴で分かる。
 雛形の置き場（business-os の `templates/`、company の `docs/_templates/`）は検査の対象外。
 雛形は `{{ }}` などの置き換え記号を含み、書き出された後の文書が検査を受けるため。
 

@@ -1,13 +1,3 @@
----
-type: knowledge
-business: n/a
-status: active
-created: 2026-09-30
-updated: 2026-10-01
-as_of: n/a
-verified: n/a
----
-
 # はじめる
 
 business-os は、1 人で複数の事業を運営する人が Claude Code（CC）を「経営の手足」として使うための Plugin です。
