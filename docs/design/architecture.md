@@ -120,6 +120,7 @@ business-os/
 | `.claude-plugin/` `skills/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `test/` `docs/` 設定ファイル群 |
 
 配布専用 Skill は `skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
+役割エージェント（サブエージェントの定義）は含めず、`agents/` を置かない（ADR 20261002-01）。
 business-os の開発リポジトリでは sandbox を使わない。sandbox で守るのは、business-os を入れて運用する company の側。
 開発では `gh` の認証、`.claude/` を含むブランチの切り替え、`claude -p` での実機の試験、コミットへの署名を sandbox が妨げるため。
 
@@ -258,6 +259,7 @@ business-os を改良する CC と、貢献する人向け。配布物と開発�
 
 事業固有の Skill は `company/.claude/skills/` に置く。business-os の更新で消えない。
 `/retro` が「同じ依頼が 2 回あった」を検出して Skill 化を提案し、月次で使われていないものを剪定提案する。
+役割エージェントも同じく `company/.claude/agents/` で育て、事業非依存と分かったものだけを ADR を経て business-os に昇格させる（20261002-01）。
 
 ### 6.4 周期 Skill の起動
 

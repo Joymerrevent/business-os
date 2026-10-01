@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-02
 as_of: n/a
 verified: n/a
 ---
@@ -88,3 +88,4 @@ supersedes: n/a       # 置き換える ADR の id（あれば）
 | 20260929-09 | 記憶は腐る前提で組む | proposed |
 | 20260929-10 | 最初から公開 Plugin | proposed |
 | 20260930-01 | Bash の文字列規則は粗い網 | proposed |
+| 20261002-01 | 役割エージェントは business-os に含めない | proposed |
