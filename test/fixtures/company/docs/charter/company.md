@@ -25,7 +25,7 @@ verified: 2026-09-28
 
 ## 事業
 
-事業ごとの定義は [businesses/](businesses/) にある。
+事業ごとの定義は `docs/charter/businesses/` にある（事業ごとに 1 ファイル）。
 
 - 事業 A（`biz-a`）
 - 事業 B（`biz-b`）
