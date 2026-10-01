@@ -1,6 +1,6 @@
 # business-os — 開発ガイド
 
-これは配布される Claude Code Plugin。1 人で複数事業を運営する人が CC を「経営の手足」として使う器。
+これは配布される Claude Code Plugin。1 人で複数事業を運営する人が CC を「経営の手足」として使う business-os。
 **事業情報・人名・認証情報は一切含めない。** 見つけたら即報告し、コミットしない。
 
 ## 何がどこにあるか
@@ -9,10 +9,10 @@
 - `hooks/`           SessionStart（軽い点検）と PreToolUse（書き込みガード）。TypeScript
 - `scripts/`         重い点検（`/check`）と `check:*` の共有実装、バージョン同期
 - `templates/`       company の雛形。`/onboard` が展開する
-- `adapters/obsidian/` 任意アダプタ。器の機能に関与しない
+- `adapters/obsidian/` 任意アダプタ。business-os の機能に関与しない
 - `docs/adr/`        設計判断。**ここが正典**。`docs/design/architecture.md` が構造仕様
 - `docs/usage/`      利用者向け。ADR 番号を書かない
-- `.claude/`         この器を開発するときの設定と開発専用 Skill（配布しない）
+- `.claude/`         business-os を開発するときの設定と開発専用 Skill（配布しない）
 
 ## 絶対ルール
 
@@ -46,5 +46,5 @@
 
 ## 迷ったら
 
-「器に固有名詞を書いていないか」「その変更は ADR に反しないか」の 2 つを先に確かめる。
+「business-os に固有名詞を書いていないか」「その変更は ADR に反しないか」の 2 つを先に確かめる。
 判断が要るなら、実装せずにメンテナに聞く。

@@ -1,6 +1,6 @@
 ---
 name: check
-description: 器の安全装置が「存在するか」ではなく「効いているか」を試し、文書の規約・鮮度・リンク・漏洩・git の状態をまとめて点検する。週に 1 回と、導入の直後に使う。
+description: business-os の安全装置が「存在するか」ではなく「効いているか」を試し、文書の規約・鮮度・リンク・漏洩・git の状態をまとめて点検する。週に 1 回と、導入の直後に使う。
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 ## 何をするか
 
-器の点検スクリプトを company に対して実行し、結果を `docs/operations/reviews/check-YYYYMMDD.md` に残す。
+business-os の点検スクリプトを company に対して実行し、結果を `docs/operations/reviews/check-YYYYMMDD.md` に残す。
 判定は pass / warn / fail。全体の成否はスクリプトの**終了コード**で判断する（出力の件数を数えない）。
 
 - 終了コード 0：fail なし（warn はあってよい）
@@ -30,12 +30,12 @@ disable-model-invocation: true
 
 2. 終了コードを確かめる。0 以外なら、fail の項目を人間に示す
 3. 本物の Claude Code での発火試験もするか聞く。案内文：
-   「本物の Claude Code（claude -p）で、器の hook が実際に動くかも試しますか。利用枠を消費します。所要は数十秒です」
-   - 試す場合：器のルートと company のルートを絶対パスで確かめ（`cd "${CLAUDE_SKILL_DIR}/../.." && pwd` と `pwd`）、
+   「本物の Claude Code（claude -p）で、business-os の hook が実際に動くかも試しますか。利用枠を消費します。所要は数十秒です」
+   - 試す場合：business-os のルートと company のルートを絶対パスで確かめ（`cd "${CLAUDE_SKILL_DIR}/../.." && pwd` と `pwd`）、
      人間に次の 1 行を**入力欄で `!` 付きで実行してもらう**（sandbox の中からは claude -p が hook を起動できないため、CC は自分で実行しない）
 
      ```text
-     ! node "<器のルート>/scripts/check.ts" --company "<company のルート>" --live
+     ! node "<business-os のルート>/scripts/check.ts" --company "<company のルート>" --live
      ```
 
    - この試験は company の一時コピーで行い、company そのものには触れない
@@ -50,7 +50,7 @@ disable-model-invocation: true
 
 | 分類 | fail / warn のときの対処 |
 |---|---|
-| 防衛の発火（合成入力・実機） | 最優先。安全装置が壊れた状態で運用を続けない。器の不具合なら器のリポジトリの Issues に報告する |
+| 防衛の発火（合成入力・実機） | 最優先。安全装置が壊れた状態で運用を続けない。business-os の不具合なら business-os のリポジトリの Issues に報告する |
 | 設定の一致 | `.claude/settings.json` の規則を雛形どおりに戻す提案を書く（`/approve` で反映） |
 | 文書の規約 | 該当する文書のフロントマターを直す（憲章なら提案として書く） |
 | 鮮度 | 憲章は `/quarterly`、現況は `/weekly-review`、決定記録は人間が accepted / rejected を決める |

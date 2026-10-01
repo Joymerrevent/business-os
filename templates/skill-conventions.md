@@ -1,4 +1,4 @@
-# 器の Skill の共通規約
+# business-os の Skill の共通規約
 
 business-os の Skill（`/onboard` など 10 個）は、実行の最初にこの文書を読み、ここに書いた規約に従う。
 各 Skill の SKILL.md には、この規約との差分だけを書く。
@@ -6,7 +6,7 @@ business-os の Skill（`/onboard` など 10 個）は、実行の最初にこ�
 ## 場所
 
 - company のルートは、作業ディレクトリから上位へ辿って `.business-os.json` があるディレクトリ
-- 器のファイルは `${CLAUDE_SKILL_DIR}/../..` を器のルートとして参照する（例：雛形は `${CLAUDE_SKILL_DIR}/../../templates/`）
+- business-os のファイルは `${CLAUDE_SKILL_DIR}/../..` を business-os のルートとして参照する（例：雛形は `${CLAUDE_SKILL_DIR}/../../templates/`）
 - 雛形の変数と書き出し先は `templates/README.md` にある
 
 ## 日付
@@ -21,9 +21,9 @@ business-os の Skill（`/onboard` など 10 個）は、実行の最初にこ�
 - `type` `business` `status` と、4 つの日付欄（`created` `updated` `as_of` `verified`）を省略しない。該当しない欄は `n/a`
 - 既存の文書を変えたら `updated` を今日にする。`created` は書き換えない
 - 数字を扱う文書（月次・四半期のレビュー）は `as_of` に「その数字がいつ時点か」を必ず書く
-- 規約に合わない書き込みは器の hook が拒否する。拒否されたら理由を読んで直し、別の方法で書き込もうとしない
+- 規約に合わない書き込みは business-os の hook が拒否する。拒否されたら理由を読んで直し、別の方法で書き込もうとしない
 - `docs/` 配下の文書は Write / Edit ツールで書く。Bash の `sed -i` やリダイレクト（`>`）で書き換えない
-  （器の hook は Write / Edit しか検査できず、Bash で書くとフロントマターの検査を通らないため）
+  （business-os の hook は Write / Edit しか検査できず、Bash で書くとフロントマターの検査を通らないため）
 
 ## 承認が要ること
 
@@ -33,7 +33,7 @@ business-os の Skill（`/onboard` など 10 個）は、実行の最初にこ�
 2. 保護対象（`docs/charter/`、`CLAUDE.md`、`.claude/settings.json`、`.business-os.json`）の変更：
    `docs/proposals/` に提案を書き、人間が `/approve` で承認する。雛形は `templates/proposals/_template.md`
    - 提案 1 件の `target` は 1 ファイルだけ。複数のファイルを変えるときは、ファイルごとに提案を分ける
-     （器の hook は `target` と書き込み先のファイルを 1 対 1 で照合するため）
+     （business-os の hook は `target` と書き込み先のファイルを 1 対 1 で照合するため）
 
 それ以外（日報、レビュー、台帳、調査メモ、提案、意思決定記録の起票）は CC が直接書いてよい。
 

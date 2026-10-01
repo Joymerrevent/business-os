@@ -1,4 +1,4 @@
-// 器（business-os）の検査の入口。package.json の check:* から 1 つずつ呼ぶ。
+// business-os の検査の入口。package.json の check:* から 1 つずつ呼ぶ。
 // 成否は終了コード：fail があれば 1、無ければ 0（warn は 0）。
 //
 // 使い方：node scripts/check-repo.ts <検査の名前>

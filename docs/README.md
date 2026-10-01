@@ -10,7 +10,7 @@ verified: n/a
 
 # docs — 開発者向けの入口
 
-器（business-os）を改良する人と CC のための地図です。利用者向けの案内は [usage/](usage/getting-started.md) にあります。
+business-os を改良する人と CC のための地図です。利用者向けの案内は [usage/](usage/getting-started.md) にあります。
 
 ## 文書の地図
 
@@ -28,7 +28,7 @@ verified: n/a
 検査の一覧の正典は [package.json](../package.json) の `check:*` です。この文書には一覧を書きません。
 `pnpm check` で全てを走らせ、成否は終了コードで見ます。
 
-- 器の検査の実装は `scripts/check-repo.ts` と `scripts/lib/repo-checks.ts`
+- business-os の検査の実装は `scripts/check-repo.ts` と `scripts/lib/repo-checks.ts`
 - company の重い点検（`/check`）の実装は `scripts/check.ts` と `scripts/lib/company-checks.ts`、実機の発火試験は `scripts/lib/live-check.ts`
 - hook の実装は `hooks/`。外部の依存を持たない（Plugin は利用者側で install されないため）
 
@@ -40,7 +40,7 @@ verified: n/a
 
 ## 文書の規約
 
-- `docs/` の全ての Markdown に、フロントマター（`type` `business` `status` と 4 つの日付欄）を付ける。器の文書の `business` は `n/a`
+- `docs/` の全ての Markdown に、フロントマター（`type` `business` `status` と 4 つの日付欄）を付ける。business-os の文書の `business` は `n/a`
 - `docs/usage/` には ADR の番号を書かない。根拠を残すときは HTML コメント（`<!-- 根拠: … -->`）に書く
 - リンクは標準の inline 形式（`[text](path)`）
 

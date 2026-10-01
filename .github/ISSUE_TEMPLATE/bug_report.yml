@@ -1,5 +1,5 @@
 name: 不具合の報告
-description: 器（business-os）の Skill・hook・点検が期待どおりに動かない
+description: business-os の Skill・hook・点検が期待どおりに動かない
 labels: ["bug"]
 body:
   - type: markdown
@@ -35,7 +35,7 @@ body:
   - type: input
     id: plugin-version
     attributes:
-      label: 器のバージョン
+      label: business-os のバージョン
       description: .business-os.json の pluginVersion、または /plugin の表示
       placeholder: "0.1.0"
     validations:

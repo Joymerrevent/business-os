@@ -1,4 +1,4 @@
-// 器（business-os）自身の検査。package.json の check:* から scripts/check-repo.ts 経由で呼ぶ。
+// business-os 自身の検査。package.json の check:* から scripts/check-repo.ts 経由で呼ぶ。
 // 検査の一覧の正典は package.json。この文書やほかの文書に一覧を書き写さない。
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -66,7 +66,7 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
     results.push(
       result(
         category,
-        "器の Skill は 10 個で固定",
+        "business-os の Skill は 10 個で固定",
         "fail",
         [
           missing.length > 0 ? `無い：${missing.join(", ")}` : "",

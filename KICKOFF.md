@@ -24,7 +24,7 @@
 ## 進め方
 
 **各フェーズの前に、作成予定のファイル一覧を提示してメンテナの承認を待つ。承認なしに作らない。**
-これは器自身の原則（提案 → 承認）を、器の実装にも適用するもの。
+これは business-os 自身の原則（提案 → 承認）を、business-os の実装にも適用するもの。
 
 ### Phase 0：検証
 
@@ -47,7 +47,7 @@ porters-connect と同じ流儀で揃える。
   `SECURITY.md`、`CODE_OF_CONDUCT.md`、`LICENSE`
 - `.changeset/` の初期化
 - `.claude-plugin/plugin.json`（version 0.1.0、description に alpha）
-- `.claude/settings.json`（器リポ用：秘密・固有名詞の混入を防ぐ deny / sandbox）
+- `.claude/settings.json`（business-os のリポ用：秘密・固有名詞の混入を防ぐ deny / sandbox）
 
 ### Phase 2：テンプレートとスキーマ
 
@@ -95,7 +95,7 @@ porters-connect と同じ流儀で揃える。
 
 ## 制約
 
-- 器に固有名詞（事業名、人名、金額）を一切書かない。サンプル値も「事業 A」「CEO」など汎用語で
+- business-os に固有名詞（事業名、人名、金額）を一切書かない。サンプル値も「事業 A」「CEO」など汎用語で
 - bash スクリプトを追加しない。TypeScript を Node 24 が直接実行する
 - シンボリックリンクを使わない
 - ADR に反する実装をしない。反する必要があるなら、実装せずに ADR を `proposed` で起票して報告する
@@ -111,7 +111,7 @@ porters-connect と同じ流儀で揃える。
 - [ ] `claude --plugin-dir .` で読み込み、`test/fixtures/company/` に対して `/onboard` → `/morning` → `/check` が通る
 - [ ] `/check` の「防衛の発火」分類が全て pass
 - [ ] `test/fixtures/company/` の `CLAUDE.md` が 70 行以内
-- [ ] 器リポに固有名詞・秘密が無い（`check:leak` が緑）
+- [ ] business-os のリポに固有名詞・秘密が無い（`check:leak` が緑）
 - [ ] `0.1.0` の pre-release が切られている
 - [ ] Phase 0 の検証結果が `architecture.md` 第 11 節に反映されている
 

@@ -15,11 +15,11 @@ supersedes: n/a
 
 ## 背景
 
-器は Mac を主環境としつつ、Windows でも同一構成で動かす。将来は他人にも配布する。
+business-os は Mac を主環境としつつ、Windows でも同一構成で動かす。将来は他人にも配布する。
 Claude Code（CC）は Windows でネイティブ（PowerShell）でも WSL でも動くが、
 両者で bash の有無・シンボリックリンクの挙動・パス表記が異なる。
 
-2026 年 5 月版の器は bash の hook とシンボリックリンク（`.repos/`）に依存していた。
+2026 年 5 月版の business-os は bash の hook とシンボリックリンク（`.repos/`）に依存していた。
 これは Mac 単独なら問題ないが、Windows ネイティブでは hook が動かず、
 Obsidian 等の GUI アプリと WSL を組み合わせるとファイルシステム境界の問題が出る。
 

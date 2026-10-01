@@ -155,7 +155,7 @@ describe("ajv との一致", () => {
     }
   });
 
-  it("器の文書とフィクスチャのフロントマター（ajv は YAML を文字列のまま読む）", () => {
+  it("business-os の文書とフィクスチャのフロントマター（ajv は YAML を文字列のまま読む）", () => {
     const files = [
       ...walk(join(repoRoot, "docs")),
       ...walk(join(fixtureCompany, "docs")),

@@ -1,4 +1,4 @@
-// company の .claude/settings.json が、器の雛形（templates/settings.json.tmpl）の必須規則を含むかを確かめる。
+// company の .claude/settings.json が、business-os の雛形（templates/settings.json.tmpl）の必須規則を含むかを確かめる。
 // 必須規則の正典は雛形そのもの。ここに規則を書き写さない（写すと古くなるため）。
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";

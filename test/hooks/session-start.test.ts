@@ -79,7 +79,7 @@ describe("company", () => {
     expect(messageOf(start().stdout)).toContain("20260928-01");
   });
 
-  it("器のバージョンが記録と違えば --migrate を促す", () => {
+  it("business-os のバージョンが記録と違えば --migrate を促す", () => {
     const path = join(root, ".business-os.json");
     const data = JSON.parse(readFileSync(path, "utf8")) as Record<
       string,
@@ -89,7 +89,7 @@ describe("company", () => {
     expect(messageOf(start().stdout)).toContain("--migrate");
   });
 
-  it("利用者側に器と同名の Skill があれば知らせる", () => {
+  it("利用者側に business-os と同名の Skill があれば知らせる", () => {
     mkdirSync(join(home, ".claude/skills/morning"), { recursive: true });
     expect(messageOf(start().stdout)).toContain("morning");
   });

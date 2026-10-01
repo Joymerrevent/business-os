@@ -1,4 +1,4 @@
-// 器の版。正典は package.json（changesets が更新する）。plugin.json の version は利用者に更新を届ける合図になる。
+// business-os の版。正典は package.json（changesets が更新する）。plugin.json の version は利用者に更新を届ける合図になる。
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 

@@ -43,7 +43,7 @@ const checkNode = (): string[] => {
       ];
 };
 
-/** 2. 器の 10 Skill とフロントマター */
+/** 2. business-os の 10 Skill とフロントマター */
 const checkSkills = (): string[] => {
   const broken: string[] = [];
   for (const name of FOUNDATION_SKILLS) {
@@ -58,7 +58,7 @@ const checkSkills = (): string[] => {
   return broken.length === 0
     ? []
     : [
-        `器の Skill が読み込めません（無い、または name / description が無い）：${broken.join(", ")}`,
+        `business-os の Skill が読み込めません（無い、または name / description が無い）：${broken.join(", ")}`,
       ];
 };
 
@@ -107,13 +107,13 @@ const checkApproving = (company: Company): string[] => {
       ];
 };
 
-/** 7. 器のバージョンの記録 */
+/** 7. business-os のバージョンの記録 */
 const checkVersion = (company: Company): string[] => {
   const actual = pluginVersion();
   return company.pluginVersion === actual
     ? []
     : [
-        `器が更新されています（記録 ${company.pluginVersion ?? "なし"} → 現在 ${actual}）。/onboard --migrate を実行してください`,
+        `business-os が更新されています（記録 ${company.pluginVersion ?? "なし"} → 現在 ${actual}）。/onboard --migrate を実行してください`,
       ];
 };
 
@@ -136,7 +136,7 @@ const checkSandbox = (): string[] =>
       ]
     : [];
 
-/** 10. 器の Skill と同名の Skill が利用者側にないか */
+/** 10. business-os の Skill と同名の Skill が利用者側にないか */
 const checkSkillNames = (company: Company): string[] => {
   const dirs = [
     join(company.root, ".claude", "skills"),
@@ -148,7 +148,7 @@ const checkSkillNames = (company: Company): string[] => {
   return clashes.length === 0
     ? []
     : [
-        `器の Skill と同じ名前の Skill があり、そちらが優先されます：${clashes.join(", ")}。器の Skill は /business-os:<名前> で呼べます`,
+        `business-os の Skill と同じ名前の Skill があり、そちらが優先されます：${clashes.join(", ")}。business-os の Skill は /business-os:<名前> で呼べます`,
       ];
 };
 

@@ -67,7 +67,7 @@ proposed → approving → approved
 ## 何を書くか
 
 - 提案ファイルの `status` と `updated`、却下・差し戻しの理由
-- 承認された提案の `target`（憲章、地図、安全設定、器の状態）
+- 承認された提案の `target`（憲章、地図、安全設定、business-os の状態）
 - 日報への実行記録（例：`- 09:10 /approve — 承認 2 件、却下 1 件`）
 
 ## 人に何を聞くか

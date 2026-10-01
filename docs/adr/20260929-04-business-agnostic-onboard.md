@@ -1,6 +1,6 @@
 ---
 id: 20260929-04
-title: 器は事業非依存、/onboard で注入
+title: business-os は事業非依存、/onboard で注入
 type: decision
 business: n/a
 status: proposed
@@ -11,33 +11,33 @@ verified: n/a
 supersedes: n/a
 ---
 
-# 20260929-04: 器は事業非依存、/onboard で注入
+# 20260929-04: business-os は事業非依存、/onboard で注入
 
 ## 背景
 
-器（business-os）は公開 Plugin として配布し、友人にも使ってもらう。
-事業名・顧客名・数値が器に混ざっていると、配るときに全部消す作業が要り、
-事業を増減するたびに器を触ることになる。
+business-os は公開 Plugin として配布し、友人にも使ってもらう。
+事業名・顧客名・数値が business-os に混ざっていると、配るときに全部消す作業が要り、
+事業を増減するたびに business-os を触ることになる。
 
 2026 年 5 月版の「固有名詞排除の原則」（汎用ファイルに事業名を書かない）を、
 一段押し進めて構造にする。
 
 ## 決定
 
-1. 器の全ファイル（Skills、hooks、templates、docs）に **固有名詞を一切書かない**。
+1. business-os の全ファイル（Skills、hooks、templates、docs）に **固有名詞を一切書かない**。
    「CEO」「事業」「顧客」などの汎用語だけを使う
 2. 事業情報は `/onboard` Skill の **インタビュー**で注入する
-   - CC が器の雛形を読み、会社概要・事業一覧・承認範囲・期限や義務・実装リポの場所・
+   - CC が business-os の雛形を読み、会社概要・事業一覧・承認範囲・期限や義務・実装リポの場所・
      KPI 候補・Obsidian 使用可否を順に質問する
    - 回答から `company/CLAUDE.md`、`docs/charter/*`、`docs/operations/obligations.md`、
      `.claude/settings.json`、（選択時）`docs/.obsidian/` を生成する
    - 利用者は Markdown を手で書かない。質問に答えるだけ
-3. 事業の追加・撤退も `/onboard` を再実行して行う。器は触らない
-4. 器リポには `check:leak` を置き、固有名詞と秘密の混入を 2 層で検出する
+3. 事業の追加・撤退も `/onboard` を再実行して行う。business-os は触らない
+4. business-os のリポには `check:leak` を置き、固有名詞と秘密の混入を 2 層で検出する
    - CI と公開：gitleaks と汎用パターン（メール、電話、法人接尾、通貨付き金額、私有ドメイン）。汎用パターンは warn
    - ローカル：`/onboard` が `company/.leak-dict.json`（gitignore）に固有名詞の辞書を書く。
-     `check:leak` は環境変数 `BUSINESS_OS_LEAK_DICT` が指す辞書があれば読み、器リポ内を検索する
-5. 器と事業データは **リポを分ける**（`business-os` と `company`）。Plugin を更新しても事業データは触られない
+     `check:leak` は環境変数 `BUSINESS_OS_LEAK_DICT` が指す辞書があれば読み、business-os のリポ内を検索する
+5. business-os と事業データは **リポを分ける**（`business-os` と `company`）。Plugin を更新しても事業データは触られない
 
 ## 根拠
 
@@ -50,10 +50,10 @@ supersedes: n/a
 
 ## 影響
 
-- `/onboard` は器の中核 Skill になる。質問項目の設計が器の品質を決める
-- 5 事業でも 3 事業でも同じ器で動く。事業数は `charter/businesses/` のファイル数で表現する
-- 友人が器を使うとき、その事業情報は友人自身の `company` リポに入る。器の作者には流れない
-- 器のバージョンが上がったとき、`/onboard --migrate` で雛形の差分を `company` に反映する経路が要る
+- `/onboard` は business-os の中核 Skill になる。質問項目の設計が business-os の品質を決める
+- 5 事業でも 3 事業でも同じ business-os で動く。事業数は `charter/businesses/` のファイル数で表現する
+- 友人が business-os を使うとき、その事業情報は友人自身の `company` リポに入る。business-os の作者には流れない
+- business-os のバージョンが上がったとき、`/onboard --migrate` で雛形の差分を `company` に反映する経路が要る
   （実装は 0.x の間に整える）
 
 ## 参考
