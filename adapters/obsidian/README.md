@@ -73,4 +73,3 @@ Windows 上で直接動かす構成では、Claude Code の sandbox（OS によ�
 
 - Windows での `winget` によるインストールで、UAC（管理者の確認）が出るかどうか。GitHub Actions の Windows（管理者権限）では、
   確認なしでインストールできることを確かめています
-- ダッシュボードの日付の比較（`verified < today() - "90d"` など）が、期待どおりに期限切れの文書を拾うかどうか

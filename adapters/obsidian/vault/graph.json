@@ -8,42 +8,42 @@
   "collapse-color-groups": true,
   "colorGroups": [
     {
-      "query": "path:charter",
+      "query": "path:charter/",
       "color": {
         "a": 1,
         "rgb": 14701138
       }
     },
     {
-      "query": "path:proposals",
+      "query": "path:proposals/",
       "color": {
         "a": 1,
         "rgb": 15105570
       }
     },
     {
-      "query": "path:decisions",
+      "query": "path:decisions/",
       "color": {
         "a": 1,
         "rgb": 10181046
       }
     },
     {
-      "query": "path:operations",
+      "query": "path:operations/",
       "color": {
         "a": 1,
         "rgb": 3447003
       }
     },
     {
-      "query": "path:knowledge",
+      "query": "path:knowledge/",
       "color": {
         "a": 1,
         "rgb": 3066993
       }
     },
     {
-      "query": "path:inbox",
+      "query": "path:inbox/",
       "color": {
         "a": 1,
         "rgb": 9807270
