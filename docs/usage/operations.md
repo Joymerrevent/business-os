@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-01
 as_of: n/a
 verified: n/a
 ---
@@ -72,6 +72,10 @@ CC が行う git 操作は commit と push だけです。
 器の安全装置が「存在するか」ではなく「効いているか」を試験します。
 結果は pass / warn / fail で `docs/operations/reviews/` に残ります。fail が出たら、
 表示された対処を先に済ませてください。安全装置が壊れた状態で運用を続けないためです。
+
+`/check` は、本物の Claude Code で安全装置が実際に動くかの試験（発火試験）もするか聞きます。
+試す場合は、CC が示す `!` から始まる 1 行を、入力欄でそのまま実行してください。
+あなたの会社のデータの一時的な複製で試すので、データそのものには触れません。利用枠を消費し、所要は数十秒です。
 
 ### `/retro`
 
@@ -173,7 +177,8 @@ Skill を先に設計しないでください。使ってから、繰り返し�
 
 ## 器の更新
 
-器は Plugin として更新されます。更新後、最初のセッションで
+器は Plugin として更新されます。新しい版を取り込むには `/plugin marketplace update business-os` を実行します
+（`/plugin` の「Marketplaces」で自動更新を有効にすることもできます）。更新後、最初のセッションで
 「器が更新されました。`/onboard --migrate` を実行してください」と表示されることがあります。
 雛形の差分をあなたの `company` に反映するためです。事業データは触りません。
 

@@ -63,6 +63,8 @@ describe("壊した器の一時コピー", () => {
       "SECURITY.md",
       "CODE_OF_CONDUCT.md",
       "LICENSE",
+      "CLAUDE.md",
+      "package.json",
     ]) {
       cpSync(join(repoRoot, file), join(root, file));
     }
