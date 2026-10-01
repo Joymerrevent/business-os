@@ -43,7 +43,7 @@ pre-commit は gitleaks で秘密を探します。gitleaks が入っていな�
 - [Conventional Commits](https://www.conventionalcommits.org/ja/v1.0.0/) に従います（commit-msg フックで検査）。
   subject は小文字か日本語で始めます
 - PR は `develop` 向けに作ります
-- 利用者に影響する変更には changeset を付けます（`pnpm changeset`）
+- 利用者に影響する変更には changeset を付けます（`pnpm changeset`）。`CHANGELOG.md` は changesets が作るので、手で編集しません
 - 公開済みのコミットの履歴を書き換えません
 
 ## ローカルでの動作確認

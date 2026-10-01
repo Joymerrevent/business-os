@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-01
 as_of: n/a
 verified: n/a
 ---
@@ -45,7 +45,7 @@ business-os は「何をやるべきか」を決めてくれません。決め�
 CC を起動して、次の 2 行を実行します。
 
 ```text
-/plugin marketplace add <owner>/business-os
+/plugin marketplace add Joymerrevent/business-os
 /plugin install business-os@business-os
 ```
 
@@ -115,10 +115,15 @@ company/
 
 ## Obsidian を使う場合（任意）
 
-`/onboard` で「使う」と答えると、CC が Obsidian の設定と、承認待ち・決定記録・事業別現況の
-ダッシュボードを用意します。Obsidian が未インストールなら、確認の上でインストールも行います。
+`/onboard` で「使う」と答えると、CC が Obsidian の設定と、承認待ち・決定記録・事業別現況・鮮度の
+ダッシュボード、メモと日報の雛形を用意します。Obsidian が未インストールなら、確認の上でインストールも行います。
 
-Obsidian で開く場所は `company/docs/` です。`company/` そのものではありません。
+`/onboard` が終わったら、Obsidian を起動し、最初の画面の「保管庫としてフォルダを開く」で `company/docs/` を選んでください。
+`company/` そのものではありません。
+
+- 新しいメモは `inbox/` にできます。テンプレートの挿入で `inbox-note` を入れると、必要な情報（フロントマター）が付きます
+- 今日の日報は、Obsidian の「今日のデイリーノートを開く」でも開けます。`/morning` は同じファイルに書き込みます
+- Windows でのインストール（winget）で管理者の確認が出るかは、この版ではまだ確かめていません
 
 Windows で Obsidian を使う場合は、下の「Windows で使う場合」を先に読んでください。
 
@@ -148,4 +153,4 @@ Obsidian を使いたい場合は、WSL を使わずに Windows 上で直接 CC 
 
 `/plugin uninstall business-os` で器は消えます。`company/` の中身は普通の Markdown なので、
 そのまま残り、どのエディタでも読めます。Obsidian を使っていた場合は `company/docs/.obsidian/` を
-消せば元に戻ります。
+消せば元に戻ります（`company/docs/dashboards/` と `company/docs/_templates/` も消して構いません）。
