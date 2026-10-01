@@ -12,6 +12,19 @@ company の文書（`company/docs/`）を Obsidian で読むための設定で�
 | `bases/*.base` | `docs/dashboards/` | ダッシュボード（承認待ちの提案、意思決定記録、事業別の現況、鮮度の期限切れ、レビュー） |
 | `templates/*.md` | `docs/_templates/` | 手で書くメモと日報の雛形。Obsidian のテンプレート機能と Daily Notes が使う |
 
+ダッシュボードの中身は次のとおりです。鮮度の期限は `/check` と同じです。
+
+| ダッシュボード | 出るもの |
+|---|---|
+| `proposals.base` | 承認待ち（proposed / approving）の提案と、全ての提案。`/approve` で処理する |
+| `decisions.base` | 意思決定記録を status ごとに |
+| `state.base` | 事業別の現況。`/weekly-review` が更新する |
+| `freshness.base` | 期限を超えた文書：憲章の最終確認から 90 日、現況の更新から 14 日、proposed のまま 30 日の意思決定記録、approving のままの提案 |
+| `reviews.base` | 週次・月次・四半期・振り返り・点検のレビュー。`as_of` は中身の数字・事実がいつ時点か |
+
+`vault/` と `bases/` のファイルは、Obsidian が保存し直す形（改行の位置など）にそろえてあります。
+Obsidian で開いても company の git に差分が出ないようにするためです。
+
 `docs/_templates/` の雛形には Obsidian の置き換え記号（`{{date:YYYY-MM-DD}}` など）が入るため、
 器の検査（書き込みのガードと `/check`）の対象から外しています。
 

@@ -696,7 +696,10 @@ export const checkAdapters = (root: string = pluginRoot()): CheckResult[] => {
     // order の項目と、比較の左辺に出てくるプロパティ名
     for (const match of text.matchAll(/^\s*-\s+([a-z_.]+)\s*$/gm))
       used.add(match[1] ?? "");
-    for (const match of text.matchAll(/'([a-z_.]+)\s*(?:==|!=|<|>|<=|>=)/g))
+    // 比較式は引用符で囲んでも囲まなくてもよい（Obsidian は保存し直すときに引用符を外す）
+    for (const match of text.matchAll(
+      /^\s*-\s+'?([a-z_.]+)\s*(?:==|!=|<=|>=|<|>)/gm,
+    ))
       used.add(match[1] ?? "");
     for (const match of text.matchAll(/property:\s*([a-z_.]+)/g))
       used.add(match[1] ?? "");

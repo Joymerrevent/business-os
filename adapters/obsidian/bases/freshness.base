@@ -1,13 +1,11 @@
-# 鮮度の期限を超えた文書。期限は /check と同じ（憲章の verified 90 日、現況の updated 14 日、
-# proposed の意思決定記録 30 日、approving の提案）
 views:
   - type: table
     name: 憲章（最終確認から 90 日超）
     filters:
       and:
         - file.inFolder("charter")
-        - 'verified != "n/a"'
-        - 'verified < today() - "90d"'
+        - verified != "n/a"
+        - verified < today() - "90d"
     order:
       - file.name
       - verified
@@ -17,7 +15,7 @@ views:
     filters:
       and:
         - file.inFolder("operations/state")
-        - 'updated < today() - "14d"'
+        - updated < today() - "14d"
     order:
       - file.name
       - business
@@ -27,8 +25,8 @@ views:
     filters:
       and:
         - file.inFolder("decisions")
-        - 'status == "proposed"'
-        - 'created < today() - "30d"'
+        - status == "proposed"
+        - created < today() - "30d"
     order:
       - file.name
       - status
@@ -38,7 +36,7 @@ views:
     filters:
       and:
         - file.inFolder("proposals")
-        - 'status == "approving"'
+        - status == "approving"
     order:
       - file.name
       - target

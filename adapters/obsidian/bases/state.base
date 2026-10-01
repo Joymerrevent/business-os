@@ -1,8 +1,7 @@
-# 事業別の現況。/weekly-review が更新する。14 日を超えて更新が無いものは freshness.base にも出る
 filters:
   and:
     - file.inFolder("operations/state")
-    - 'type == "state"'
+    - type == "state"
 views:
   - type: table
     name: 事業別の現況

@@ -5,5 +5,7 @@
   "newFileFolderPath": "inbox",
   "attachmentFolderPath": "inbox/attachments",
   "alwaysUpdateLinks": true,
-  "userIgnoreFilters": ["_templates/"]
+  "userIgnoreFilters": [
+    "_templates/"
+  ]
 }

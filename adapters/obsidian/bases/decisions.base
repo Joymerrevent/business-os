@@ -1,8 +1,7 @@
-# 意思決定記録（ADR）の一覧。proposed のまま 30 日を超えたものは freshness.base にも出る
 filters:
   and:
     - file.inFolder("decisions")
-    - 'type == "decision"'
+    - type == "decision"
 views:
   - type: table
     name: 意思決定記録

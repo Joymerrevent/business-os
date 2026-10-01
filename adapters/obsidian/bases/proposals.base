@@ -1,15 +1,14 @@
-# 提案の一覧。承認待ち（proposed / approving）を先に見る。/approve で処理する
 filters:
   and:
     - file.inFolder("proposals")
-    - 'type == "proposal"'
+    - type == "proposal"
 views:
   - type: table
     name: 承認待ち
     filters:
       or:
-        - 'status == "proposed"'
-        - 'status == "approving"'
+        - status == "proposed"
+        - status == "approving"
     order:
       - file.name
       - status
