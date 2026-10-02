@@ -3,11 +3,11 @@ id: 20261002-01
 title: 役割エージェントは同梱せず、主セッションを COO とする。作業は作業者へ委譲する
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-02
 updated: 2026-10-02
 as_of: n/a
-verified: n/a
+verified: 2026-10-02
 supersedes: n/a
 ---
 
