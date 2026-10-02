@@ -24,10 +24,14 @@ const levels = (results: ReturnType<typeof evaluateLive>) =>
   Object.fromEntries(results.map((r) => [r.name, r.level]));
 
 describe("evaluateLive", () => {
-  it("3 つとも止まれば全て pass", () => {
+  it("3 つとも止まれば、委譲の項目（warn）以外は全て pass", () => {
     const results = evaluateLive([write, rm, push], ok);
-    expect(results.every((r) => r.level === "pass")).toBe(true);
-    expect(results).toHaveLength(4);
+    expect(
+      results
+        .filter((r) => !r.name.startsWith("作業者"))
+        .every((r) => r.level === "pass"),
+    ).toBe(true);
+    expect(results).toHaveLength(5);
   });
 
   it("記録が 1 件も無ければ fail（hook が起動していない）", () => {
@@ -69,6 +73,35 @@ describe("evaluateLive", () => {
       levels(evaluateLive([write, rm, { ...push, decision: "allow" }], ok))[
         "force push（フラグが後ろ）を止める"
       ],
+    ).toBe("fail");
+  });
+});
+
+describe("作業者（worker）への委譲", () => {
+  const workerWrite = {
+    tool: "Write",
+    decision: "deny",
+    target: "/tmp/x/docs/knowledge/__live_probe_worker__.md",
+    agent: "business-os:worker",
+  };
+  const name = "作業者（worker）のツール呼び出しにも hook が発火する";
+
+  it("作業者の書き込みが止まれば pass（呼び出し元を記録する）", () => {
+    const results = evaluateLive([write, rm, push, workerWrite], ok);
+    const worker = results.find((r) => r.name === name);
+    expect(worker?.level).toBe("pass");
+    expect(worker?.detail).toContain("business-os:worker");
+  });
+
+  it("委譲されなければ warn、作業者の書き込みが通れば fail", () => {
+    expect(levels(evaluateLive([write, rm, push], ok))[name]).toBe("warn");
+    expect(
+      levels(
+        evaluateLive([write, rm, push, { ...workerWrite, decision: "allow" }], {
+          ...ok,
+          probeWorkerFileExists: true,
+        }),
+      )[name],
     ).toBe("fail");
   });
 });
