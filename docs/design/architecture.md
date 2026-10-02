@@ -65,6 +65,8 @@ business-os/
 ├── .github/
 │   ├── workflows/               # check + gitleaks + audit を Linux / Windows で
 │   └── ISSUE_TEMPLATE/          # 不具合 / 提案 / 環境情報
+├── agents/
+│   └── worker.md                # 作業者エージェント（sonnet、ファイルの読み書きと検索のみ）。COO から委譲される
 ├── skills/                      # 配布される経営基盤 Skill（10 個）
 │   ├── onboard/SKILL.md
 │   ├── approve/SKILL.md
@@ -117,10 +119,10 @@ business-os/
 
 | 配布物（Plugin に含まれる） | 開発物（business-os の開発にだけ使う） |
 |---|---|
-| `.claude-plugin/` `skills/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `test/` `docs/` 設定ファイル群 |
+| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `test/` `docs/` 設定ファイル群 |
 
 配布専用 Skill は `skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
-役割エージェント（サブエージェントの定義）は含めず、`agents/` を置かない（ADR 20261002-01）。
+`agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
 business-os の開発リポジトリでは sandbox を使わない。sandbox で守るのは、business-os を入れて運用する company の側。
 開発では `gh` の認証、`.claude/` を含むブランチの切り替え、`claude -p` での実機の試験、コミットへの署名を sandbox が妨げるため。
 
@@ -250,8 +252,14 @@ business-os を改良する CC と、貢献する人向け。配布物と開発�
 - 全 Skill の出力は統一フロントマター（第 9 節）を持つ
 - 全 Skill は実行記録を当日の `operations/daily/` に 1 行追記する（`/retro` が実行回数を数える）
 - `/approve` は本セッションで動かす。`context: fork` の中では AskUserQuestion が使えず、承認の質問ができないため
-- `/quarterly` `/retro` は分析だけを `context: fork` に分離し、人への質問と書き込みは本セッションに戻して行う
-  （fork の既定はバックグラウンド実行で、その編集は `/rewind` で戻せないため）
+- `/quarterly` `/retro` は分析を作業者 `worker`（Agent ツール、`business-os:worker`）に委譲し、人への質問と書き込みは本セッションで行う。
+  `context: fork` は使わない（質問ができず、既定のバックグラウンド実行では編集を `/rewind` で戻せないため）
+- 主セッションは COO として、人との対話を含まない大きな作業を作業者に委譲する（ADR 20261002-01）。絶対ルールにはしない
+
+| COO（主セッション）が自分で行う | 作業者 `worker` に委譲する |
+|---|---|
+| 人との対話を含むもの（質問、承認、確認）、1〜2 ファイルの小さな読み書き、判断そのもの | 多数のファイルの読み込みと要約、調査、下書きの大量の生成、並列にできる独立した作業 |
+
 - SKILL.md の `description` は日本語でよい。`name` はフォルダ名と一致させる
 - Skill 本文は「何をするか」「何を読むか」「何を書くか」「人に何を聞くか」「完了条件」の順で書く
 
@@ -260,6 +268,7 @@ business-os を改良する CC と、貢献する人向け。配布物と開発�
 事業固有の Skill は `company/.claude/skills/` に置く。business-os の更新で消えない。
 `/retro` が「同じ依頼が 2 回あった」を検出して Skill 化を提案し、月次で使われていないものを剪定提案する。
 役割エージェントも同じく `company/.claude/agents/` で育て、事業非依存と分かったものだけを ADR を経て business-os に昇格させる（20261002-01）。
+COO（主セッション）が `/retro` で「同じ視点のレビューを 2 回頼んだ」を検出して提案する。
 
 ### 6.4 周期 Skill の起動
 
@@ -356,6 +365,8 @@ hook は入力の `cwd` から上位へ辿り、`.business-os.json` のあるデ
 
 拒否は exit 2、確認は JSON 出力の `hookSpecificOutput.permissionDecision: "ask"` で返す。
 どちらも auto mode で効くことを確認済み（第 11 節）。
+
+hook は作業者（サブエージェント）のツール呼び出しにも、主の会話と同じく発火する（公式の仕様）。
 
 全判定を `company/.claude/hook-log-YYYYMM.jsonl` に 1 行ずつ記録する（月次でファイルを分ける。gitignore）。
 
