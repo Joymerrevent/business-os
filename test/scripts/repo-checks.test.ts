@@ -14,6 +14,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   checkAdapters,
+  checkAgents,
   checkAdrIndex,
   checkDocs,
   checkHooks,
@@ -37,6 +38,7 @@ describe("実際の business-os", () => {
     ["adr", checkAdrIndex],
     ["usage", checkUsage],
     ["adapters", checkAdapters],
+    ["agents", checkAgents],
   ] as [string, Check][])("%s に fail が無い", (_, check) => {
     expect(failsOf(check)).toEqual([]);
   });
@@ -48,6 +50,7 @@ describe("壊した business-os の一時コピー", () => {
     root = mkdtempSync(join(tmpdir(), "business-os-repo-"));
     for (const dir of [
       "skills",
+      "agents",
       "adapters",
       "hooks",
       "templates",
@@ -103,6 +106,22 @@ describe("壊した business-os の一時コピー", () => {
     const fails = failsOf(checkAdapters, root).map((r) => r.name);
     expect(fails).toContain("adapters/obsidian/bases/state.base");
     expect(fails).toContain("adapters/obsidian/vault/app.json");
+  });
+
+  it("作業者に Bash を持たせる・版番号でモデルを書く・役割エージェントを同梱すると fail", () => {
+    edit(
+      "agents/worker.md",
+      "tools: Read, Grep, Glob, Write, Edit",
+      "tools: Read, Grep, Glob, Write, Edit, Bash",
+    );
+    edit("agents/worker.md", "model: sonnet", "model: claude-sonnet-5");
+    writeFileSync(
+      join(root, "agents", "cfo.md"),
+      "---\nname: cfo\ndescription: x\nmodel: opus\ntools: Read\n---\n",
+    );
+    const fails = failsOf(checkAgents, root);
+    expect(fails.map((r) => r.name)).toContain("agents/worker.md");
+    expect(fails.map((r) => r.name)).toContain("agents/");
   });
 
   it("Skill の節が欠けると fail", () => {
