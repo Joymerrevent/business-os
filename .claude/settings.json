@@ -13,29 +13,5 @@
       "Bash(git push --no-verify:*)"
     ],
     "ask": ["Bash(gh pr merge:*)", "Bash(gh release create:*)"]
-  },
-  "sandbox": {
-    "enabled": true,
-    "allowUnsandboxedCommands": false,
-    "excludedCommands": ["gh", "gh *"],
-    "filesystem": {
-      "denyRead": ["./.env", "./.env.*", "~/.ssh", "~/.aws"],
-      "allowWrite": [
-        "~/.npm",
-        "~/Library/pnpm",
-        "~/Library/Caches/pnpm",
-        "~/.local/share/pnpm",
-        "~/.cache/pnpm"
-      ]
-    },
-    "network": {
-      "allowedDomains": [
-        "registry.npmjs.org",
-        "github.com",
-        "api.github.com",
-        "codeload.github.com",
-        "objects.githubusercontent.com"
-      ]
-    }
   }
 }

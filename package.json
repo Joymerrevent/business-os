@@ -26,6 +26,7 @@
     "check:types": "tsc --noEmit",
     "check:test": "vitest run",
     "check:skills": "node scripts/check-repo.ts skills",
+    "check:agents": "node scripts/check-repo.ts agents",
     "check:hooks": "node scripts/check-repo.ts hooks",
     "check:plugin": "node scripts/check-repo.ts plugin",
     "check:templates": "node scripts/check-repo.ts templates",

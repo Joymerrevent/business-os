@@ -515,6 +515,26 @@ describe("hook 自身の例外（fail-closed）", () => {
 describe("ログ", () => {
   beforeEach(() => ({ root, cleanup } = makeCompany()));
 
+  it("作業者（サブエージェント）からの呼び出しは、呼び出し元を記録する", () => {
+    runHook("pre-tool-use", {
+      ...toolInput(root, "Write", {
+        file_path: join(root, "docs/knowledge/x.md"),
+        content: "# 本文だけ\n",
+      }),
+      agent_type: "business-os:worker",
+    });
+    const file = readdirSync(join(root, ".claude")).find((f) =>
+      f.startsWith("hook-log-"),
+    );
+    const entry = JSON.parse(
+      readFileSync(join(root, ".claude", file ?? ""), "utf8")
+        .trim()
+        .split("\n")[0] ?? "{}",
+    ) as { decision: string; agent?: string };
+    expect(entry.decision).toBe("deny");
+    expect(entry.agent).toBe("business-os:worker");
+  });
+
   it("判定を月次のファイルに 1 行ずつ記録する", () => {
     write("docs/charter/repositories.md", validDoc("charter"));
     bash("git status");
