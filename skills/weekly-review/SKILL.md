@@ -1,0 +1,54 @@
+---
+name: weekly-review
+description: 今週の日報と事業別の現況から、今週の実績・事業ごとの時間配分・来週の重点を整理し、現況を更新する。週末に使う。
+disable-model-invocation: true
+---
+
+# /weekly-review
+
+## 何をするか
+
+今週（月曜〜日曜）を振り返り、週次レビュー `docs/operations/reviews/weekly-YYYY-Www.md` を書く。
+あわせて事業別の現況 `docs/operations/state/<事業 ID>.md` を今週の内容で更新する。
+
+## 何を読むか
+
+1. `${CLAUDE_SKILL_DIR}/../../templates/skill-conventions.md`（共通規約。最初に必ず読む）
+2. `${CLAUDE_SKILL_DIR}/../../templates/operations/reviews/weekly.md`（雛形）
+3. 今週の日報 `docs/operations/daily/`（月曜〜今日）
+4. `docs/operations/state/*.md`（事業別の現況）
+5. `docs/decisions/` のうち今週作られたもの
+6. `docs/operations/obligations.md`（来週の期限）
+7. `docs/charter/company.md`（会社の優先順位）
+
+## 手順
+
+1. 今日の日付から、対象の週（ISO 週番号 `YYYY-Www`、月曜〜日曜）を決める
+2. 日報と意思決定記録から、今週の実績を事業ごとに箇条書きで案にする。日報が少ない週は「記録が少ない」と明記する
+3. 事業ごとに使った時間を聞く（おおよそでよい。「わからない」も可）
+4. 来週の重点を聞く。CC は来週の期限と現況の「詰まり」から候補を挙げる
+5. 事業別の現況（動いているもの・待ち・詰まり）の更新案を示し、了承を得て書く。`updated` と `as_of` を今日にする
+6. 来週の重点が、憲章の優先順位（`docs/charter/company.md`）の変更にあたるなら、提案を書き `/approve` を案内する。
+   あたらなければレビューに書くだけでよい
+7. 週次レビューを雛形から書き出す（既にあれば `updated` を今日にして内容を更新する。`created` は変えない）
+
+## 何を書くか
+
+- `docs/operations/reviews/weekly-YYYY-Www.md`
+- `docs/operations/state/<事業 ID>.md`
+- 優先順位の変更にあたるときは提案（`docs/proposals/`）
+- 日報への実行記録（例：`- 19:00 /weekly-review — 2026-W40、現況 2 件を更新`）
+
+## 人に何を聞くか
+
+- 事業ごとの時間配分（おおよそ）
+- 来週の重点
+- 現況の更新案でよいか
+- 最後にコミットしてよいか
+
+## 完了条件
+
+- 週次レビューが書き出され、`as_of` が対象の週の最終日（または今日）になっている
+- 全事業の現況の `updated` が今日になっている（変化が無い事業も「変化なし」と確かめて更新する）
+- 優先順位の変更は提案になっている（憲章を直接書いていない）
+- 日報に実行記録が 1 行ある

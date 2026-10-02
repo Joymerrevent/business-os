@@ -1,0 +1,13 @@
+filters:
+  and:
+    - file.inFolder("operations/state")
+    - type == "state"
+views:
+  - type: table
+    name: 事業別の現況
+    order:
+      - file.name
+      - business
+      - status
+      - updated
+      - as_of

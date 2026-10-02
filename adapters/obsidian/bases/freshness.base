@@ -1,0 +1,43 @@
+views:
+  - type: table
+    name: 憲章（最終確認から 90 日超）
+    filters:
+      and:
+        - file.inFolder("charter")
+        - verified != "n/a"
+        - verified < today() - "90d"
+    order:
+      - file.name
+      - verified
+      - updated
+  - type: table
+    name: 事業別の現況（更新から 14 日超）
+    filters:
+      and:
+        - file.inFolder("operations/state")
+        - updated < today() - "14d"
+    order:
+      - file.name
+      - business
+      - updated
+  - type: table
+    name: 意思決定記録（proposed のまま 30 日超）
+    filters:
+      and:
+        - file.inFolder("decisions")
+        - status == "proposed"
+        - created < today() - "30d"
+    order:
+      - file.name
+      - status
+      - created
+  - type: table
+    name: 提案（approving のまま）
+    filters:
+      and:
+        - file.inFolder("proposals")
+        - status == "approving"
+    order:
+      - file.name
+      - target
+      - updated

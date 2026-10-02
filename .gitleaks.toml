@@ -1,0 +1,10 @@
+# gitleaks の設定。既定の規則をそのまま使い、検証用の偽データだけを許可する。
+# 固有名詞（事業名・人名）の検出は gitleaks ではなく check:leak が担う。
+title = "business-os"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "hook と検査のテストに使う合成データ"
+paths = ['''^test/fixtures/''']

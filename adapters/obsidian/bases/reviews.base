@@ -1,0 +1,12 @@
+filters:
+  and:
+    - file.inFolder("operations/reviews")
+    - type == "review"
+views:
+  - type: table
+    name: レビュー
+    order:
+      - file.name
+      - created
+      - as_of
+      - updated

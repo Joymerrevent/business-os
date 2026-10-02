@@ -1,0 +1,15 @@
+# 依存・ロックファイル
+node_modules
+coverage
+pnpm-lock.yaml
+
+# Markdown は markdownlint が見る。Prettier で整形すると日本語の表や文書が大きく書き換わるため対象外
+*.md
+
+# changesets が管理するファイル
+.changeset
+
+# Obsidian アダプタ。Obsidian が保存し直す形（改行の位置、末尾の改行なし）にそろえてあり、
+# 整形すると利用者が Obsidian を開くたびに company の git に差分が出る
+adapters/obsidian/vault
+adapters/obsidian/bases

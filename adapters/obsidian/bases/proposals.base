@@ -1,0 +1,29 @@
+filters:
+  and:
+    - file.inFolder("proposals")
+    - type == "proposal"
+views:
+  - type: table
+    name: 承認待ち
+    filters:
+      or:
+        - status == "proposed"
+        - status == "approving"
+    order:
+      - file.name
+      - status
+      - target
+      - business
+      - created
+      - updated
+  - type: table
+    name: 全ての提案
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - file.name
+      - status
+      - target
+      - business
+      - updated

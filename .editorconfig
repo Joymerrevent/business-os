@@ -1,0 +1,18 @@
+# EditorConfig（エディタ間の整形の土台を揃える） https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+# Markdown の行末スペースは改行の意味を持つため、末尾空白の除去はしない
+trim_trailing_whitespace = false
+
+[adapters/obsidian/{vault,bases}/**]
+# Obsidian が保存し直す形にそろえる（末尾に改行を足さない）
+insert_final_newline = false

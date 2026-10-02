@@ -1,0 +1,880 @@
+// business-os 自身の検査。package.json の check:* から scripts/check-repo.ts 経由で呼ぶ。
+// 検査の一覧の正典は package.json。この文書やほかの文書に一覧を書き写さない。
+import { spawnSync } from "node:child_process";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join, relative, resolve, sep } from "node:path";
+import { parseFrontmatter } from "../../hooks/lib/frontmatter.ts";
+import {
+  FOUNDATION_SKILLS,
+  frontmatterSchema,
+  pluginRoot,
+} from "../../hooks/lib/plugin.ts";
+import { validate } from "../../hooks/lib/schema.ts";
+import type { CheckResult, Level } from "./company-checks.ts";
+import { manifestVersion, packageVersion } from "./version.ts";
+
+const result = (
+  category: string,
+  name: string,
+  level: Level,
+  detail = "",
+): CheckResult => ({ category, name, level, detail });
+
+const rel = (root: string, path: string): string =>
+  relative(root, path).split(sep).join("/");
+
+const walk = (dir: string, predicate: (path: string) => boolean): string[] => {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).flatMap((name) => {
+    if (name === "node_modules" || name === ".git") return [];
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return walk(path, predicate);
+    return predicate(path) ? [path] : [];
+  });
+};
+
+/** git が追跡しているファイル（リポジトリのルートからの相対パス） */
+const trackedFiles = (root: string): string[] => {
+  const run = spawnSync("git", ["ls-files", "-z"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  if (run.status !== 0) throw new Error("git ls-files を実行できません");
+  return run.stdout.split("\0").filter((f) => f !== "");
+};
+
+// ---- Skill ----
+
+const SKILL_SECTIONS = [
+  "## 何をするか",
+  "## 何を読むか",
+  "## 何を書くか",
+  "## 人に何を聞くか",
+  "## 完了条件",
+];
+
+export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "Skill";
+  const results: CheckResult[] = [];
+  const dirs = readdirSync(join(root, "skills")).filter((name) =>
+    statSync(join(root, "skills", name)).isDirectory(),
+  );
+  const expected = new Set<string>(FOUNDATION_SKILLS);
+  const extra = dirs.filter((name) => !expected.has(name));
+  const missing = FOUNDATION_SKILLS.filter((name) => !dirs.includes(name));
+  if (extra.length > 0 || missing.length > 0) {
+    results.push(
+      result(
+        category,
+        "business-os の Skill は 10 個で固定",
+        "fail",
+        [
+          missing.length > 0 ? `無い：${missing.join(", ")}` : "",
+          extra.length > 0 ? `余分（増やすなら ADR）：${extra.join(", ")}` : "",
+        ]
+          .filter((s) => s !== "")
+          .join("、"),
+      ),
+    );
+  }
+  for (const name of FOUNDATION_SKILLS) {
+    const path = join(root, "skills", name, "SKILL.md");
+    if (!existsSync(path)) continue;
+    const text = readFileSync(path, "utf8");
+    const problems: string[] = [];
+    const fm = parseFrontmatter(text);
+    if (fm === undefined) problems.push("フロントマターが無い");
+    else {
+      if (fm.data["name"] !== name)
+        problems.push(`name（${fm.data["name"] ?? "なし"}）がフォルダ名と違う`);
+      if (!fm.data["description"]) problems.push("description が無い");
+      if (fm.data["disable-model-invocation"] !== "true")
+        problems.push("disable-model-invocation: true が無い");
+    }
+    let last = -1;
+    for (const section of SKILL_SECTIONS) {
+      const index = text.indexOf(`\n${section}\n`);
+      if (index < 0) problems.push(`「${section.slice(3)}」の節が無い`);
+      else if (index < last)
+        problems.push(`「${section.slice(3)}」の節の順番が違う`);
+      else last = index;
+    }
+    results.push(
+      problems.length === 0
+        ? result(category, `skills/${name}`, "pass")
+        : result(category, `skills/${name}`, "fail", problems.join("、")),
+    );
+  }
+  return results;
+};
+
+// ---- hook ----
+
+export const checkHooks = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "hook";
+  const text = readFileSync(join(root, "hooks", "hooks.json"), "utf8");
+  const config = JSON.parse(text) as {
+    hooks?: Record<
+      string,
+      { matcher?: string; hooks?: { command?: string }[] }[]
+    >;
+  };
+  const results: CheckResult[] = [];
+  const commands = Object.values(config.hooks ?? {}).flatMap((groups) =>
+    groups.flatMap((group) =>
+      (group.hooks ?? []).map((hook) => hook.command ?? ""),
+    ),
+  );
+  for (const command of commands) {
+    const match = /"\$\{CLAUDE_PLUGIN_ROOT\}\/([^"]+)"/.exec(command);
+    if (match === null) {
+      results.push(
+        result(
+          category,
+          command,
+          "fail",
+          'パスを "${CLAUDE_PLUGIN_ROOT}/…" の形（二重引用符つき）で書いていません',
+        ),
+      );
+      continue;
+    }
+    const script = match[1] ?? "";
+    results.push(
+      existsSync(join(root, script))
+        ? result(category, script, "pass")
+        : result(
+            category,
+            script,
+            "fail",
+            "hooks.json が指すスクリプトがありません",
+          ),
+    );
+  }
+  const matcher = (config.hooks?.["PreToolUse"] ?? [])
+    .map((group) => group.matcher ?? "")
+    .join("|");
+  const tools = matcher.split("|");
+  const missingTools = ["Write", "Edit", "Bash", "PowerShell"].filter(
+    (tool) => !tools.includes(tool),
+  );
+  results.push(
+    missingTools.length === 0
+      ? result(category, "PreToolUse の対象ツール", "pass")
+      : result(
+          category,
+          "PreToolUse の対象ツール",
+          "fail",
+          `matcher に無い：${missingTools.join(", ")}`,
+        ),
+  );
+  if (!config.hooks?.["SessionStart"]) {
+    results.push(
+      result(
+        category,
+        "SessionStart",
+        "fail",
+        "軽い点検の hook が登録されていません",
+      ),
+    );
+  }
+  return results;
+};
+
+// ---- Plugin ----
+
+export const checkPlugin = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "Plugin";
+  return [".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"].map(
+    (file) => {
+      const run = spawnSync(
+        "claude",
+        ["plugin", "validate", join(root, file)],
+        {
+          encoding: "utf8",
+          shell: process.platform === "win32",
+        },
+      );
+      if (run.error !== undefined) {
+        return result(
+          category,
+          file,
+          "warn",
+          "claude コマンドがありません（CI は @anthropic-ai/claude-code を入れて実行します）",
+        );
+      }
+      const output = `${run.stdout}${run.stderr}`.trim();
+      if (run.status === 0) return result(category, file, "pass");
+      if (/log ?in|auth|credential|api key/i.test(output)) {
+        return result(
+          category,
+          file,
+          "warn",
+          `認証が必要で実行できませんでした：${output.split("\n").slice(-1)[0] ?? ""}`,
+        );
+      }
+      return result(
+        category,
+        file,
+        "fail",
+        output.split("\n").slice(-3).join(" "),
+      );
+    },
+  );
+};
+
+// ---- 雛形 ----
+
+const VARIABLE = /\{\{ ([a-z_]+) \}\}/g;
+
+/** 変数の名前から、スキーマに合う見本の値を決める */
+const sampleValue = (name: string): string => {
+  if (
+    /(^|_)(date|at|today|as_of|due|start|end)$/.test(name) ||
+    name === "as_of"
+  )
+    return "2026-01-01";
+  if (name === "business_id") return "biz-a";
+  if (name === "business") return "portfolio";
+  if (name === "proposal_id" || name === "decision_id") return "20260101-01";
+  if (name === "target") return "docs/charter/company.md";
+  if (name === "plugin_version") return "0.1.0";
+  return "見本";
+};
+
+export const checkTemplates = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "雛形";
+  const results: CheckResult[] = [];
+  const dir = join(root, "templates");
+  const readme = readFileSync(join(dir, "README.md"), "utf8");
+  const documented = new Set(
+    [...readme.matchAll(/`([a-z_]+)`/g)].map((m) => m[1] ?? ""),
+  );
+  const schema = frontmatterSchema();
+  const files = walk(
+    dir,
+    (path) =>
+      !path.endsWith(`${sep}README.md`) &&
+      !path.endsWith("skill-conventions.md") &&
+      !path.endsWith(".schema.json"),
+  );
+  for (const file of files) {
+    const text = readFileSync(file, "utf8");
+    const problems: string[] = [];
+    const variables = [...text.matchAll(VARIABLE)].map((m) => m[1] ?? "");
+    const undocumented = [
+      ...new Set(variables.filter((v) => !documented.has(v))),
+    ];
+    if (undocumented.length > 0)
+      problems.push(
+        `templates/README.md に無い変数：${undocumented.join(", ")}`,
+      );
+    const filled = text.replace(VARIABLE, (_, name: string) =>
+      sampleValue(name),
+    );
+    if (filled.includes("{{") || filled.includes("}}"))
+      problems.push("変数の書き方が {{ snake_case }} になっていない箇所がある");
+    if (file.endsWith(".json") || file.endsWith(".json.tmpl")) {
+      try {
+        JSON.parse(filled);
+      } catch (error) {
+        problems.push(
+          `見本の値を入れると JSON として読めない：${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+    if (file.endsWith(".md")) {
+      const fm = parseFrontmatter(filled);
+      if (fm === undefined) problems.push("フロントマターが無い");
+      else {
+        const errors = [...new Set(validate(schema, schema, fm.data))];
+        if (errors.length > 0)
+          problems.push(
+            `見本の値を入れるとスキーマに合わない：${errors.join("、")}`,
+          );
+      }
+    }
+    results.push(
+      problems.length === 0
+        ? result(category, rel(root, file), "pass")
+        : result(category, rel(root, file), "fail", problems.join("、")),
+    );
+  }
+  return results;
+};
+
+// ---- 漏洩 ----
+
+const ALLOWED_EMAILS = new Set([
+  "noreply@anthropic.com",
+  "conduct@joymerrevent.com",
+]);
+const ALLOWED_HOSTS = [
+  "github.com",
+  "raw.githubusercontent.com",
+  "joymerrevent.com",
+  "claude.com",
+  "code.claude.com",
+  "docs.claude.com",
+  "anthropic.com",
+  "contributor-covenant.org",
+  "conventionalcommits.org",
+  "json.schemastore.org",
+  "json-schema.org",
+  "unpkg.com",
+  "editorconfig.org",
+  "localhost",
+];
+const hostAllowed = (host: string): boolean =>
+  ALLOWED_HOSTS.some(
+    (allowed) => host === allowed || host.endsWith(`.${allowed}`),
+  );
+
+type Pattern = {
+  name: string;
+  regex: RegExp;
+  ignore?: (match: string) => boolean;
+};
+const PATTERNS: Pattern[] = [
+  {
+    name: "メールアドレス",
+    regex: /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g,
+    ignore: (m) =>
+      ALLOWED_EMAILS.has(m.toLowerCase()) ||
+      m.endsWith("@users.noreply.github.com"),
+  },
+  {
+    name: "電話番号",
+    regex: /(?<![\d-])(?:\+81[- ]?|0)\d{1,4}-\d{1,4}-\d{3,4}(?![\d-])/g,
+  },
+  {
+    name: "法人格",
+    regex: /株式会社|有限会社|合同会社|一般社団法人|一般財団法人/g,
+  },
+  {
+    name: "通貨付きの金額",
+    regex: /[¥￥]\s?\d|\d[\d,.]*\s?円|\$\s?\d[\d,]{2,}/g,
+  },
+  {
+    name: "許可リストに無いドメイン",
+    regex: /https?:\/\/([A-Za-z0-9.-]+)/g,
+    ignore: (m) => hostAllowed(m.replace(/^https?:\/\//, "").toLowerCase()),
+  },
+];
+
+/** 検査の対象外（生成物・ロックファイル・この検査の定義そのもの） */
+const LEAK_SKIP = [
+  /^pnpm-lock\.yaml$/,
+  /^CHANGELOG\.md$/,
+  /^\.changeset\//,
+  /^scripts\/lib\/repo-checks\.ts$/,
+  /^test\//,
+];
+
+export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "漏洩";
+  const results: CheckResult[] = [];
+  const files = trackedFiles(root).filter(
+    (file) => !LEAK_SKIP.some((skip) => skip.test(file)),
+  );
+  const texts = files.flatMap((file) => {
+    const path = join(root, file);
+    if (!existsSync(path)) return [];
+    const text = readFileSync(path, "utf8");
+    return text.includes("\0") ? [] : [{ file, text }];
+  });
+
+  // 1. gitleaks（履歴を含む）
+  const leaks = spawnSync(
+    "gitleaks",
+    ["git", "--no-banner", "--redact", "--exit-code", "1"],
+    { cwd: root, encoding: "utf8" },
+  );
+  if (leaks.error !== undefined)
+    results.push(
+      result(
+        category,
+        "gitleaks",
+        "warn",
+        "gitleaks がありません（macOS は brew install gitleaks）",
+      ),
+    );
+  else if (leaks.status === 0)
+    results.push(result(category, "gitleaks", "pass"));
+  else if (leaks.status === 1)
+    results.push(
+      result(
+        category,
+        "gitleaks",
+        "fail",
+        "秘密らしき文字列があります。gitleaks git を手で実行して確かめてください",
+      ),
+    );
+  else
+    results.push(
+      result(
+        category,
+        "gitleaks",
+        "fail",
+        `gitleaks を実行できませんでした：${leaks.stderr.trim().split("\n").slice(-1)[0] ?? ""}`,
+      ),
+    );
+
+  // 2. 固有名詞の辞書（手元のみ。company の /onboard が .leak-dict.json を書く）
+  const dictPath = process.env["BUSINESS_OS_LEAK_DICT"];
+  if (dictPath === undefined || dictPath === "") {
+    results.push(
+      result(
+        category,
+        "固有名詞の辞書",
+        "pass",
+        "BUSINESS_OS_LEAK_DICT が未設定のため辞書の検索はしていません",
+      ),
+    );
+  } else {
+    const dict = JSON.parse(readFileSync(resolve(dictPath), "utf8")) as {
+      terms?: unknown;
+    };
+    const terms = Array.isArray(dict.terms)
+      ? dict.terms.filter(
+          (t): t is string => typeof t === "string" && t.trim().length >= 2,
+        )
+      : [];
+    const hits: string[] = [];
+    for (const { file, text } of texts) {
+      const lower = text.toLowerCase();
+      for (const term of terms) {
+        if (lower.includes(term.toLowerCase()))
+          hits.push(`${file}（${term.length} 文字の語）`);
+      }
+    }
+    results.push(
+      hits.length === 0
+        ? result(category, "固有名詞の辞書", "pass", `${terms.length} 語を検索`)
+        : result(
+            category,
+            "固有名詞の辞書",
+            "fail",
+            `辞書の語が見つかりました：${[...new Set(hits)].join(", ")}`,
+          ),
+    );
+  }
+
+  // 3. 汎用のパターン（warn）
+  for (const pattern of PATTERNS) {
+    const found: string[] = [];
+    for (const { file, text } of texts) {
+      for (const match of text.matchAll(pattern.regex)) {
+        if (pattern.ignore?.(match[0]) === true) continue;
+        const line = text.slice(0, match.index).split("\n").length;
+        found.push(`${file}:${line}`);
+      }
+    }
+    results.push(
+      found.length === 0
+        ? result(category, pattern.name, "pass")
+        : result(
+            category,
+            pattern.name,
+            "warn",
+            `${found.length} 件（${found.slice(0, 5).join(", ")}${found.length > 5 ? " ほか" : ""}）。事業情報でないか確かめてください`,
+          ),
+    );
+  }
+  return results;
+};
+
+// ---- 文書（フロントマターとリンク） ----
+
+export const checkDocs = (root: string = pluginRoot()): CheckResult[] => {
+  const results: CheckResult[] = [];
+  const schema = frontmatterSchema();
+  // フロントマターを持つのは ADR と構造仕様だけ（利用者向けの docs/usage/ と入口の docs/README.md は持たない）
+  const withFrontmatter = [
+    ...walk(join(root, "docs", "adr"), (path) => path.endsWith(".md")),
+    ...walk(join(root, "docs", "design"), (path) => path.endsWith(".md")),
+  ];
+  for (const file of withFrontmatter) {
+    const path = rel(root, file);
+    const problems: string[] = [];
+    const fm = parseFrontmatter(readFileSync(file, "utf8"));
+    if (fm === undefined) problems.push("フロントマターがありません");
+    else {
+      problems.push(...new Set(validate(schema, schema, fm.data)));
+      const { created, updated, id } = fm.data;
+      if (created !== undefined && updated !== undefined && updated < created)
+        problems.push("updated が created より前です");
+      const name = path.split("/").pop() ?? "";
+      if (
+        path.startsWith("docs/adr/2") &&
+        (id === undefined || !name.startsWith(`${id}-`))
+      ) {
+        problems.push(`id（${id ?? "なし"}）がファイル名の先頭と一致しません`);
+      }
+    }
+    results.push(
+      problems.length === 0
+        ? result("文書", path, "pass")
+        : result("文書", path, "fail", problems.join("、")),
+    );
+  }
+  const broken: string[] = [];
+  const markdown = trackedFiles(root).filter(
+    (file) =>
+      file.endsWith(".md") && !/^(CHANGELOG\.md|\.changeset\/)/.test(file),
+  );
+  for (const file of markdown) {
+    const path = join(root, file);
+    if (!existsSync(path)) continue;
+    const text = readFileSync(path, "utf8")
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`[^`\n]*`/g, "");
+    for (const match of text.matchAll(
+      /(?<!!)\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g,
+    )) {
+      const target = match[1] ?? "";
+      if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith("#"))
+        continue;
+      const linkPath = decodeURIComponent(target.split("#")[0] ?? "");
+      if (linkPath !== "" && !existsSync(resolve(dirname(path), linkPath)))
+        broken.push(`${file} → ${target}`);
+    }
+  }
+  results.push(
+    broken.length === 0
+      ? result("文書", "相対リンク", "pass", `${markdown.length} 本`)
+      : result(
+          "文書",
+          "相対リンク",
+          "fail",
+          `リンク先がありません：${broken.join(", ")}`,
+        ),
+  );
+  return results;
+};
+
+// ---- ADR の一覧 ----
+
+type AdrEntry = { id: string; title: string; status: string };
+
+const adrFiles = (root: string): AdrEntry[] =>
+  walk(join(root, "docs", "adr"), (path) =>
+    /[\\/]\d{8}-\d{2}-[^\\/]+\.md$/.test(path),
+  ).map((file) => {
+    const fm = parseFrontmatter(readFileSync(file, "utf8"));
+    return {
+      id: fm?.data["id"] ?? "",
+      title: fm?.data["title"] ?? "",
+      status: fm?.data["status"] ?? "",
+    };
+  });
+
+export const checkAdrIndex = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "ADR";
+  const readme = readFileSync(join(root, "docs", "adr", "README.md"), "utf8");
+  const section = readme.split(/\n## 一覧\n/)[1] ?? "";
+  const listed = new Map<string, AdrEntry>();
+  for (const line of section.split("\n")) {
+    const cells = line.split("|").map((cell) => cell.trim());
+    if (cells.length >= 5 && /^\d{8}-\d{2}$/.test(cells[1] ?? "")) {
+      listed.set(cells[1] ?? "", {
+        id: cells[1] ?? "",
+        title: cells[2] ?? "",
+        status: cells[3] ?? "",
+      });
+    }
+  }
+  const problems: string[] = [];
+  const files = adrFiles(root);
+  for (const file of files) {
+    const entry = listed.get(file.id);
+    if (entry === undefined) problems.push(`${file.id} が一覧にありません`);
+    else {
+      if (entry.title !== file.title)
+        problems.push(
+          `${file.id} の題が違います（一覧「${entry.title}」、ファイル「${file.title}」）`,
+        );
+      if (entry.status !== file.status)
+        problems.push(
+          `${file.id} の status が違います（一覧 ${entry.status}、ファイル ${file.status}）`,
+        );
+    }
+  }
+  for (const id of listed.keys()) {
+    if (!files.some((file) => file.id === id))
+      problems.push(`一覧の ${id} に対応するファイルがありません`);
+  }
+  return [
+    problems.length === 0
+      ? result(
+          category,
+          "docs/adr/README.md の一覧",
+          "pass",
+          `${files.length} 本`,
+        )
+      : result(
+          category,
+          "docs/adr/README.md の一覧",
+          "fail",
+          problems.join("、"),
+        ),
+  ];
+};
+
+// ---- 利用者向け文書 ----
+
+export const checkUsage = (root: string = pluginRoot()): CheckResult[] => {
+  const ids = adrFiles(root)
+    .map((entry) => entry.id)
+    .filter((id) => id !== "");
+  const hits: string[] = [];
+  for (const file of walk(join(root, "docs", "usage"), (path) =>
+    path.endsWith(".md"),
+  )) {
+    const text = readFileSync(file, "utf8").replace(/<!--[\s\S]*?-->/g, "");
+    for (const id of ids) {
+      if (text.includes(id)) hits.push(`${rel(root, file)}（${id}）`);
+    }
+  }
+  return [
+    hits.length === 0
+      ? result("利用者向け文書", "docs/usage/ に ADR の番号が無い", "pass")
+      : result(
+          "利用者向け文書",
+          "docs/usage/ に ADR の番号が無い",
+          "fail",
+          `ADR の番号は HTML コメントに移してください：${hits.join(", ")}`,
+        ),
+  ];
+};
+
+export const REPO_CHECKS: Record<string, (root?: string) => CheckResult[]> = {
+  skills: checkSkills,
+  hooks: checkHooks,
+  plugin: checkPlugin,
+  templates: checkTemplates,
+  leak: checkLeak,
+  docs: checkDocs,
+  adr: checkAdrIndex,
+  usage: checkUsage,
+};
+
+// ---- Obsidian アダプタ ----
+
+/** Bases のダッシュボードが参照してよいノートのプロパティ（第 9 節のフロントマターだけ） */
+const BASE_PROPERTIES = new Set([
+  "type",
+  "business",
+  "status",
+  "created",
+  "updated",
+  "as_of",
+  "verified",
+  "id",
+  "target",
+]);
+
+export const checkAdapters = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "Obsidian アダプタ";
+  const dir = join(root, "adapters", "obsidian");
+  const results: CheckResult[] = [];
+  for (const file of walk(join(dir, "vault"), (path) =>
+    path.endsWith(".json"),
+  )) {
+    try {
+      JSON.parse(readFileSync(file, "utf8"));
+      results.push(result(category, rel(root, file), "pass"));
+    } catch (error) {
+      results.push(
+        result(
+          category,
+          rel(root, file),
+          "fail",
+          `JSON として読めません：${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
+    }
+  }
+  for (const file of walk(join(dir, "bases"), (path) =>
+    path.endsWith(".base"),
+  )) {
+    const text = readFileSync(file, "utf8");
+    const used = new Set<string>();
+    // order の項目と、比較の左辺に出てくるプロパティ名
+    for (const match of text.matchAll(/^\s*-\s+([a-z_.]+)\s*$/gm))
+      used.add(match[1] ?? "");
+    // 比較式は引用符で囲んでも囲まなくてもよい（Obsidian は保存し直すときに引用符を外す）
+    for (const match of text.matchAll(
+      /^\s*-\s+'?([a-z_.]+)\s*(?:==|!=|<=|>=|<|>)/gm,
+    ))
+      used.add(match[1] ?? "");
+    for (const match of text.matchAll(/property:\s*([a-z_.]+)/g))
+      used.add(match[1] ?? "");
+    const unknown = [...used].filter((name) => {
+      const bare = name.replace(/^note\./, "");
+      return (
+        !name.startsWith("file.") &&
+        !name.startsWith("formula.") &&
+        !BASE_PROPERTIES.has(bare)
+      );
+    });
+    const problems: string[] = [];
+    if (text.trim() === "") problems.push("中身が空です");
+    if (!/^views:/m.test(text)) problems.push("views がありません");
+    if (unknown.length > 0)
+      problems.push(
+        `第 9 節のフロントマターに無いプロパティを使っています：${unknown.join(", ")}`,
+      );
+    results.push(
+      problems.length === 0
+        ? result(category, rel(root, file), "pass")
+        : result(category, rel(root, file), "fail", problems.join("、")),
+    );
+  }
+  const schema = frontmatterSchema();
+  for (const file of walk(join(dir, "templates"), (path) =>
+    path.endsWith(".md"),
+  )) {
+    // Obsidian の置き換え記号に見本の値を入れてから、スキーマに照らす
+    const filled = readFileSync(file, "utf8")
+      .replace(/\{\{date(?::[^}]*)?\}\}/g, "2026-01-01")
+      .replace(/\{\{[a-z]+\}\}/g, "見本");
+    const fm = parseFrontmatter(filled);
+    const errors =
+      fm === undefined
+        ? ["フロントマターがありません"]
+        : [...new Set(validate(schema, schema, fm.data))];
+    results.push(
+      errors.length === 0
+        ? result(category, rel(root, file), "pass")
+        : result(category, rel(root, file), "fail", errors.join("、")),
+    );
+  }
+  if (results.length === 0)
+    results.push(
+      result(
+        category,
+        "adapters/obsidian",
+        "fail",
+        "アダプタのファイルがありません",
+      ),
+    );
+  return results;
+};
+
+REPO_CHECKS["adapters"] = checkAdapters;
+
+// ---- 版 ----
+
+export const checkVersion = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "版";
+  try {
+    const pkg = packageVersion(root);
+    const manifest = manifestVersion(root);
+    return [
+      pkg === manifest
+        ? result(
+            category,
+            "package.json と plugin.json の version",
+            "pass",
+            pkg,
+          )
+        : result(
+            category,
+            "package.json と plugin.json の version",
+            "fail",
+            `package.json ${pkg}、plugin.json ${manifest}。node scripts/sync-plugin-version.ts で写してください`,
+          ),
+    ];
+  } catch (error) {
+    return [
+      result(
+        category,
+        "version",
+        "fail",
+        error instanceof Error ? error.message : String(error),
+      ),
+    ];
+  }
+};
+
+REPO_CHECKS["version"] = checkVersion;
+
+// ---- 作業者エージェント ----
+
+/** business-os が同梱するエージェント（作業者だけ。役割エージェントは同梱しない。ADR 20261002-01） */
+const BUNDLED_AGENTS = ["worker.md"];
+const MODEL_ALIASES = new Set(["fable", "best", "opus", "sonnet", "haiku"]);
+/** 作業者が持ってはいけないツール（外部への行動、人との対話、さらなる委譲につながるもの） */
+const FORBIDDEN_WORKER_TOOLS = [
+  "Bash",
+  "PowerShell",
+  "WebFetch",
+  "WebSearch",
+  "Agent",
+  "AskUserQuestion",
+];
+
+export const checkAgents = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "作業者エージェント";
+  const dir = join(root, "agents");
+  if (!existsSync(dir))
+    return [
+      result(category, "agents/", "fail", "agents/worker.md がありません"),
+    ];
+  const files = readdirSync(dir).filter((name) => name.endsWith(".md"));
+  const results: CheckResult[] = [];
+  const extra = files.filter((name) => !BUNDLED_AGENTS.includes(name));
+  if (extra.length > 0) {
+    results.push(
+      result(
+        category,
+        "agents/",
+        "fail",
+        `同梱するのは作業者だけです（役割エージェントは company で育てる）：${extra.join(", ")}`,
+      ),
+    );
+  }
+  for (const name of BUNDLED_AGENTS) {
+    const path = join(dir, name);
+    if (!existsSync(path)) {
+      results.push(result(category, `agents/${name}`, "fail", "ありません"));
+      continue;
+    }
+    const fm = parseFrontmatter(readFileSync(path, "utf8"));
+    const problems: string[] = [];
+    if (fm === undefined) problems.push("フロントマターがありません");
+    else {
+      if (fm.data["name"] !== name.replace(/\.md$/, ""))
+        problems.push("name がファイル名と違います");
+      if (!fm.data["description"]) problems.push("description がありません");
+      const model = fm.data["model"] ?? "";
+      if (!MODEL_ALIASES.has(model))
+        problems.push(
+          `model は別名（${[...MODEL_ALIASES].join(" / ")}）で書きます：${model || "なし"}`,
+        );
+      const tools = (fm.data["tools"] ?? "")
+        .split(",")
+        .map((tool) => tool.trim())
+        .filter((tool) => tool !== "");
+      if (tools.length === 0)
+        problems.push(
+          "tools を明示してください（省略すると全てのツールを受け継ぐ）",
+        );
+      const forbidden = tools.filter((tool) =>
+        FORBIDDEN_WORKER_TOOLS.includes(tool),
+      );
+      if (forbidden.length > 0)
+        problems.push(
+          `作業者に持たせないツールがあります：${forbidden.join(", ")}`,
+        );
+    }
+    results.push(
+      problems.length === 0
+        ? result(category, `agents/${name}`, "pass")
+        : result(category, `agents/${name}`, "fail", problems.join("、")),
+    );
+  }
+  return results;
+};
+
+REPO_CHECKS["agents"] = checkAgents;

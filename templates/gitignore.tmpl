@@ -1,0 +1,17 @@
+# /onboard が company/.gitignore として書き出す雛形
+
+# 秘密
+.env
+.env.*
+
+# business-os の check:leak が読む固有名詞の辞書（手元限り）
+.leak-dict.json
+
+# Claude Code：個人設定と hook のログは手元限り
+.claude/settings.local.json
+.claude/hook-log-*.jsonl
+
+# OS / エディタ
+.DS_Store
+.idea/
+.vscode/
