@@ -48,7 +48,11 @@ disable-model-invocation: true
 5. 各事業の実装リポジトリの場所（macOS と Windows のパス）。無ければ無しでよい
 6. 各事業で追いかける数字。事業の説明から候補を 3〜5 個挙げ、選んでもらう（AskUserQuestion の複数選択）
 7. 事業ごとのリスクの候補を CC が挙げ、残すものを選んでもらう
-8. ナレッジの閲覧に Obsidian を使うか（推奨だが任意。使わなくても business-os の動きは同じと伝える）
+8. 主セッション（COO）のモデル。質問文は「主セッションのモデル。best 推奨（使える最上位）。利用枠を節約するなら opus」。
+   AskUserQuestion の選択肢は `best`（推奨）・`opus`・`fable`・`sonnet`。答えが無ければ `best`。
+   別名のまま `.claude/settings.json` の `model` に書く（版番号を書かない）。あわせて次を伝える：
+   「Fable は安全分類器で別のモデル（Opus）に自動で切り替わることがあります。その場合は `/model fable` で戻せます」
+9. ナレッジの閲覧に Obsidian を使うか（推奨だが任意。使わなくても business-os の動きは同じと伝える）
    - native Windows なら、先に次の事実を告げる：「Windows で Obsidian を使うなら、Claude Code も WSL ではなく
      Windows 上で直接動かす構成になり、Claude Code の sandbox が動きません。憲章の保護は hook と権限設定だけに頼ります」
    - 「使わない」と答えた場合：Obsidian 関連のファイルは一切書き出さない（`docs/.obsidian/`、`docs/dashboards/`、`docs/_templates/` を作らない）

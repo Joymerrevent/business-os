@@ -3,11 +3,11 @@ id: 20260929-01
 title: シェル非依存
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-03
 as_of: n/a
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 

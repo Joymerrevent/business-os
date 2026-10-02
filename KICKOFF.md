@@ -9,7 +9,7 @@
 - このリポジトリの `docs/adr/`、`docs/design/architecture.md`、`docs/usage/`、`CLAUDE.md`、
   `templates/CLAUDE.md.tmpl` は配置済み（本文書と同時に渡されたもの）
 - Node 24、pnpm、gh CLI が使える
-- 実装者は CC。設計判断者はメンテナ（JJ）
+- 実装者は CC。設計判断者はメンテナ
 
 ## 読む順序
 

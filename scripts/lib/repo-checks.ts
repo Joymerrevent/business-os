@@ -798,3 +798,83 @@ export const checkVersion = (root: string = pluginRoot()): CheckResult[] => {
 };
 
 REPO_CHECKS["version"] = checkVersion;
+
+// ---- 作業者エージェント ----
+
+/** business-os が同梱するエージェント（作業者だけ。役割エージェントは同梱しない。ADR 20261002-01） */
+const BUNDLED_AGENTS = ["worker.md"];
+const MODEL_ALIASES = new Set(["fable", "best", "opus", "sonnet", "haiku"]);
+/** 作業者が持ってはいけないツール（外部への行動、人との対話、さらなる委譲につながるもの） */
+const FORBIDDEN_WORKER_TOOLS = [
+  "Bash",
+  "PowerShell",
+  "WebFetch",
+  "WebSearch",
+  "Agent",
+  "AskUserQuestion",
+];
+
+export const checkAgents = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "作業者エージェント";
+  const dir = join(root, "agents");
+  if (!existsSync(dir))
+    return [
+      result(category, "agents/", "fail", "agents/worker.md がありません"),
+    ];
+  const files = readdirSync(dir).filter((name) => name.endsWith(".md"));
+  const results: CheckResult[] = [];
+  const extra = files.filter((name) => !BUNDLED_AGENTS.includes(name));
+  if (extra.length > 0) {
+    results.push(
+      result(
+        category,
+        "agents/",
+        "fail",
+        `同梱するのは作業者だけです（役割エージェントは company で育てる）：${extra.join(", ")}`,
+      ),
+    );
+  }
+  for (const name of BUNDLED_AGENTS) {
+    const path = join(dir, name);
+    if (!existsSync(path)) {
+      results.push(result(category, `agents/${name}`, "fail", "ありません"));
+      continue;
+    }
+    const fm = parseFrontmatter(readFileSync(path, "utf8"));
+    const problems: string[] = [];
+    if (fm === undefined) problems.push("フロントマターがありません");
+    else {
+      if (fm.data["name"] !== name.replace(/\.md$/, ""))
+        problems.push("name がファイル名と違います");
+      if (!fm.data["description"]) problems.push("description がありません");
+      const model = fm.data["model"] ?? "";
+      if (!MODEL_ALIASES.has(model))
+        problems.push(
+          `model は別名（${[...MODEL_ALIASES].join(" / ")}）で書きます：${model || "なし"}`,
+        );
+      const tools = (fm.data["tools"] ?? "")
+        .split(",")
+        .map((tool) => tool.trim())
+        .filter((tool) => tool !== "");
+      if (tools.length === 0)
+        problems.push(
+          "tools を明示してください（省略すると全てのツールを受け継ぐ）",
+        );
+      const forbidden = tools.filter((tool) =>
+        FORBIDDEN_WORKER_TOOLS.includes(tool),
+      );
+      if (forbidden.length > 0)
+        problems.push(
+          `作業者に持たせないツールがあります：${forbidden.join(", ")}`,
+        );
+    }
+    results.push(
+      problems.length === 0
+        ? result(category, `agents/${name}`, "pass")
+        : result(category, `agents/${name}`, "fail", problems.join("、")),
+    );
+  }
+  return results;
+};
+
+REPO_CHECKS["agents"] = checkAgents;

@@ -9,6 +9,8 @@ export type LogEntry = {
   decision: "deny" | "ask" | "allow";
   reason: string;
   target: string;
+  /** サブエージェント（作業者など）からの呼び出しなら、その種類（入力に含まれる場合だけ） */
+  agent?: string;
 };
 
 export const logFileName = (date: Date): string =>

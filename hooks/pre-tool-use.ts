@@ -30,6 +30,8 @@ type HookInput = {
   cwd: string;
   tool_name: string;
   tool_input: Record<string, unknown>;
+  /** サブエージェントからの呼び出しのとき、その種類（例：business-os:worker） */
+  agent_type?: string;
 };
 
 const ALLOW: Decision = { decision: "allow", reason: "" };
@@ -49,10 +51,12 @@ const parseInput = (raw: string): HookInput => {
   if (typeof toolInput !== "object" || toolInput === null) {
     throw new Error("hook の入力に tool_input がありません");
   }
+  const agentType = input["agent_type"];
   return {
     cwd,
     tool_name: toolName,
     tool_input: toolInput as Record<string, unknown>,
+    ...(typeof agentType === "string" ? { agent_type: agentType } : {}),
   };
 };
 
@@ -223,6 +227,7 @@ const main = (): Decision | undefined => {
     decision: result.decision,
     reason: result.reason,
     target,
+    ...(input.agent_type !== undefined ? { agent: input.agent_type } : {}),
   });
   return result;
 };

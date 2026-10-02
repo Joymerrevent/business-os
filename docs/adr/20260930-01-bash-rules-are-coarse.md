@@ -3,11 +3,11 @@ id: 20260930-01
 title: Bash の文字列規則は粗い網
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-03
 as_of: n/a
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
