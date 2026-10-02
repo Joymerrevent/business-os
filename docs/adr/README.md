@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-02
+updated: 2026-10-03
 as_of: n/a
 verified: n/a
 ---
@@ -35,7 +35,7 @@ accepted → superseded（新しい ADR に置き換えられた）
 ```
 
 **個人や AI が単独で `accepted` にしない。** 起票は誰でも（CC を含む）できるが、
-`accepted` への変更はメンテナ（business-os では JJ）が内容を確認して行う。
+`accepted` への変更はメンテナが内容を確認して行う。
 CC が「accepted に変えてよいか」と聞くのは構わない。勝手に変えるのは禁止。
 
 ## フロントマター
@@ -77,15 +77,15 @@ supersedes: n/a       # 置き換える ADR の id（あれば）
 
 | id | title | status |
 |---|---|---|
-| 20260929-01 | シェル非依存 | proposed |
-| 20260929-02 | CLAUDE.md は地図 | proposed |
-| 20260929-03 | 憲章と育つ文書の分離 | proposed |
-| 20260929-04 | business-os は事業非依存、/onboard で注入 | proposed |
-| 20260929-05 | ステージングと承認、四重防衛 | proposed |
-| 20260929-06 | 起動時セルフチェック | proposed |
-| 20260929-07 | 経営基盤 Skill は最初から、業務 Skill は育てる | proposed |
-| 20260929-08 | 既製フレームワークは参考にし、fork しない | proposed |
-| 20260929-09 | 記憶は腐る前提で組む | proposed |
-| 20260929-10 | 最初から公開 Plugin | proposed |
-| 20260930-01 | Bash の文字列規則は粗い網 | proposed |
+| 20260929-01 | シェル非依存 | accepted |
+| 20260929-02 | CLAUDE.md は地図 | accepted |
+| 20260929-03 | 憲章と育つ文書の分離 | accepted |
+| 20260929-04 | business-os は事業非依存、/onboard で注入 | accepted |
+| 20260929-05 | ステージングと承認、四重防衛 | accepted |
+| 20260929-06 | 起動時セルフチェック | accepted |
+| 20260929-07 | 経営基盤 Skill は最初から、業務 Skill は育てる | accepted |
+| 20260929-08 | 既製フレームワークは参考にし、fork しない | accepted |
+| 20260929-09 | 記憶は腐る前提で組む | accepted |
+| 20260929-10 | 最初から公開 Plugin | accepted |
+| 20260930-01 | Bash の文字列規則は粗い網 | accepted |
 | 20261002-01 | 役割エージェントは同梱せず、主セッションを COO とする。作業は作業者へ委譲する | accepted |

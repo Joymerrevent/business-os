@@ -3,11 +3,11 @@ id: 20260929-10
 title: 最初から公開 Plugin
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-03
 as_of: n/a
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
