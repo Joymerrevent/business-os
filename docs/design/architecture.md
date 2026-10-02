@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-01
+updated: 2026-10-02
 as_of: n/a
 verified: n/a
 ---
@@ -57,7 +57,7 @@ business-os/
 │   ├── plugin.json              # Plugin メタデータ。name / version / description(alpha)
 │   └── marketplace.json         # business-os 自身をマーケットプレイスとして公開する定義（/plugin marketplace add 用）
 ├── .claude/                     # business-os を CC で開発するときの設定（配布しない）
-│   ├── settings.json            # 秘密・固有名詞の混入を防ぐ deny / sandbox
+│   ├── settings.json            # 秘密の読み取りと force push などを拒否する permissions（sandbox は使わない。§3.1）
 │   ├── settings.local.json      # 個人設定（gitignore）
 │   └── skills/
 │       └── release/SKILL.md     # 開発専用：changeset → version → CHANGELOG → tag
@@ -120,6 +120,8 @@ business-os/
 | `.claude-plugin/` `skills/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `test/` `docs/` 設定ファイル群 |
 
 配布専用 Skill は `skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
+business-os の開発リポジトリでは sandbox を使わない。sandbox で守るのは、business-os を入れて運用する company の側。
+開発では `gh` の認証、`.claude/` を含むブランチの切り替え、`claude -p` での実機の試験、コミットへの署名を sandbox が妨げるため。
 
 ### 3.2 言語と実行方式
 
