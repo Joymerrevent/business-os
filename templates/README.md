@@ -45,6 +45,7 @@
 | 忘れてはいけない期限や義務 | `due` `obligation` `frequency` `obligation_status` | `operations/obligations.md`（行の雛形） |
 | 各事業の実装リポジトリの場所 | `repo_name` `repo_path_macos` `repo_path_windows` `repo_purpose` | `charter/repositories.md`（行の雛形） |
 | 各事業で追いかける数字（候補から選ぶ） | `business_kpis` | `charter/businesses/_template.md` |
+| 主セッション（COO）のモデル。best 推奨（使える最上位）。利用枠を節約するなら opus | `main_model` | `settings.json.tmpl`。別名（`best` `fable` `opus` `sonnet` `haiku`）で書き、版番号を書かない。既定は `best` |
 | ナレッジの閲覧に Obsidian を使うか | （変数なし） | 分岐のみ。使わない場合は Obsidian 関連のファイルを一切書き出さない |
 
 ## 質問しない変数
