@@ -171,8 +171,8 @@ describe("壊した business-os の一時コピー", () => {
   it("ADR の一覧と status が食い違うと fail", () => {
     edit(
       "docs/adr/README.md",
-      "| 20260929-01 | シェル非依存 | proposed |",
       "| 20260929-01 | シェル非依存 | accepted |",
+      "| 20260929-01 | シェル非依存 | proposed |",
     );
     expect(failsOf(checkAdrIndex, root).length).toBe(1);
   });
