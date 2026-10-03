@@ -19,7 +19,7 @@ const gitInit = (): void => {
 };
 
 const copyCompany = (): void => {
-  cpSync(join(repoRoot, "test", "fixtures", "company"), ".", {
+  cpSync(join(repoRoot, "fixtures", "company"), ".", {
     recursive: true,
   });
 };

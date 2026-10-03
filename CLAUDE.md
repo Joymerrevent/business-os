@@ -39,7 +39,7 @@
 ## ローカル検証
 
 - `claude --plugin-dir .` でこのリポを Plugin として読み込む
-- 検証用の company 相当リポ（`test/fixtures/company/`）で `/onboard` から動かす
+- 検証用の company 相当リポ（`fixtures/company/`）で `/onboard` から動かす
 - hook の fail-closed テスト：`pnpm test`
 - Skill の動作：`pnpm eval:cases`（eval のケース）と `pnpm eval:dialogue`（質問の流れ）。
   Skill・雛形・hook を変えた PR では CC が実行し、結果の要約を PR 本文に書く。実行のたびにメンテナの利用枠を消費する。

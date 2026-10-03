@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-export const fixtureCompany = join(repoRoot, "test", "fixtures", "company");
+export const fixtureCompany = join(repoRoot, "fixtures", "company");
 
 export type HookResult = {
   status: number | null;

@@ -368,6 +368,7 @@ const LEAK_SKIP = [
   /^\.changeset\//,
   /^scripts\/lib\/repo-checks\.ts$/,
   /^test\//,
+  /^fixtures\//,
 ];
 
 export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
