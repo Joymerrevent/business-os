@@ -131,6 +131,41 @@ describe("壊れた company", () => {
     expect(fails.map((r) => r.category)).toContain("設定の一致");
   });
 
+  it("settings.local.json による sandbox の上書きを fail にする", () => {
+    writeFileSync(
+      join(root, ".claude/settings.local.json"),
+      JSON.stringify({ sandbox: { allowUnsandboxedCommands: true } }),
+    );
+    const fails = failsOf(runCompanyChecks(root, options));
+    expect(fails.map((r) => r.detail).join("")).toContain(
+      "settings.local.json",
+    );
+  });
+
+  it("settings.local.json の広い緩めを warn にし、許したソケットを示す", () => {
+    writeFileSync(
+      join(root, ".claude/settings.local.json"),
+      JSON.stringify({
+        sandbox: {
+          network: {
+            allowAllUnixSockets: true,
+            allowUnixSockets: ["~/agent.sock"],
+          },
+        },
+      }),
+    );
+    const results = runCompanyChecks(root, options);
+    expect(failsOf(results)).toEqual([]);
+    const warned = results.find(
+      (r) => r.name === "settings.local.json が sandbox を広く緩めていない",
+    );
+    expect(warned?.level).toBe("warn");
+    const sockets = results.find(
+      (r) => r.name === "sandbox の中から接続できる Unix ソケット",
+    );
+    expect(sockets?.detail).toBe("~/agent.sock");
+  });
+
   it("リンク切れを fail にする", () => {
     const path = join(root, "docs/charter/company.md");
     writeFileSync(path, `${readFileSync(path, "utf8")}\n[無い](nowhere.md)\n`);

@@ -1,6 +1,7 @@
 {
-  "description": "/onboard の初回のインタビューを、SKILL.md の質問の表の番号の順に台本で答えて進め、書き出す前の確認（質問 21）で断る",
+  "description": "/onboard の初回で、コミットに署名する設定のときに、署名の agent（試験のソケット）を示して接続を許すかを聞く（質問 20）。書き出す前の確認（質問 21）で断る",
   "scaffold": "empty-repo",
+  "signing": "deny",
   "firstMessage": "/onboard",
   "steps": [
     {
@@ -75,6 +76,12 @@
       "question": 18,
       "name": "Obsidian",
       "answer": "使わない"
+    },
+    {
+      "question": 20,
+      "name": "コミットの署名",
+      "answer": "許す",
+      "responseIncludes": ["{socket}"]
     },
     {
       "question": 21,

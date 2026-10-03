@@ -17,6 +17,7 @@
 - `docs/adr/`        設計判断。**ここが正典**。`docs/design/architecture.md` が構造仕様
 - `docs/usage/`      利用者向け。ADR 番号を書かない
 - `.claude/`         business-os を開発するときの設定と開発専用 Skill（配布しない）
+- `ROADMAP.md`       版ごとの方向。残作業とその状態は GitHub の Project とマイルストーンにあり、足し方も `ROADMAP.md` に書く
 
 ## 絶対ルール
 
@@ -46,12 +47,15 @@
 - Skill の動作：`pnpm eval:cases`（eval のケース）と `pnpm eval:dialogue`（質問の流れ）。
   Skill・雛形・hook を変えた PR では CC が実行し、結果の要約を PR 本文に書く。実行のたびにメンテナの利用枠を消費する。
   記録は `evals/results/`（追跡しない）。`/check` は Bash が要るため eval の対象外（判定のロジックは vitest で検査する）。
+  コミットの署名の台本（`signing` を持つ `dialogue.json`）は、作業場所の安全設定を読み込んで Bash を許し、macOS でだけ動く（他の OS では飛ばす）。
   Skill を足したら `evals/skills/<Skill 名>/` にケースを足す（無ければ `check:evals` が warn を出す）
 
 ## リリース
 
 `/release`（`.claude/skills/release/`）：changeset → version → `plugin.json` 同期 → CHANGELOG → `main` へのリリース PR →
-タグ `business-os--v<版>` → GitHub の Release（版に `-beta.N` などの接尾辞があるときだけ pre-release）。タグの push と Release の公開は、実行の前にメンテナに確認する。
+タグ `business-os--v<版>` → GitHub の Release（版に `-beta.N` などの接尾辞があるときだけ pre-release）。
+リリース PR の CI（`check:release`）が版の誤りを止め、マージされたら CI（`tag.yml`）がタグを作って push する。
+Release の公開は、実行の前にメンテナに確認する。
 0.x は開発中。1.0 で公式ディレクトリ提出を検討する。
 
 ## 迷ったら

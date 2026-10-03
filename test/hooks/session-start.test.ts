@@ -62,6 +62,42 @@ describe("company", () => {
     expect(message).toContain("厳格モード");
   });
 
+  it("settings.local.json が sandbox を無効にすると厳格モードを知らせる", () => {
+    writeFileSync(
+      join(root, ".claude/settings.local.json"),
+      JSON.stringify({ sandbox: { enabled: false } }),
+    );
+    const message = messageOf(start().stdout);
+    expect(message).toContain("厳格モード");
+    expect(message).toContain("settings.local.json");
+  });
+
+  it("settings.local.json が全ての Unix ソケットや sandbox の外のコマンドを許せば知らせる", () => {
+    writeFileSync(
+      join(root, ".claude/settings.local.json"),
+      JSON.stringify({
+        sandbox: {
+          excludedCommands: ["docker *"],
+          network: { allowAllUnixSockets: true },
+        },
+      }),
+    );
+    const message = messageOf(start().stdout);
+    expect(message).toContain("allowAllUnixSockets");
+    expect(message).toContain("docker *");
+    expect(message).not.toContain("厳格モード");
+  });
+
+  it("settings.local.json が 1 つのソケットを許すだけなら知らせない", () => {
+    writeFileSync(
+      join(root, ".claude/settings.local.json"),
+      JSON.stringify({
+        sandbox: { network: { allowUnixSockets: ["~/agent.sock"] } },
+      }),
+    );
+    expect(messageOf(start().stdout)).not.toContain("settings.local.json");
+  });
+
   it("初期化中なら /onboard の再開を促す", () => {
     setState(root, "initializing");
     expect(messageOf(start().stdout)).toContain("/onboard");

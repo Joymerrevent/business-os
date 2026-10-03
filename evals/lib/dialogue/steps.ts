@@ -1,7 +1,7 @@
 // 進行役（run.ts）の判定。claude を呼ばない純粋な関数だけを置き、test/evals/ で検査する。
 
 export type Step = {
-  /** SKILL.md の質問の表の番号（ADR 20261003-08） */
+  /** SKILL.md の質問の表の番号。利用者には質問 ID として見せる（ADR 20261003-08、20261003-10） */
   question: number;
   /** 記録とエラーの文に使う名前（質問の表の見出しと同じにする） */
   name: string;
@@ -10,15 +10,41 @@ export type Step = {
   clarify?: string;
   /** 条件によって聞かれない質問（例：既存の記録があるときだけの置き換えの質問） */
   optional?: boolean;
+  /**
+   * 事業ごとにくり返す質問。続けて並んだ perBusiness の項目は 1 つのまとまりで、
+   * 1 つの事業についてまとまりを聞いてから、次の事業でまとまりの前の項目へ戻ってよい
+   */
+  perBusiness?: boolean;
+  /** この質問を聞いた応答に含まれるべき文字列。`{socket}` は試験のソケットのパスに置き換える */
+  responseIncludes?: string[];
+};
+
+/** 台本が終わった後の状態の判定（ADR 20261003-13）。判定の正典は台本に書く */
+export type Expect = {
+  /** 作業場所のリポジトリのコミットの数 */
+  commits?: number;
+  /** 最後のコミットに署名（gpgsig）が付いているか */
+  signedHead?: boolean;
+  /** 最後の応答に含まれるべき文字列 */
+  finalTextIncludes?: string[];
+  /** 会話の記録の Bash の呼び出し（入力の JSON）に現れてはいけない正規表現 */
+  forbiddenBashInputs?: string[];
 };
 
 /** 台本どおりに進まなかったこと（不合格）。進行役そのものの失敗とは分ける */
 export class ScriptFailure extends Error {}
 
-/** 「質問 <番号>/<総数>」（共通規約の質問の付け方）。全角の ／ も受け付ける */
-const QUESTION_MARK = /質問\s*(\d+)\s*[/／]\s*\d+/g;
-/** 「（質問 <番号> の確認）」（聞き返しの付け方） */
-const CLARIFY_MARK = /質問\s*(\d+)\s*の確認/g;
+/**
+ * 質問の先頭の「質問 <何問目>/<見込みの数>：<見出し>（質問 ID：<番号>）」（共通規約の質問の付け方）の質問 ID。
+ * 事業の数が分かるまでの「質問 <何問目>：<見出し>（質問 ID：<番号>）」も受け付ける（ADR 20261003-12）。
+ * 全角・半角の ／ とコロンを受け付ける。
+ * 何問目と見込みの数は、質問の先頭の行を見分ける目印にだけ使い、値は照合に使わない。
+ * 前置きの文の「（質問 ID：2）は飛ばします」のような言及は、同じ行に何問目が無いので数えない
+ */
+const QUESTION_MARK =
+  /質問\s*\d+\s*(?:[/／]\s*\d+\s*)?[:：][^\n]*?質問\s*ID\s*[:：]\s*(\d+)/g;
+/** 「（質問 ID：<番号> の確認）」（聞き返しの付け方） */
+const CLARIFY_MARK = /質問\s*ID\s*[:：]\s*(\d+)\s*の確認/g;
 
 const numbersOf = (pattern: RegExp, text: string): number[] => [
   ...new Set([...text.matchAll(pattern)].map((match) => Number(match[1]))),
@@ -26,8 +52,9 @@ const numbersOf = (pattern: RegExp, text: string): number[] => [
 
 /**
  * 今のターンの応答が、台本のどの項目にあたるかを、応答に付いた質問の番号で決める。
- * - 「質問 N/総数」が 1 つ：番号が N の項目。今の項目と同じ番号なら、くり返し（事業ごとに聞く場合など）
- * - 「（質問 N の確認）」だけ：今の項目の聞き返し
+ * - 「質問 ID：N」が 1 つ：番号が N の項目。今の項目と同じ番号なら、くり返し（事業ごとに聞く場合など）
+ * - 「（質問 ID：N の確認）」だけ：今の項目の聞き返し
+ * - 今の項目が perBusiness で、N が同じまとまりの前の項目：次の事業についてのくり返し
  * - 番号が無い、2 つ以上の番号を聞いた、台本に無い番号、必須の項目を飛ばした：不合格
  */
 export const nextStep = (
@@ -43,7 +70,7 @@ export const nextStep = (
       return position;
     }
     throw new ScriptFailure(
-      "応答に質問の番号（「質問 N/総数」か「（質問 N の確認）」）がありません",
+      "応答に質問 ID（「質問 ID：N」か「（質問 ID：N の確認）」）がありません",
     );
   }
   if (asked.length > 1) {
@@ -53,6 +80,15 @@ export const nextStep = (
   }
   const number = asked[0];
   if (current !== undefined && current.question === number) return position;
+  if (current?.perBusiness === true) {
+    let start = position;
+    while (steps[start - 1]?.perBusiness === true) start -= 1;
+    const back = steps.findIndex(
+      (step, index) =>
+        index >= start && index < position && step.question === number,
+    );
+    if (back !== -1) return back;
+  }
   const found = steps.findIndex(
     (step, index) => index > position && step.question === number,
   );
@@ -96,3 +132,43 @@ export const changedFiles = (
       !allowed.some((pattern) => pattern.test(file)),
   );
 };
+
+/** `{socket}` を試験のソケットのパスに置き換える */
+export const fillPlaceholders = (text: string, socket: string): string =>
+  text.replaceAll("{socket}", socket);
+
+/**
+ * claude の会話の記録（JSON Lines）から、指定したツールの呼び出しの入力を JSON の文字列で取り出す。
+ * 読めない行は飛ばす（記録の途中の行が欠けても、残りの呼び出しは判定する）
+ */
+export const toolInputs = (jsonl: string, tool: string): string[] =>
+  jsonl.split("\n").flatMap((line) => {
+    if (line.trim() === "") return [];
+    let entry: unknown;
+    try {
+      entry = JSON.parse(line);
+    } catch {
+      return [];
+    }
+    const content = (entry as { message?: { content?: unknown } }).message
+      ?.content;
+    if (!Array.isArray(content)) return [];
+    return content.flatMap((item: unknown) => {
+      const use = item as { type?: unknown; name?: unknown; input?: unknown };
+      return use.type === "tool_use" && use.name === tool
+        ? [JSON.stringify(use.input)]
+        : [];
+    });
+  });
+
+/** 入力のうち、禁止の正規表現に合うものを「正規表現：入力」の形で返す */
+export const forbiddenMatches = (
+  inputs: readonly string[],
+  patterns: readonly string[],
+): string[] =>
+  patterns.flatMap((pattern) => {
+    const regexp = new RegExp(pattern);
+    return inputs
+      .filter((input) => regexp.test(input))
+      .map((input) => `${pattern}：${input}`);
+  });

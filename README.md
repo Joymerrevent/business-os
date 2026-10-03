@@ -38,6 +38,16 @@ CC の Plugin として配布します。business-os そのものには事業の
 詳しい手順と最初の 1 週間の過ごし方は [はじめる](docs/usage/getting-started.md)、
 日々の回し方は [日々の運用](docs/usage/operations.md) を読んでください。
 
+## 新しい版に更新する
+
+入っている版は CC の中で `/plugin list` を実行すると分かります。新しい版にするには、次の順に操作します。
+
+1. `/plugin marketplace update business-os` で新しい版の一覧を取り込む（これだけでは更新されません）
+2. `/plugin` の「Installed」で business-os を選び、「Update now」を選ぶ
+3. CC を起動し直すか、`/reload-plugins` を実行する
+
+自動更新の設定と、更新後の `/onboard --migrate` は [日々の運用](docs/usage/operations.md#business-os-の更新) にあります。
+
 ## 開発に参加する
 
 [CONTRIBUTING.md](CONTRIBUTING.md) を読んでください。設計判断の記録は [docs/adr/](docs/adr/README.md) にあります。

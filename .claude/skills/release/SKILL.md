@@ -16,8 +16,9 @@ develop ─ release/<版> ─(PR)→ main ─ タグ business-os--v<版> ─ Git
                      └────────(PR)→ develop（版の更新を戻す）
 ```
 
-**人間の確認が要る操作**：リリース PR のマージ（人間が行う）、タグの push、GitHub の Release の公開。
-タグの push と Release の公開は本番の公開にあたるので、実行の直前に必ず確認を取る。
+**人間の確認が要る操作**：リリース PR のマージ（人間が行う）、GitHub の Release の公開。
+タグは、リリース PR が main にマージされたときに CI（`.github/workflows/tag.yml`）が作って push する。
+Release の公開は本番の公開にあたるので、実行の直前に必ず確認を取る。
 
 ## 何を読むか
 
@@ -42,10 +43,14 @@ develop ─ release/<版> ─(PR)→ main ─ タグ business-os--v<版> ─ Git
 5. **コミットと PR**
    - コミット：`chore(release): <版> の版上げ`（subject は大文字の英単語で始めない）
    - push して、`main` 向けの PR を作る。タイトルは「chore(release): <版> をリリースする」。本文に CHANGELOG の今回の節を貼る
+   - main 向けの PR の CI（`check:release`）が、版が直近のタグより大きいこと・CHANGELOG の節・使い残しの changeset が無いことを確かめる。
+     失敗したら直してから進める
    - **マージは人間が行う。** CC はマージしない
-6. **タグを作る**（リリース PR のマージ後）
-   - `main` を最新にして（`git pull` は人間に頼む）、`claude plugin tag -m "business-os %s"` でタグを作る
-   - **タグを push する前に、タグの名前と指すコミットを示して確認を取る。** 了承を得たら push する
+6. **タグを確かめる**（リリース PR のマージ後）
+   - main への push で動く CI（`tag.yml`）が、タグ `business-os--v<版>` を作って push する。CC はタグを作らない
+   - `gh run list --workflow tag.yml --branch main` で実行が成功したことを、`git ls-remote --tags origin business-os--v<版>` でタグがリモートにあることを確かめる
+   - タグが指すコミットが、リリース PR のマージコミットであることを確かめる
+   - 失敗していたら原因を人間に示す。直したうえで、Actions の画面から `tag.yml` を手で動かし直してもらう（`workflow_dispatch`）
 7. **GitHub の Release を作る**
    - 版に pre-release の接尾辞（`-alpha.N` / `-beta.N` / `-rc.N`）があるときだけ `--prerelease` を付ける。
      接尾辞の無い版は、`0.x` でも通常の Release にする（開発中であることは版の番号と README・`plugin.json` の表示で伝える）
@@ -57,7 +62,7 @@ develop ─ release/<版> ─(PR)→ main ─ タグ business-os--v<版> ─ Git
 
 - 次の版でよいか
 - リリース PR のマージ（人間が行う）
-- タグの push と、Release の公開（それぞれ直前に確認する）
+- Release の公開（直前に確認する）
 - develop に戻す PR のマージ（人間が行う）
 
 ## 完了条件
