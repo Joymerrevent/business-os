@@ -32,6 +32,19 @@ describe("nextStep", () => {
     expect(nextStep(steps, -1, text)).toBe(0);
   });
 
+  it("事業の数が分かるまでの、見込みの数の無い形でも見分ける", () => {
+    expect(nextStep(steps, -1, "質問 1：会社の呼び名（質問 ID：5）")).toBe(0);
+  });
+
+  it("見込みの数の無い形でも、前置きの文の言及は数えない", () => {
+    const text = [
+      "事業 ID の質問（質問 ID：10）は、名前から案を作って聞きます。",
+      "",
+      "質問 3：任せてよい範囲（質問 ID：11）",
+    ].join("\n");
+    expect(nextStep(steps, 1, text)).toBe(3);
+  });
+
   it("半角のコロンでも見分ける", () => {
     expect(nextStep(steps, -1, "質問 1/16：会社の呼び名（質問 ID:5）")).toBe(0);
   });
