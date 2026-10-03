@@ -7,10 +7,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { manifestVersion } from "../../scripts/lib/version.ts";
 import { repoRoot } from "../helpers.ts";
 
-const scaffold = (cwd: string, name: string) =>
+const scaffold = (cwd: string, ...args: string[]) =>
   spawnSync(
     process.execPath,
-    [join(repoRoot, "evals", "lib", "scaffold.ts"), name],
+    [join(repoRoot, "evals", "lib", "scaffold.ts"), ...args],
     { cwd, encoding: "utf8" },
   );
 
@@ -41,6 +41,23 @@ describe("evals/lib/scaffold.ts", () => {
       state: "initializing",
       pluginVersion: manifestVersion(repoRoot),
     });
+  });
+
+  it("company-active は導入済みの company を複製し、重ねるファイルの組を上書きで足す", () => {
+    const run = scaffold(cwd, "company-active", "retro-history");
+    expect(run.status).toBe(0);
+    const state = JSON.parse(
+      readFileSync(join(cwd, ".business-os.json"), "utf8"),
+    ) as Record<string, unknown>;
+    expect(state["state"]).toBe("active");
+    expect(
+      existsSync(join(cwd, "docs", "operations", "daily", "2026-10-01.md")),
+    ).toBe(true);
+  });
+
+  it("無い組を重ねようとすると失敗の終了コードを返す", () => {
+    const run = scaffold(cwd, "company-active", "no-such-overlay");
+    expect(run.status).not.toBe(0);
   });
 
   it("知らない名前なら失敗の終了コードを返す", () => {
