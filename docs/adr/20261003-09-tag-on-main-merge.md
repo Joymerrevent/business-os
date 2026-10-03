@@ -3,11 +3,11 @@ id: 20261003-09
 title: リリース PR が main にマージされたら、CI がタグを作って push する。GitHub の Release は CC か人が作る
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
