@@ -1,5 +1,5 @@
 // 進行役の判定（evals/lib/dialogue/steps.ts）と台本（evals/skills/**/dialogue.json）のテスト。
-// 質問は SKILL.md の質問の表の番号で見分ける（ADR 20261003-08）。
+// 質問は SKILL.md の質問の表の番号（利用者に見せる質問 ID）で見分ける（ADR 20261003-08、20261003-10）。
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -22,37 +22,52 @@ const steps: Step[] = [
 ];
 
 describe("nextStep", () => {
-  it("前置きのあとの「質問 N/総数」で項目を見分ける", () => {
+  it("前置きのあとの「質問 ID：N」で項目を見分ける", () => {
     const text = [
       "導入を始めます。この作業フォルダは git リポジトリで、sandbox も使えます。",
       "",
-      "質問 5/21：会社の呼び名",
+      "質問 1/16：会社の呼び名（質問 ID：5）",
       "会社の呼び名を教えてください。",
     ].join("\n");
     expect(nextStep(steps, -1, text)).toBe(0);
   });
 
-  it("全角の ／ でも見分ける", () => {
-    expect(nextStep(steps, -1, "質問 5／21：会社の呼び名")).toBe(0);
+  it("半角のコロンでも見分ける", () => {
+    expect(nextStep(steps, -1, "質問 1/16：会社の呼び名（質問 ID:5）")).toBe(0);
+  });
+
+  it("何問目と見込みの数は照合に使わない", () => {
+    expect(nextStep(steps, -1, "質問 9/21：会社の呼び名（質問 ID：5）")).toBe(
+      0,
+    );
   });
 
   it("任意の項目は飛ばしてよい", () => {
-    expect(nextStep(steps, 1, "質問 11/21：任せてよい範囲")).toBe(3);
+    expect(nextStep(steps, 1, "質問 3/16：任せてよい範囲（質問 ID：11）")).toBe(
+      3,
+    );
   });
 
   it("同じ番号はくり返し（事業ごとに聞く場合）とみなす", () => {
-    expect(nextStep(steps, 4, "質問 15/21：追いかける数字（事業 B）")).toBe(4);
+    expect(
+      nextStep(steps, 4, "質問 9/19：追いかける数字（事業 B、質問 ID：15）"),
+    ).toBe(4);
   });
 
-  it("「（質問 N の確認）」だけの応答は、今の項目の聞き返しとみなす", () => {
+  it("「（質問 ID：N の確認）」だけの応答は、今の項目の聞き返しとみなす", () => {
     const text =
-      "（質問 9 の確認）「教材の販売」は、事業 B の一言の説明でよいですか。";
+      "（質問 ID：9 の確認）「教材の販売」は、事業 B の一言の説明でよいですか。";
     expect(nextStep(steps, 1, text)).toBe(1);
+  });
+
+  it("聞き返しの番号の一部を、別の質問 ID と取り違えない", () => {
+    const text = "（質問 ID：15 の確認）事業 B の数字も同じでよいですか。";
+    expect(nextStep(steps, 4, text)).toBe(4);
   });
 
   it("補足や予告に先の項目の語が出ても、番号が 1 つなら 1 つの質問とみなす", () => {
     const text = [
-      "質問 9/21：事業の一覧",
+      "質問 2/16：事業の一覧（質問 ID：9）",
       "事業の名前と、一言の説明を教えてください。",
       "事業 ID は、このあと名前から英小文字・数字・ハイフンで作ります。",
     ].join("\n");
@@ -65,24 +80,31 @@ describe("nextStep", () => {
     );
   });
 
+  it("質問 ID の無い番号（「表 N」など）は見分けず、不合格にする", () => {
+    expect(() =>
+      nextStep(steps, -1, "質問 1/16：会社の呼び名（表 5）"),
+    ).toThrow(/質問 ID/);
+  });
+
   it("1 ターンで 2 つの番号を聞くと不合格", () => {
-    const text = "質問 9/21：事業の一覧\n…\n質問 11/21：任せてよい範囲\n…";
+    const text =
+      "質問 2/16：事業の一覧（質問 ID：9）\n…\n質問 3/16：任せてよい範囲（質問 ID：11）\n…";
     expect(() => nextStep(steps, 0, text)).toThrow(/複数の質問/);
   });
 
   it("必須の項目を飛ばすと不合格", () => {
-    expect(() => nextStep(steps, 0, "質問 11/21：任せてよい範囲")).toThrow(
-      /飛ばしています/,
-    );
+    expect(() =>
+      nextStep(steps, 0, "質問 2/16：任せてよい範囲（質問 ID：11）"),
+    ).toThrow(/飛ばしています/);
   });
 
   it("台本に無い番号、前に戻った番号は不合格", () => {
-    expect(() => nextStep(steps, 0, "質問 3/21：git リポジトリ")).toThrow(
-      /台本に無い/,
-    );
-    expect(() => nextStep(steps, 3, "質問 9/21：事業の一覧")).toThrow(
-      /台本に無い/,
-    );
+    expect(() =>
+      nextStep(steps, 0, "質問 1/17：git リポジトリ（質問 ID：3）"),
+    ).toThrow(/台本に無い/);
+    expect(() =>
+      nextStep(steps, 3, "質問 4/16：事業の一覧（質問 ID：9）"),
+    ).toThrow(/台本に無い/);
   });
 });
 

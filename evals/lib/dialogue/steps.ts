@@ -1,7 +1,7 @@
 // 進行役（run.ts）の判定。claude を呼ばない純粋な関数だけを置き、test/evals/ で検査する。
 
 export type Step = {
-  /** SKILL.md の質問の表の番号（ADR 20261003-08） */
+  /** SKILL.md の質問の表の番号。利用者には質問 ID として見せる（ADR 20261003-08、20261003-10） */
   question: number;
   /** 記録とエラーの文に使う名前（質問の表の見出しと同じにする） */
   name: string;
@@ -15,10 +15,14 @@ export type Step = {
 /** 台本どおりに進まなかったこと（不合格）。進行役そのものの失敗とは分ける */
 export class ScriptFailure extends Error {}
 
-/** 「質問 <番号>/<総数>」（共通規約の質問の付け方）。全角の ／ も受け付ける */
-const QUESTION_MARK = /質問\s*(\d+)\s*[/／]\s*\d+/g;
-/** 「（質問 <番号> の確認）」（聞き返しの付け方） */
-const CLARIFY_MARK = /質問\s*(\d+)\s*の確認/g;
+/**
+ * 質問の先頭の「（質問 ID：<番号>）」（共通規約の質問の付け方）。全角・半角のコロンを受け付ける。
+ * 「質問 <何問目>/<見込みの数>」は CC が数えるもので、照合には使わない。
+ * 聞き返しの「（質問 ID：<番号> の確認）」は含めない
+ */
+const QUESTION_MARK = /質問\s*ID\s*[:：]\s*(\d+)(?!\d)(?!\s*の確認)/g;
+/** 「（質問 ID：<番号> の確認）」（聞き返しの付け方） */
+const CLARIFY_MARK = /質問\s*ID\s*[:：]\s*(\d+)\s*の確認/g;
 
 const numbersOf = (pattern: RegExp, text: string): number[] => [
   ...new Set([...text.matchAll(pattern)].map((match) => Number(match[1]))),
@@ -26,8 +30,8 @@ const numbersOf = (pattern: RegExp, text: string): number[] => [
 
 /**
  * 今のターンの応答が、台本のどの項目にあたるかを、応答に付いた質問の番号で決める。
- * - 「質問 N/総数」が 1 つ：番号が N の項目。今の項目と同じ番号なら、くり返し（事業ごとに聞く場合など）
- * - 「（質問 N の確認）」だけ：今の項目の聞き返し
+ * - 「質問 ID：N」が 1 つ：番号が N の項目。今の項目と同じ番号なら、くり返し（事業ごとに聞く場合など）
+ * - 「（質問 ID：N の確認）」だけ：今の項目の聞き返し
  * - 番号が無い、2 つ以上の番号を聞いた、台本に無い番号、必須の項目を飛ばした：不合格
  */
 export const nextStep = (
@@ -43,7 +47,7 @@ export const nextStep = (
       return position;
     }
     throw new ScriptFailure(
-      "応答に質問の番号（「質問 N/総数」か「（質問 N の確認）」）がありません",
+      "応答に質問 ID（「質問 ID：N」か「（質問 ID：N の確認）」）がありません",
     );
   }
   if (asked.length > 1) {
