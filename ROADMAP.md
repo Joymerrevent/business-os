@@ -34,6 +34,8 @@ business-os がどの版で何を目指すかを書く。個々の残作業と�
   ```
 
   - 新しい Issue は Project に自動では入らない。`--project` を付け忘れたら `gh project item-add 7 --owner Joymerrevent --url <Issue の URL>` で足す
-- PR の本文に `Closes #<番号>` と書く。マージで Issue が閉じ、Project の状態が Done になる
+- PR の本文に `Closes #<番号>` と書き、PR と Issue を結びつける
+- `develop` 向けの PR では、マージしても Issue は自動で閉じない。GitHub が `Closes` で Issue を閉じるのは、既定のブランチ（`main`）にマージしたときだけのため。
+  `develop` へのマージで作業が終わったら、`gh issue close <番号> --reason completed` で閉じる。閉じると Project の状態が Done になる
 - ADR の「影響」や「後続の検討」に新しい作業が出たら、その ADR を accepted にしたときに Issue にする
 - 「次のどれかが起きたら見直す」のような見張る条件は Issue にしない（ADR の本文に残す）
