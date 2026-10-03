@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: close-kpi-change
+description: 月次締めで追いかける数字の定義を変えたいとき、事業の憲章の変更を提案にする
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: skill-started
+    type: regex
+    target: "trace"
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+  - name: monthly-created
+    type: file_exists
+    path: "docs/operations/reviews/monthly-*.md"
+  - name: kpi-change-proposed
+    type: regex
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/proposals/[^"]+\.md"[^}]*target: docs/charter/businesses/biz-b\.md[^}]*販売数'
+    target: "trace"
+  - name: daily-record
+    type: regex
+    target: "trace"
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/daily/\d{4}-\d{2}-\d{2}\.md"[^}]*- (?:\d{2}|--):(?:\d{2}|--) /close — '
+  - name: charter-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: charter-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: map-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
+  - name: map-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'

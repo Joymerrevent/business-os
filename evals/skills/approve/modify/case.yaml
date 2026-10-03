@@ -1,0 +1,56 @@
+schema_version: "1.1"
+name: approve-modify
+description: 提案の修正を求め、本文を書き直させる。書き直した提案は保留にし、憲章は変えない
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: skill-started
+    type: regex
+    target: "trace"
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+  - name: rewritten
+    type: regex
+    pattern: "5 万円"
+    target:
+      source: "file"
+      path: "docs/proposals/20260928-02-proposed-decision-rules.md"
+  - name: still-proposed
+    type: regex
+    pattern: "status: proposed"
+    target:
+      source: "file"
+      path: "docs/proposals/20260928-02-proposed-decision-rules.md"
+  - name: approving-reverted
+    type: regex
+    pattern: "status: proposed"
+    target:
+      source: "file"
+      path: "docs/proposals/20260928-01-approving-company.md"
+  - name: daily-record
+    type: regex
+    target: "trace"
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/daily/\d{4}-\d{2}-\d{2}\.md"[^}]*- (?:\d{2}|--):(?:\d{2}|--) /approve — '
+  - name: charter-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: charter-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: map-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
+  - name: map-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
