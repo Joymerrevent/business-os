@@ -11,7 +11,7 @@ import {
 } from "../../hooks/lib/plugin.ts";
 import { validate } from "../../hooks/lib/schema.ts";
 import type { CheckResult, Level } from "./company-checks.ts";
-import { manifestVersion, packageVersion } from "./version.ts";
+import { compareVersions, manifestVersion, packageVersion } from "./version.ts";
 
 const result = (
   category: string,
@@ -827,28 +827,106 @@ export const checkAdapters = (root: string = pluginRoot()): CheckResult[] => {
 
 REPO_CHECKS["adapters"] = checkAdapters;
 
-// ---- 版 ----
+// ---- 版とリリース（ADR 20261003-09） ----
 
-export const checkVersion = (root: string = pluginRoot()): CheckResult[] => {
-  const category = "版";
-  try {
-    const pkg = packageVersion(root);
-    const manifest = manifestVersion(root);
-    return [
-      pkg === manifest
+/** リリースのタグの接頭辞。`claude plugin tag` が作る `<Plugin 名>--v<版>` */
+const RELEASE_TAG_PREFIX = "business-os--v";
+
+/** リリースのタグの版の一覧。タグを読めなければ undefined */
+const releaseTagVersions = (root: string): string[] | undefined => {
+  const run = spawnSync("git", ["tag", "--list", `${RELEASE_TAG_PREFIX}*`], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  if (run.status !== 0) return undefined;
+  return run.stdout
+    .split("\n")
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.startsWith(RELEASE_TAG_PREFIX))
+    .map((tag) => tag.slice(RELEASE_TAG_PREFIX.length));
+};
+
+/** リリース PR（main 向けの PR）でだけ確かめること */
+const releasePrResults = (root: string, version: string): CheckResult[] => {
+  const category = "リリース";
+  const results: CheckResult[] = [];
+  const tags = releaseTagVersions(root);
+  if (tags === undefined || tags.length === 0) {
+    results.push(
+      result(
+        category,
+        "直近のタグ",
+        "fail",
+        `${RELEASE_TAG_PREFIX}* のタグを読めません。CI の checkout がタグを取っているか確かめてください（比べる基準が無いまま通さない）`,
+      ),
+    );
+  } else {
+    const latest = tags.reduce((max, tag) =>
+      compareVersions(tag, max) > 0 ? tag : max,
+    );
+    results.push(
+      compareVersions(version, latest) > 0
         ? result(
             category,
-            "package.json と plugin.json の version",
+            "版が直近のタグより大きい",
             "pass",
-            pkg,
+            `${latest} → ${version}`,
           )
         : result(
             category,
-            "package.json と plugin.json の version",
+            "版が直近のタグより大きい",
             "fail",
-            `package.json ${pkg}、plugin.json ${manifest}。node scripts/sync-plugin-version.ts で写してください`,
+            `版 ${version} が直近のタグ ${RELEASE_TAG_PREFIX}${latest} より大きくありません。版上げ（pnpm release:version）を忘れていないか確かめてください`,
           ),
-    ];
+    );
+  }
+  const changelogPath = join(root, "CHANGELOG.md");
+  const changelog = existsSync(changelogPath)
+    ? readFileSync(changelogPath, "utf8")
+    : "";
+  results.push(
+    changelog.split("\n").some((line) => line.trim() === `## ${version}`)
+      ? result(category, "CHANGELOG の版の節", "pass", version)
+      : result(
+          category,
+          "CHANGELOG の版の節",
+          "fail",
+          `CHANGELOG.md に「## ${version}」の節がありません`,
+        ),
+  );
+  const changesetDir = join(root, ".changeset");
+  const leftovers = existsSync(changesetDir)
+    ? readdirSync(changesetDir).filter(
+        (name) => name.endsWith(".md") && name !== "README.md",
+      )
+    : [];
+  results.push(
+    leftovers.length === 0
+      ? result(category, "使い残しの changeset", "pass")
+      : result(
+          category,
+          "使い残しの changeset",
+          "fail",
+          `.changeset/ に ${leftovers.join("、")} が残っています。版上げ（pnpm release:version）で消費してください`,
+        ),
+  );
+  return results;
+};
+
+/**
+ * 版とリリースの検査。版の一致と形は常に、版の大きさ・CHANGELOG・changeset は main 向けの PR でだけ確かめる。
+ * main 向けかどうかは、GitHub Actions の pull_request で入る GITHUB_BASE_REF で見分ける
+ */
+export const checkRelease = (
+  root: string = pluginRoot(),
+  env: NodeJS.ProcessEnv = process.env,
+): CheckResult[] => {
+  const category = "版";
+  let pkg: string;
+  let manifest: string;
+  try {
+    pkg = packageVersion(root);
+    manifest = manifestVersion(root);
   } catch (error) {
     return [
       result(
@@ -859,9 +937,26 @@ export const checkVersion = (root: string = pluginRoot()): CheckResult[] => {
       ),
     ];
   }
+  if (pkg !== manifest) {
+    return [
+      result(
+        category,
+        "package.json と plugin.json の version",
+        "fail",
+        `package.json ${pkg}、plugin.json ${manifest}。node scripts/sync-plugin-version.ts で写してください`,
+      ),
+    ];
+  }
+  const results = [
+    result(category, "package.json と plugin.json の version", "pass", pkg),
+  ];
+  if (env["GITHUB_BASE_REF"] === "main") {
+    results.push(...releasePrResults(root, pkg));
+  }
+  return results;
 };
 
-REPO_CHECKS["version"] = checkVersion;
+REPO_CHECKS["release"] = (root) => checkRelease(root);
 
 // ---- 作業者エージェント ----
 

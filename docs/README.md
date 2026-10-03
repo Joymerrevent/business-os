@@ -39,3 +39,4 @@ business-os を改良する人と CC のための地図です。利用者向け�
 
 開発専用の Skill `/release`（`.claude/skills/release/`）に従う。changeset → 版上げ → `plugin.json` への同期 → CHANGELOG →
 `main` へのリリース PR → タグ `business-os--v<版>` → GitHub の Release（版に `-beta.N` などの接尾辞があるときだけ pre-release）。
+タグは、リリース PR が `main` にマージされたときに CI（`.github/workflows/tag.yml`）が作る。Release は CC か人が作る。

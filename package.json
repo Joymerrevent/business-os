@@ -35,7 +35,7 @@
     "check:adr": "node scripts/check-repo.ts adr",
     "check:usage": "node scripts/check-repo.ts usage",
     "check:adapters": "node scripts/check-repo.ts adapters",
-    "check:version": "node scripts/check-repo.ts version",
+    "check:release": "node scripts/check-repo.ts release",
     "check:shell": "node scripts/check-repo.ts shell",
     "check:evals": "node scripts/check-repo.ts evals",
     "format": "prettier --write .",
