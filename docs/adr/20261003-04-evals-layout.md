@@ -50,13 +50,20 @@ evals/
 │           ├── scaffold.sh       作業場所の用意（exec node の 1 行）
 │           ├── overlay/          任意：このケースだけの前提データ（検証用の company に重ねる）
 │           └── dialogue.json     任意：このケースの質問の流れの台本
-├── fixtures/                     複数のケースで共有する前提データ（必要になったときだけ作る）
+├── fixtures/                     eval の複数のケースが共有する環境（必要になったときだけ作る）
 └── results/                      実行の記録（追跡しない）
 ```
 
 1. 共通の道具は `evals/lib/`、Skill ごとのテストは `evals/skills/<Skill 名>/<ケース名>/` に置く
-2. 前提データは、使うケースのフォルダの `overlay/` に置く。2 つ以上のケースで共有するものだけを `evals/fixtures/` に置く。
-   土台の検証用 company は、vitest と共有するため `test/fixtures/company/` のままにする
+2. 前提データは、役割で 3 段に分ける
+
+   | 段 | 置き場 | 中身 |
+   |---|---|---|
+   | 土台 | `test/fixtures/company/` | business-os を動かすのに必要な検証用の company。vitest と eval が共有する |
+   | 共通の環境 | `evals/fixtures/<名前>/` | eval の 2 つ以上のケースが共有する環境（例：日報が 1 か月分たまった company）。必要になったときだけ作る |
+   | ケースの前提データ | `evals/skills/<Skill 名>/<ケース名>/overlay/` | そのケースだけで使うデータ |
+
+   scaffold は、土台の上に共通の環境、その上にケースの前提データの順で重ねる
 3. 質問の流れの台本は、同じ場面を扱うケースのフォルダに `dialogue.json` として置く。
    `pnpm eval:dialogue` は `evals/skills/` の下の `dialogue.json` を全て実行する
 4. 判定は `case.yaml` の `graders:` にまとめる。`graders/*.md` は使わない
@@ -80,9 +87,19 @@ evals/
 - 検討した代替案
   - `--eval-dir evals/skills` で eval のフォルダ自体を `skills/` にする：実行の記録が `evals/skills/results/` にでき、Skill の名前と混ざる。不採用
   - 前提データを全て `evals/fixtures/` に置く：今の前提データは 1 ケースでしか使っておらず、ケースから離れる。不採用
+  - 土台の検証用 company も `evals/fixtures/company/` に移す：利用者の大半は vitest（hook・`/check`・スキーマのテスト）で、
+    eval は `evals/lib/scaffold.ts` の 1 か所から借りているだけである。移すと単体テスト（`test/`）が開発用の Skill の検証（`evals/`）に依存し、
+    `evals/` を作り直したり外したりするときに hook のテストまで巻き込む。不採用
+  - `test/` と `evals/` を 1 つにまとめる：`test/` は結果が毎回同じで費用が無く、CI と `pnpm check` で必ず走る。
+    `evals/` はモデルを動かすため結果が揺れ、利用枠を消費し、手元で必要なときだけ走る（20261003-01 の決定 6）。
+    フォルダを分けておくと、この境界が構成から読める。道具の既定（vitest は `test/`、`claude plugin eval` は `evals/`）にも合う。今は不採用
   - 台本を `evals/dialogue/<Skill 名>.json` に集める：Skill ごとに台本が 1 つに限られ、ケースとの対応も名前でしか分からない。不採用
 
 ## 影響
+
+- `test/` と `evals/` を分けた決定は、次のどれかが起きたら見直す
+  - eval を CI で回すようになった（Bash の制約が解けた、API キーの費用を受け入れた など）
+  - 共通の前提データが増え、`test/fixtures/` と `evals/fixtures/` のどちらに置くか迷う場面がくり返し起きた
 
 - 既存の 11 ケース、台本、前提データ、道具を移す（実装 PR で行う）。移した後に全ケースと台本を実行し、結果が変わらないことを確かめる
 - 各 `scaffold.sh` の相対パスが 1 段深くなる。`check:shell` の規則（`evals/` の下の `scaffold.sh` が `exec node` の 1 行）はそのまま使える
