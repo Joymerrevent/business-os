@@ -117,9 +117,9 @@ describe("運用中（state: active）の保護対象", () => {
   });
 
   it("提案の無い憲章は拒否", () => {
-    expect(write("docs/charter/repositories.md", validDoc("charter"))).toBe(
-      "deny",
-    );
+    expect(
+      write("docs/charter/repositories/README.md", validDoc("charter")),
+    ).toBe("deny");
   });
 
   it("proposed（承認前）の提案では拒否", () => {
@@ -135,15 +135,18 @@ describe("運用中（state: active）の保護対象", () => {
   });
 
   it("大文字小文字を変えたパスでも拒否", () => {
-    expect(write("Docs/Charter/repositories.md", validDoc("charter"))).toBe(
-      "deny",
-    );
+    expect(
+      write("Docs/Charter/repositories/README.md", validDoc("charter")),
+    ).toBe("deny");
     expect(write("claude.md", "# 地図\n")).toBe("deny");
   });
 
   it("相対パスの寄り道（..）でも拒否", () => {
     expect(
-      write("docs/operations/../charter/repositories.md", validDoc("charter")),
+      write(
+        "docs/operations/../charter/repositories/README.md",
+        validDoc("charter"),
+      ),
     ).toBe("deny");
   });
 
@@ -151,6 +154,21 @@ describe("運用中（state: active）の保護対象", () => {
     expect(write("docs/charter/businesses/biz-c.md", validDoc("charter"))).toBe(
       "deny",
     );
+  });
+
+  it("実装リポの指示（charter/repositories/<リポ名>/）も提案が無ければ拒否", () => {
+    expect(
+      write(
+        "docs/charter/repositories/biz-a-app/instructions.md",
+        validDoc("charter"),
+      ),
+    ).toBe("deny");
+  });
+
+  it("実装リポのメモ（knowledge/repositories/<リポ名>/）は通す", () => {
+    expect(
+      write("docs/knowledge/repositories/biz-a-app/notes.md", validDoc()),
+    ).toBe("allow");
   });
 
   it("company の外のファイルは判定しない", () => {
@@ -536,7 +554,7 @@ describe("ログ", () => {
   });
 
   it("判定を月次のファイルに 1 行ずつ記録する", () => {
-    write("docs/charter/repositories.md", validDoc("charter"));
+    write("docs/charter/repositories/README.md", validDoc("charter"));
     bash("git status");
     const files = readdirSync(join(root, ".claude")).filter((f) =>
       /^hook-log-\d{6}\.jsonl$/.test(f),
