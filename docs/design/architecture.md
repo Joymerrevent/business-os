@@ -160,6 +160,7 @@ company/
 ├── CLAUDE.md                    # 地図（第 5 節）。Vault 外
 ├── .claude/
 │   ├── settings.json            # sandbox / permissions（templates/settings.json.tmpl から生成）
+│   ├── settings.local.json      # 利用者個人の設定。gitignore。署名の agent のソケットの許可を置く（§7.2）
 │   └── skills/                  # 業務 Skill（事業固有。business-os の外で育てる）
 ├── .business-os.json            # business-os の状態（initializing / active）、バージョン記録、onboard 実施日
 ├── .leak-dict.json              # 固有名詞の辞書（business-os の check:leak が読む）。gitignore
@@ -201,9 +202,9 @@ company/
 | `docs/operations/` `docs/knowledge/` `docs/dashboards/` | ○ | ○ | — |
 | `docs/inbox/` | ○ | 整理を頼まれたときのみ | — |
 | `docs/archive/` | — | 移動のみ | — |
-| `.claude/settings.json` `.business-os.json` | ○ | × | ○ |
+| `.claude/settings.json` `.claude/settings.local.json` `.business-os.json` | ○ | × | ○ |
 
-<!-- 根拠: 20260929-03, 20260929-05 -->
+<!-- 根拠: 20260929-03, 20260929-05, 20261003-11 -->
 
 ### 4.2 実装リポの参照
 
@@ -250,7 +251,7 @@ business-os を改良する CC と、貢献する人向け。配布物と開発�
 
 | Skill | 起動 | 読む | 書く（直接） | 提案（承認要） | 人に聞く |
 |---|---|---|---|---|---|
-| `/onboard` | 初回、事業追加、`--migrate` | business-os の `templates/` | `CLAUDE.md`、`charter/*`、`operations/obligations.md`、`.claude/settings.json`、`.business-os.json`、（選択時）`docs/.obsidian/` `dashboards/` `_templates/` | — | 会社概要、事業一覧、承認範囲、期限・義務、実装リポの場所、Obsidian 使用可否、KPI 候補の選択 |
+| `/onboard` | 初回、事業追加、`--migrate` | business-os の `templates/` | `CLAUDE.md`、`charter/*`、`operations/obligations.md`、`.claude/settings.json`、`.business-os.json`、（選択時）`docs/.obsidian/` `dashboards/` `_templates/`、（署名を許したとき）`.claude/settings.local.json` | — | 会社概要、事業一覧、承認範囲、期限・義務、実装リポの場所、Obsidian 使用可否、KPI 候補の選択、コミットの署名の agent への接続 |
 | `/approve` | 人間が呼ぶ | `proposals/`（`status: proposed`） | 提案の status、承認内容を `charter/` へ反映（permissions の ask が最終確認） | — | 承認 / 却下 / 修正 |
 | `/check` | 週次 | business-os の検査定義、`company` 全体 | `operations/reviews/check-YYYYMMDD.md` | 設定の修正 | 異常時のみ |
 | `/adr` | 判断時 | `charter/decision-rules.md`、関連 ADR | `decisions/YYYYMMDD-nn-*.md`（`proposed`） | — | 決定内容、accepted への変更 |
@@ -318,7 +319,7 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
     "enabled": true,
     "allowUnsandboxedCommands": false,
     "filesystem": {
-      "denyWrite": ["./docs/charter/**", "./CLAUDE.md", "./.claude/settings.json", "./.business-os.json"],
+      "denyWrite": ["./docs/charter/**", "./CLAUDE.md", "./.claude/settings.json", "./.claude/settings.local.json", "./.business-os.json"],
       "denyRead": ["./.env", "./.env.*", "~/.ssh/**", "~/.aws/**", "~/.config/gh/**"]
     }
   },
@@ -329,7 +330,7 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
     ],
     "ask": [
       "Edit(./docs/charter/**)", "Edit(./CLAUDE.md)",
-      "Edit(./.claude/settings.json)", "Edit(./.business-os.json)",
+      "Edit(./.claude/settings.json)", "Edit(./.claude/settings.local.json)", "Edit(./.business-os.json)",
       "Bash(rm -rf:*)",
       "mcp__*__send_*", "mcp__*__post_*", "mcp__*__create_*", "mcp__*__pay_*"
     ],
@@ -350,6 +351,13 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
 - `ask` の MCP パターンは動詞で網をかけたもの。`/onboard` が接続済み MCP を検出したら具体名に置き換える
 - `company`（非公開）への通常 `git push` は allow。force は deny（粗い網）と hook（本命）で止める
 - sandbox のキー名は実装初日に公式ドキュメントで確認する
+- `.claude/settings.local.json` は `.claude/settings.json` より優先され、sandbox の値を上書きできる。
+  そのため保護対象に含め（`denyWrite` と `ask`、hook）、点検で上書きを見つける（§8）
+- 署名付きコミットは、sandbox が署名の agent のソケットへの接続を止めるため失敗する。
+  macOS では、`/onboard` が利用者の了承を得て、`.claude/settings.local.json` の `sandbox.network.allowUnixSockets` にそのソケット 1 つだけを書く。
+  雛形には書かない（パスは利用者ごとに違う）。Linux / WSL2 にはパスごとの許可が無いため、Skill は署名で失敗したら止め、人にコミットを頼む
+
+<!-- 根拠: 20261003-11 -->
 
 ### 7.3 `pre-tool-use.ts` の判定
 
@@ -367,7 +375,7 @@ hook は入力の `cwd` から上位へ辿り、`.business-os.json` のあるデ
 `/onboard` は最初の行動として `.business-os.json` を `state: initializing` で作り、完了時に `active` にする。
 再実行（`--migrate`、事業追加）は運用中の扱いで、提案経由で行う。新規ファイルも提案の `target` にできる。
 
-保護対象：`docs/charter/**`、`CLAUDE.md`、`.claude/settings.json`、`.business-os.json`
+保護対象：`docs/charter/**`、`CLAUDE.md`、`.claude/settings.json`、`.claude/settings.local.json`、`.business-os.json`
 
 #### 運用中の判定
 
@@ -379,7 +387,7 @@ hook は入力の `cwd` から上位へ辿り、`.business-os.json` のあるデ
 | Bash（拒否） | 引数を解析し、`git push` に force 系フラグ（`-f` / `--force` / `--force-with-lease` / `--force-if-includes`、位置不問）、`+` 付き refspec、`--no-verify` があるか | 該当は exit 2 |
 | Bash（確認） | `rm -r*`、`git reset --hard`、`git clean -f*`、`git branch -D` | 該当は ask |
 | Bash（共通） | `sh -c` / `bash -c` / `eval` の内側も同じ規則で解析する | — |
-| 厳格モード | `state: active` かつ軽い点検で `settings.json` の必須規則が欠けていた場合 | 保護対象への Write / Edit を提案の有無に関わらず全拒否 |
+| 厳格モード | `state: active` かつ、`settings.json` の必須規則が欠けているか、`settings.local.json` が sandbox の必須の値を上書きしている・読めない場合 | 保護対象への Write / Edit を提案の有無に関わらず全拒否 |
 | hook 自身の例外 | 判定中に例外 | **exit 2（fail-closed）** |
 
 拒否は exit 2、確認は JSON 出力の `hookSpecificOutput.permissionDecision: "ask"` で返す。
@@ -436,6 +444,8 @@ status を変えるのは `/approve` だけ。`approving` のまま 24 時間超
 毎セッション、1 秒未満、読むだけ、全部 OK なら無言。項目は ADR 20260929-06 の表を正典とする。
 `.business-os.json` が無いディレクトリでは何もしない（company ではないため）。
 `state: active` で項目 4（`settings.json` の必須規則）が異常なら厳格モードに入る。
+`settings.local.json` が `sandbox.enabled` か `allowUnsandboxedCommands` を上書きしている、または読めない場合も、項目 4 の異常として扱う。
+`settings.local.json` が `allowAllUnixSockets` を有効にしている、または `excludedCommands` が空でない場合は warn を出す（厳格モードにはしない）。
 sandbox が使えない環境（native Windows 等）は厳格モードにせず、毎セッション warn を出す。
 
 ### 8.2 重い点検（`/check` → `scripts/check.ts`）
@@ -443,6 +453,8 @@ sandbox が使えない環境（native Windows 等）は厳格モードにせず
 週次。判定は pass / warn / fail、全体は終了コード。出力は `operations/reviews/check-YYYYMMDD.md`。
 分類は ADR 20260929-06 の表を正典とする。「設定がある」ではなく「効いている」を確認する
 （hook への合成入力、sandbox への書き込み試行）。
+「設定の一致」では、`settings.local.json` による上書き（fail）と広い緩め（warn）も見て、
+`allowUnixSockets` で許したソケットのパスを一覧で示す（判定はしない）。
 
 `/doctor prompt-audit` は範囲を company の指示ファイルに限定して呼ぶ（`/doctor prompt-audit ./CLAUDE.md` 等）。
 範囲を指定しないと利用者の `~/.claude` 配下まで監査し、その中身がレポート経由で company に入るため。
