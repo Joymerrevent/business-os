@@ -19,6 +19,7 @@ import {
   checkDocs,
   checkHooks,
   checkLeak,
+  checkShell,
   checkSkills,
   checkTemplates,
   checkUsage,
@@ -39,6 +40,7 @@ describe("実際の business-os", () => {
     ["usage", checkUsage],
     ["adapters", checkAdapters],
     ["agents", checkAgents],
+    ["shell", checkShell],
   ] as [string, Check][])("%s に fail が無い", (_, check) => {
     expect(failsOf(check)).toEqual([]);
   });
@@ -122,6 +124,46 @@ describe("壊した business-os の一時コピー", () => {
     const fails = failsOf(checkAgents, root);
     expect(fails.map((r) => r.name)).toContain("agents/worker.md");
     expect(fails.map((r) => r.name)).toContain("agents/");
+  });
+
+  describe("シェルスクリプト", () => {
+    const add = (path: string, text: string) => {
+      mkdirSync(join(root, path, ".."), { recursive: true });
+      writeFileSync(join(root, path), text);
+      spawnSync("git", ["add", "-A"], { cwd: root });
+    };
+    const shellFails = () => failsOf(checkShell, root).map((r) => r.name);
+
+    it("evals/ の scaffold.sh が exec node の 1 行なら fail にならない", () => {
+      add(
+        "evals/onboard/x/scaffold.sh",
+        '#!/usr/bin/env bash\n# コメント\n\nexec node "$(dirname "$0")/../../lib/scaffold.ts" empty-repo\n',
+      );
+      expect(shellFails()).toEqual([]);
+    });
+
+    it("scaffold.sh に 2 行目の処理があると fail", () => {
+      add(
+        "evals/onboard/x/scaffold.sh",
+        '#!/usr/bin/env bash\ngit init -q\nexec node "$(dirname "$0")/../../lib/scaffold.ts" empty-repo\n',
+      );
+      expect(shellFails()).toContain("evals/onboard/x/scaffold.sh");
+    });
+
+    it("scaffold.sh の 1 行が exec node でないと fail", () => {
+      add("evals/onboard/x/scaffold.sh", "#!/usr/bin/env bash\ngit init -q\n");
+      expect(shellFails()).toContain("evals/onboard/x/scaffold.sh");
+    });
+
+    it("evals/ の外の .sh と、拡張子の無い bash のファイルは fail", () => {
+      add("scripts/setup.sh", "#!/usr/bin/env bash\necho hi\n");
+      add("evals/onboard/x/prepare.sh", "exec node x.ts\n");
+      add("scripts/setup", "#!/bin/bash\necho hi\n");
+      const fails = shellFails();
+      expect(fails).toContain("scripts/setup.sh");
+      expect(fails).toContain("evals/onboard/x/prepare.sh");
+      expect(fails).toContain("scripts/setup");
+    });
   });
 
   it("Skill の節が欠けると fail", () => {

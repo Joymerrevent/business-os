@@ -36,11 +36,14 @@
     "check:usage": "node scripts/check-repo.ts usage",
     "check:adapters": "node scripts/check-repo.ts adapters",
     "check:version": "node scripts/check-repo.ts version",
+    "check:shell": "node scripts/check-repo.ts shell",
     "format": "prettier --write .",
     "fix:md": "markdownlint-cli2 --fix",
     "changeset": "changeset",
     "prepare": "simple-git-hooks",
     "test": "vitest run",
+    "eval:cases": "claude plugin eval . --ablation none --runs 1 --scaffold --allow-tools Write Edit --trust-plugin --no-publish",
+    "eval:dialogue": "node evals/dialogue/run.ts evals/dialogue/onboard.json",
     "release:version": "changeset version && node scripts/sync-plugin-version.ts && prettier --write .claude-plugin/plugin.json"
   },
   "simple-git-hooks": {
