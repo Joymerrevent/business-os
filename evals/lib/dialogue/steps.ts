@@ -1,7 +1,7 @@
 // 進行役（run.ts）の判定。claude を呼ばない純粋な関数だけを置き、test/evals/ で検査する。
 
 export type Step = {
-  /** SKILL.md の質問の表の番号（ADR 20261003-08） */
+  /** SKILL.md の質問の表の番号。利用者には質問 ID として見せる（ADR 20261003-08、20261003-10） */
   question: number;
   /** 記録とエラーの文に使う名前（質問の表の見出しと同じにする） */
   name: string;
@@ -10,15 +10,27 @@ export type Step = {
   clarify?: string;
   /** 条件によって聞かれない質問（例：既存の記録があるときだけの置き換えの質問） */
   optional?: boolean;
+  /**
+   * 事業ごとにくり返す質問。続けて並んだ perBusiness の項目は 1 つのまとまりで、
+   * 1 つの事業についてまとまりを聞いてから、次の事業でまとまりの前の項目へ戻ってよい
+   */
+  perBusiness?: boolean;
 };
 
 /** 台本どおりに進まなかったこと（不合格）。進行役そのものの失敗とは分ける */
 export class ScriptFailure extends Error {}
 
-/** 「質問 <番号>/<総数>」（共通規約の質問の付け方）。全角の ／ も受け付ける */
-const QUESTION_MARK = /質問\s*(\d+)\s*[/／]\s*\d+/g;
-/** 「（質問 <番号> の確認）」（聞き返しの付け方） */
-const CLARIFY_MARK = /質問\s*(\d+)\s*の確認/g;
+/**
+ * 質問の先頭の「質問 <何問目>/<見込みの数>：<見出し>（質問 ID：<番号>）」（共通規約の質問の付け方）の質問 ID。
+ * 事業の数が分かるまでの「質問 <何問目>：<見出し>（質問 ID：<番号>）」も受け付ける（ADR 20261003-12）。
+ * 全角・半角の ／ とコロンを受け付ける。
+ * 何問目と見込みの数は、質問の先頭の行を見分ける目印にだけ使い、値は照合に使わない。
+ * 前置きの文の「（質問 ID：2）は飛ばします」のような言及は、同じ行に何問目が無いので数えない
+ */
+const QUESTION_MARK =
+  /質問\s*\d+\s*(?:[/／]\s*\d+\s*)?[:：][^\n]*?質問\s*ID\s*[:：]\s*(\d+)/g;
+/** 「（質問 ID：<番号> の確認）」（聞き返しの付け方） */
+const CLARIFY_MARK = /質問\s*ID\s*[:：]\s*(\d+)\s*の確認/g;
 
 const numbersOf = (pattern: RegExp, text: string): number[] => [
   ...new Set([...text.matchAll(pattern)].map((match) => Number(match[1]))),
@@ -26,8 +38,9 @@ const numbersOf = (pattern: RegExp, text: string): number[] => [
 
 /**
  * 今のターンの応答が、台本のどの項目にあたるかを、応答に付いた質問の番号で決める。
- * - 「質問 N/総数」が 1 つ：番号が N の項目。今の項目と同じ番号なら、くり返し（事業ごとに聞く場合など）
- * - 「（質問 N の確認）」だけ：今の項目の聞き返し
+ * - 「質問 ID：N」が 1 つ：番号が N の項目。今の項目と同じ番号なら、くり返し（事業ごとに聞く場合など）
+ * - 「（質問 ID：N の確認）」だけ：今の項目の聞き返し
+ * - 今の項目が perBusiness で、N が同じまとまりの前の項目：次の事業についてのくり返し
  * - 番号が無い、2 つ以上の番号を聞いた、台本に無い番号、必須の項目を飛ばした：不合格
  */
 export const nextStep = (
@@ -43,7 +56,7 @@ export const nextStep = (
       return position;
     }
     throw new ScriptFailure(
-      "応答に質問の番号（「質問 N/総数」か「（質問 N の確認）」）がありません",
+      "応答に質問 ID（「質問 ID：N」か「（質問 ID：N の確認）」）がありません",
     );
   }
   if (asked.length > 1) {
@@ -53,6 +66,15 @@ export const nextStep = (
   }
   const number = asked[0];
   if (current !== undefined && current.question === number) return position;
+  if (current?.perBusiness === true) {
+    let start = position;
+    while (steps[start - 1]?.perBusiness === true) start -= 1;
+    const back = steps.findIndex(
+      (step, index) =>
+        index >= start && index < position && step.question === number,
+    );
+    if (back !== -1) return back;
+  }
   const found = steps.findIndex(
     (step, index) => index > position && step.question === number,
   );
