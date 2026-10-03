@@ -3,11 +3,11 @@ id: 20261003-12
 title: コミットの署名の流れは、質問の流れの進行役で company の安全設定を読み込み、Bash を許して検証する
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
