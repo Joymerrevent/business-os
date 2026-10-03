@@ -3,11 +3,11 @@ id: 20261003-10
 title: 質問の先頭には、その回で何問目か・聞く見込みの数・質問 ID を付ける
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: n/a
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
