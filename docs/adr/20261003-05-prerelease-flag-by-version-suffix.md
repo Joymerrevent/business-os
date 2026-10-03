@@ -3,11 +3,11 @@ id: 20261003-05
 title: GitHub の pre-release は版の接尾辞があるときだけ付ける
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
