@@ -10,6 +10,11 @@ export type Step = {
   clarify?: string;
   /** 条件によって聞かれない質問（例：既存の記録があるときだけの置き換えの質問） */
   optional?: boolean;
+  /**
+   * 事業ごとにくり返す質問。続けて並んだ perBusiness の項目は 1 つのまとまりで、
+   * 1 つの事業についてまとまりを聞いてから、次の事業でまとまりの前の項目へ戻ってよい
+   */
+  perBusiness?: boolean;
 };
 
 /** 台本どおりに進まなかったこと（不合格）。進行役そのものの失敗とは分ける */
@@ -34,6 +39,7 @@ const numbersOf = (pattern: RegExp, text: string): number[] => [
  * 今のターンの応答が、台本のどの項目にあたるかを、応答に付いた質問の番号で決める。
  * - 「質問 ID：N」が 1 つ：番号が N の項目。今の項目と同じ番号なら、くり返し（事業ごとに聞く場合など）
  * - 「（質問 ID：N の確認）」だけ：今の項目の聞き返し
+ * - 今の項目が perBusiness で、N が同じまとまりの前の項目：次の事業についてのくり返し
  * - 番号が無い、2 つ以上の番号を聞いた、台本に無い番号、必須の項目を飛ばした：不合格
  */
 export const nextStep = (
@@ -59,6 +65,15 @@ export const nextStep = (
   }
   const number = asked[0];
   if (current !== undefined && current.question === number) return position;
+  if (current?.perBusiness === true) {
+    let start = position;
+    while (steps[start - 1]?.perBusiness === true) start -= 1;
+    const back = steps.findIndex(
+      (step, index) =>
+        index >= start && index < position && step.question === number,
+    );
+    if (back !== -1) return back;
+  }
   const found = steps.findIndex(
     (step, index) => index > position && step.question === number,
   );

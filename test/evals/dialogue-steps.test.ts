@@ -124,6 +124,41 @@ describe("nextStep", () => {
   });
 });
 
+describe("nextStep（事業ごとにくり返す質問）", () => {
+  const perBusinessSteps: Step[] = [
+    { question: 13, name: "期限と義務", answer: "a" },
+    { question: 14, name: "実装リポジトリ", answer: "b", perBusiness: true },
+    { question: 15, name: "追いかける数字", answer: "c", perBusiness: true },
+    { question: 16, name: "リスク", answer: "d", perBusiness: true },
+    { question: 17, name: "主セッションのモデル", answer: "e" },
+  ];
+  const ask = (position: number, text: string): number =>
+    nextStep(perBusinessSteps, position, text);
+
+  it("事業 A のまとまりを聞いたあと、事業 B でまとまりの頭に戻ってよい", () => {
+    expect(ask(3, "質問 13/19：実装リポジトリ（事業 B、質問 ID：14）")).toBe(1);
+    expect(ask(1, "質問 14/19：追いかける数字（事業 B、質問 ID：15）")).toBe(2);
+    expect(ask(2, "質問 15/19：リスク（事業 B、質問 ID：16）")).toBe(3);
+    expect(ask(3, "質問 16/19：主セッションのモデル（質問 ID：17）")).toBe(4);
+  });
+
+  it("事業 B で済んだ質問を飛ばし、まとまりの途中に戻ってよい", () => {
+    expect(ask(3, "質問 12/18：追いかける数字（事業 B、質問 ID：15）")).toBe(2);
+  });
+
+  it("まとまりの外の前の質問へは戻れない", () => {
+    expect(() => ask(3, "質問 13/19：期限と義務（質問 ID：13）")).toThrow(
+      /台本に無い/,
+    );
+  });
+
+  it("perBusiness でない項目からは、まとまりへ戻れない", () => {
+    expect(() =>
+      ask(4, "質問 17/19：実装リポジトリ（事業 B、質問 ID：14）"),
+    ).toThrow(/台本に無い/);
+  });
+});
+
 /** SKILL.md の質問の表の番号と見出し */
 const questionHeaders = (skill: string): Map<number, string> => {
   const text = readFileSync(
