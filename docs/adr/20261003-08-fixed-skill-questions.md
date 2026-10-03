@@ -3,11 +3,11 @@ id: 20261003-08
 title: Skill が人に聞く質問は、SKILL.md の質問の表で番号・見出し・質問文を固定する
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
