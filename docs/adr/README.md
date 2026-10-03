@@ -92,3 +92,4 @@ supersedes: n/a       # 置き換える ADR の id（あれば）
 | 20261003-01 | Skill の動作は claude plugin eval で CC が手元で検証する | accepted |
 | 20261003-02 | Skill の自動検証で残した 4 つの論点の扱い | accepted |
 | 20261003-03 | eval の scaffold に限り、TypeScript を呼ぶ 1 行の bash を許す | accepted |
+| 20261003-04 | 共通の前提データを直下の fixtures/ に置き、evals/ を共通の道具と Skill ごとのテストに分ける | accepted |
