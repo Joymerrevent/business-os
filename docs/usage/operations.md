@@ -187,10 +187,23 @@ CC は必要なときに、表のパスにある実装リポジトリを読み�
 
 ## business-os の更新
 
-business-os は Plugin として更新されます。新しい版を取り込むには `/plugin marketplace update business-os` を実行します
-（`/plugin` の「Marketplaces」で自動更新を有効にすることもできます）。更新後、最初のセッションで
-「business-os が更新されました。`/onboard --migrate` を実行してください」と表示されることがあります。
-雛形の差分をあなたの `company` に反映するためです。事業データは触りません。
+business-os は Plugin として更新されます。新しい版と変更点は
+[Releases](https://github.com/Joymerrevent/business-os/releases) で確かめられます。
+
+1. 入っている版を確かめる：CC の中で `/plugin list` を実行する（ターミナルでは `claude plugin list`）。
+   business-os の行の Version が、いま入っている版です
+2. 新しい版の一覧を取り込む：`/plugin marketplace update business-os` を実行する。
+   この操作は一覧を新しくするだけで、入っている business-os はまだ古い版のままです
+3. business-os を更新する：`/plugin` を開き、「Installed」で business-os を選んで「Update now」を選ぶ
+   （ターミナルでは `claude plugin update business-os@business-os`）
+4. 新しい版を読み込む：CC を起動し直すか、開いているセッションで `/reload-plugins` を実行する
+
+2 と 3 を毎回手で行わずに済ませるなら、`/plugin` の「Marketplaces」で business-os を選び、「Enable auto-update」を選びます。
+business-os のマーケットプレイスは、最初は自動更新が切れています。自動更新を有効にすると、セッションで最初の入力をしてから
+10 分以内に新しい版が取り込まれ、「Plugin updated」と表示されます。新しい版は、次のセッションか `/reload-plugins` の後に使われます。
+
+更新後、最初のセッションで「business-os が更新されています（記録 … → 現在 …）。/onboard --migrate を実行してください」と
+表示されることがあります。雛形の差分をあなたの `company` に反映するためです。事業データは触りません。
 
 更新で安全設定の規則が増えると、起動時に「厳格モード」と表示され、憲章などへの書き込みが止まることがあります。
 CC は止まっている間、安全設定（`.claude/settings.json`）を書き換えられません。
