@@ -3,11 +3,11 @@ id: 20261003-04
 title: 共通の前提データを直下の fixtures/ に置き、evals/ を共通の道具と Skill ごとのテストに分ける
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
