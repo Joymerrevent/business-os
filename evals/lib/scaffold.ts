@@ -6,7 +6,7 @@
 // 作業場所の用意のあと、書いた順に上書きで複製する（土台 → 共通の環境 → ケースの前提データ）
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { manifestVersion } from "../../scripts/lib/version.ts";
 
@@ -50,10 +50,13 @@ const SCAFFOLDS: Record<string, () => void> = {
 
 /**
  * 重ねるものの指定を、実際のフォルダにする。
- * `/` を含めばケースのフォルダの overlay/ などのパス、含まなければ共通の環境 fixtures/<名前>/ の名前とみなす
+ * 絶対パスか、区切り（`/`、Windows では `\` も）を含めばケースのフォルダの overlay/ などのパス、
+ * それ以外は共通の環境 fixtures/<名前>/ の名前とみなす
  */
 const overlayDir = (spec: string): string =>
-  spec.includes("/") ? resolve(spec) : join(repoRoot, "fixtures", spec);
+  isAbsolute(spec) || /[/\\]/.test(spec)
+    ? resolve(spec)
+    : join(repoRoot, "fixtures", spec);
 
 const main = (): number => {
   const name = process.argv[2] ?? "";
