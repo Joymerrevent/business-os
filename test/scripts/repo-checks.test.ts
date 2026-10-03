@@ -180,7 +180,7 @@ describe("壊した business-os の一時コピー", () => {
 
     it("evals/ の scaffold.sh が exec node の 1 行なら fail にならない", () => {
       add(
-        "evals/onboard/x/scaffold.sh",
+        "evals/skills/onboard/x/scaffold.sh",
         '#!/usr/bin/env bash\n# コメント\n\nexec node "$(dirname "$0")/../../lib/scaffold.ts" empty-repo\n',
       );
       expect(shellFails()).toEqual([]);
@@ -188,24 +188,27 @@ describe("壊した business-os の一時コピー", () => {
 
     it("scaffold.sh に 2 行目の処理があると fail", () => {
       add(
-        "evals/onboard/x/scaffold.sh",
+        "evals/skills/onboard/x/scaffold.sh",
         '#!/usr/bin/env bash\ngit init -q\nexec node "$(dirname "$0")/../../lib/scaffold.ts" empty-repo\n',
       );
-      expect(shellFails()).toContain("evals/onboard/x/scaffold.sh");
+      expect(shellFails()).toContain("evals/skills/onboard/x/scaffold.sh");
     });
 
     it("scaffold.sh の 1 行が exec node でないと fail", () => {
-      add("evals/onboard/x/scaffold.sh", "#!/usr/bin/env bash\ngit init -q\n");
-      expect(shellFails()).toContain("evals/onboard/x/scaffold.sh");
+      add(
+        "evals/skills/onboard/x/scaffold.sh",
+        "#!/usr/bin/env bash\ngit init -q\n",
+      );
+      expect(shellFails()).toContain("evals/skills/onboard/x/scaffold.sh");
     });
 
     it("evals/ の外の .sh と、拡張子の無い bash のファイルは fail", () => {
       add("scripts/setup.sh", "#!/usr/bin/env bash\necho hi\n");
-      add("evals/onboard/x/prepare.sh", "exec node x.ts\n");
+      add("evals/skills/onboard/x/prepare.sh", "exec node x.ts\n");
       add("scripts/setup", "#!/bin/bash\necho hi\n");
       const fails = shellFails();
       expect(fails).toContain("scripts/setup.sh");
-      expect(fails).toContain("evals/onboard/x/prepare.sh");
+      expect(fails).toContain("evals/skills/onboard/x/prepare.sh");
       expect(fails).toContain("scripts/setup");
     });
   });
