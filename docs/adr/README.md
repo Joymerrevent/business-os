@@ -97,3 +97,4 @@ accepted の ADR は書き直さないので、2 つの形式が並ぶ。古い�
 | 20261003-05 | GitHub の pre-release は版の接尾辞があるときだけ付ける | accepted |
 | 20261003-06 | 新しい ADR は MADR 形式で書き、既存の ADR は書き直さない | accepted |
 | 20261003-07 | 実装リポの開発に要るものは実装リポに、経営側の文脈は company に置く | accepted |
+| 20261003-08 | Skill が人に聞く質問は、SKILL.md の質問の表で番号・見出し・質問文を固定する | accepted |
