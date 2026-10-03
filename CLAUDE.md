@@ -17,6 +17,7 @@
 - `docs/adr/`        設計判断。**ここが正典**。`docs/design/architecture.md` が構造仕様
 - `docs/usage/`      利用者向け。ADR 番号を書かない
 - `.claude/`         business-os を開発するときの設定と開発専用 Skill（配布しない）
+- `ROADMAP.md`       版ごとの方向。残作業とその状態は GitHub の Project とマイルストーンにあり、足し方も `ROADMAP.md` に書く
 
 ## 絶対ルール
 
