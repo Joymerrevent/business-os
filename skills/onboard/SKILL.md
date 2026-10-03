@@ -31,43 +31,34 @@ disable-model-invocation: true
 
 ### 1. 準備
 
-1. 作業ディレクトリが git リポジトリか確かめる。違えば `git init` してよいか聞く
-2. sandbox が使える環境か確かめる（native Windows では使えない）。使えない環境なら、次の事実を告げて、続けてよいか確認する
-   - 「この環境では Claude Code の sandbox（OS による見張り）が動きません。憲章の保護は、business-os の hook と権限設定だけに頼ることになります。WSL での利用を勧めます」
+1. 作業ディレクトリが git リポジトリか確かめる。違えば質問 3 を聞き、「作る」なら `git init` する
+2. sandbox が使える環境か確かめる（native Windows では使えない）。使えない環境なら質問 4 を聞き、「やめる」なら止める
 3. **最初の書き込みとして** `templates/business-os.json.tmpl` から `.business-os.json` を書き出す（`state: initializing`、`pluginVersion` は business-os のバージョン）。
    これ以降、business-os の hook は保護対象の新規作成を通し、既存ファイルの上書きだけ人間に確認を求める
 
 ### 2. インタビュー
 
-`templates/README.md` の「変数と /onboard の質問の対応」の順に聞く。1 度に 1 つずつ、短く聞く。
+質問 5〜18 を番号の順に聞く（下の「人に何を聞くか」の表）。項目と雛形の変数の対応は `templates/README.md` にある。
 
-1. 会社の呼び名、一行説明、目指すこと、優先順位
-2. 運営している事業の一覧（名前と一言説明）。事業 ID は CC が名前から英小文字・数字・ハイフンで作り、利用者に確認する
-3. CC に任せてよい範囲と、承認が要る範囲。承認が要る 2 種類（外部に影響が出る行動、憲章と地図の変更）は固定だと伝え、追加があるかだけを聞く
-4. 忘れてはいけない期限や義務（申告、支払い、契約更新、許認可）。日付は `YYYY-MM-DD` で確かめる
-5. 各事業の実装リポジトリの場所（macOS と Windows のパス）。無ければ無しでよい
-6. 各事業で追いかける数字。事業の説明から候補を 3〜5 個挙げ、選んでもらう（AskUserQuestion の複数選択）
-7. 事業ごとのリスクの候補を CC が挙げ、残すものを選んでもらう
-8. 主セッション（COO）のモデル。質問文は「主セッションのモデル。best 推奨（使える最上位）。利用枠を節約するなら opus」。
-   AskUserQuestion の選択肢は `best`（推奨）・`opus`・`fable`・`sonnet`。答えが無ければ `best`。
-   別名のまま `.claude/settings.json` の `model` に書く（版番号を書かない）。あわせて次を伝える：
-   「Fable は安全分類器で別のモデル（Opus）に自動で切り替わることがあります。その場合は `/model fable` で戻せます」
-9. ナレッジの閲覧に Obsidian を使うか（推奨だが任意。使わなくても business-os の動きは同じと伝える）
-   - native Windows なら、先に次の事実を告げる：「Windows で Obsidian を使うなら、Claude Code も WSL ではなく
-     Windows 上で直接動かす構成になり、Claude Code の sandbox が動きません。憲章の保護は hook と権限設定だけに頼ります」
-   - 「使わない」と答えた場合：Obsidian 関連のファイルは一切書き出さない（`docs/.obsidian/`、`docs/dashboards/`、`docs/_templates/` を作らない）
-   - 「使う」と答えた場合：**この時点で**インストールを確かめる（安全設定を書いた後は sandbox がインストールを止めるため）
-     1. 入っているか確かめる（macOS：`/Applications/Obsidian.app` があるか、Windows：`winget list --id Obsidian.Obsidian --exact`）
-     2. 無ければ、実行するコマンドを示して、インストールしてよいか聞く。了承されたときだけ実行する
-        - macOS：`brew install --cask obsidian`
-        - Windows：`winget install --id Obsidian.Obsidian --exact --accept-source-agreements --accept-package-agreements`
-     3. Homebrew / winget が無い、またはインストールが失敗したら、<https://obsidian.md/download> から手で入れるよう案内して先へ進む
+- 質問 10：事業 ID は、CC が事業の名前から英小文字・数字・ハイフンで作り、案を示してから聞く。`portfolio` は使わない
+- 質問 14〜16：事業ごとにくり返す。質問 15・16 の選択肢は、CC が事業の説明から候補を 3〜5 個挙げる
+- 質問 17：答えが無ければ `best`。別名のまま `.claude/settings.json` の `model` に書く（版番号を書かない）。あわせて次を伝える：
+  「Fable は安全分類器で別のモデル（Opus）に自動で切り替わることがあります。その場合は `/model fable` で戻せます」
+- 質問 18：native Windows なら、聞く前に次の事実を告げる：「Windows で Obsidian を使うなら、Claude Code も WSL ではなく
+  Windows 上で直接動かす構成になり、Claude Code の sandbox が動きません。憲章の保護は hook と権限設定だけに頼ります」
+  - 「使わない」と答えた場合：Obsidian 関連のファイルは一切書き出さない（`docs/.obsidian/`、`docs/dashboards/`、`docs/_templates/` を作らない）
+  - 「使う」と答えた場合：**この時点で**インストールを確かめる（安全設定を書いた後は sandbox がインストールを止めるため）
+    1. 入っているか確かめる（macOS：`/Applications/Obsidian.app` があるか、Windows：`winget list --id Obsidian.Obsidian --exact`）
+    2. 無ければ、実行するコマンドを示して質問 19 を聞く。「インストールする」のときだけ実行する
+       - macOS：`brew install --cask obsidian`
+       - Windows：`winget install --id Obsidian.Obsidian --exact --accept-source-agreements --accept-package-agreements`
+    3. Homebrew / winget が無い、またはインストールが失敗したら、<https://obsidian.md/download> から手で入れるよう案内して先へ進む
 
 答えに迷う項目は「まだ決めていない」でよいと伝える。その文言をそのまま書き出す。
 
 ### 3. 書き出す前の確認
 
-書き出すファイルの一覧と、各ファイルの要点を示し、書き出してよいか聞く。
+書き出すファイルの一覧と、各ファイルの要点を示し、質問 20 を聞く。「直す」なら、直す点を聞いて案を作り直し、もう一度示す。
 
 ### 4. 書き出し
 
@@ -80,7 +71,8 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 1. `.gitignore`、`.gitattributes`、`.leak-dict.json`
    - `.leak-dict.json`：会社の呼び名、事業名、答えに出てきた人名・取引先名を `{"terms": [...]}` の形で書く（`.gitignore` 済み）
 2. `CLAUDE.md`
-3. `docs/charter/company.md`、`decision-rules.md`、`repositories.md`、`businesses/<事業 ID>.md`
+3. `docs/charter/company.md`、`decision-rules.md`、`repositories/README.md`、`businesses/<事業 ID>.md`
+   - `repositories/README.md` の「指示」の列は「無し」にする。実装リポを扱うときの指示（`repositories/<リポ名>/`）は `/onboard` では作らず、必要になったら提案として足す
 4. `docs/operations/obligations.md`、`risks.md`、`state/<事業 ID>.md`、
    人間の入口 `docs/inbox/attachments/.gitkeep`（空のファイル。空のフォルダは git に残らないため置く。
    Obsidian の新規ノートと添付の置き場でもあり、フォルダが無いと Obsidian は `docs/` の直下にノートを作る）
@@ -105,7 +97,7 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 2. 書き出した内容の要点をもう一度示し、`.business-os.json` を `state: active`、`onboardedAt` を今日にする。
    この書き換えで business-os の hook が人間に確認を求める。これが導入の確定の確認になる
 3. 共通規約どおり日報に実行記録を 1 行追記する
-4. コミットしてよいか聞き、よければ `git add` と `git commit` をする（push はしない）
+4. 質問 21 を聞き、「コミットする」なら `git add` と `git commit` をする（push はしない）
 5. Obsidian を使う場合は、開き方を案内する（CC は Obsidian を起動しない。sandbox がアプリの起動を止めるため）
    - 「入力欄で `! open -a Obsidian` を実行するか、Obsidian を手で起動してください」（Windows はスタートメニューから）
    - 「最初の画面で『保管庫としてフォルダを開く（Open folder as vault）』を選び、`<company の絶対パス>/docs` を選んでください。
@@ -115,10 +107,15 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 
 ## 導入済み（state: active）のとき
 
-- **事業の追加・撤退**：新しい事業の質問（上の 2・5・6・7）だけをし、`docs/charter/` と `CLAUDE.md` の変更は
-  `docs/proposals/` に提案として書く（新規ファイルも提案の `target` にできる）。台帳（`docs/operations/`）は直接書いてよい。最後に `/approve` を案内する
+- 最初に質問 1 を聞く（`--migrate` 付きで呼ばれたら聞かない）
+- **事業の追加・撤退**：追加なら質問 9・10・14・15・16、撤退なら質問 2 を聞き、`docs/charter/` と `CLAUDE.md` の変更は
+  `docs/proposals/` に提案として書く（新規ファイルも提案の `target` にできる）。台帳（`docs/operations/`）は直接書いてよい。
+  書く前に質問 20、書いた後に質問 21 を聞く。最後に `/approve` を案内する
 - **`--migrate`**：business-os の雛形と company の文書を比べ、business-os の更新で増えた欄や規則を提案として書く。
   `.business-os.json` の `pluginVersion` の更新も提案にする。事業の中身は変えない
+  - 古い置き場の `docs/charter/repositories.md` があれば、同じ表に「指示」の列（値は「無し」）を足した内容で
+    `docs/charter/repositories/README.md` を作る提案を書く。提案は新しいファイルを `target` にする。
+    承認されたら、古い `docs/charter/repositories.md` を消すよう人間に案内する（CC は憲章のファイルを消さない）
 
 ## 何を書くか
 
@@ -130,8 +127,33 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 
 ## 人に何を聞くか
 
-- 上のインタビューの項目
-- 書き出す前の確認、導入の確定（`state: active` への切り替え）の確認（hook による）、コミットしてよいか
+表の番号の順に聞く。聞き方は共通規約の「人への質問」に従う。
+
+| 番号 | 見出し | 質問文 | 答えの形 | 選択肢 | 聞くとき |
+|---|---|---|---|---|---|
+| 1 | 何をするか | 導入は済んでいます。何をしますか。 | 選択肢（単一） | 事業を追加する / 事業を撤退する / business-os の更新を反映する | 導入済みのとき（`--migrate` 付きなら聞かない） |
+| 2 | 撤退する事業 | 撤退する事業はどれですか。 | 選択肢（単一） | CC が事業の一覧から挙げる | 質問 1 で「事業を撤退する」を選んだとき |
+| 3 | git リポジトリ | この作業フォルダは git リポジトリではありません。`git init` で作ってよいですか。 | 選択肢（単一） | 作る / やめる | 初回で、作業フォルダが git リポジトリでないとき |
+| 4 | sandbox | この環境では Claude Code の sandbox（OS による見張り）が動きません。憲章の保護は、business-os の hook と権限設定だけに頼ることになります。WSL での利用を勧めます。このまま続けますか。 | 選択肢（単一） | 続ける / やめる | 初回で、sandbox が使えない環境のとき |
+| 5 | 会社の呼び名 | 会社の呼び名を教えてください。 | 自由記述 | — | 初回 |
+| 6 | 一行説明 | 会社を一行で説明してください。 | 自由記述 | — | 初回 |
+| 7 | 目指すこと | 会社として目指すことを教えてください。 | 自由記述 | — | 初回 |
+| 8 | 優先順位 | 事業や活動の優先順位を教えてください。 | 自由記述 | — | 初回 |
+| 9 | 事業の一覧 | 事業の名前と、一言の説明を教えてください。複数あれば全て挙げてください。 | 自由記述 | — | 初回、事業を追加するとき |
+| 10 | 事業 ID | 事業 ID を、名前から上のとおり作りました。この ID でよいですか。 | 選択肢（単一） | この ID でよい / 直す | 初回、事業を追加するとき |
+| 11 | 任せてよい範囲 | CC に任せてよいことを教えてください。 | 自由記述 | — | 初回 |
+| 12 | 追加の承認 | 承認が要ることは、外部に影響が出る行動と、憲章と地図の変更の 2 種類で、固定です。ほかに承認を必須にしたいことはありますか。 | 自由記述 | — | 初回 |
+| 13 | 期限と義務 | 忘れてはいけない期限や義務（申告、支払い、契約更新、許認可）を、日付（YYYY-MM-DD）と一緒に教えてください。 | 自由記述 | — | 初回 |
+| 14 | 実装リポジトリ | 事業の実装リポジトリの場所を、macOS と Windows のパスで教えてください。無ければ「無し」で構いません。 | 自由記述 | — | 初回、事業を追加するとき（事業ごと） |
+| 15 | 追いかける数字 | 事業で追いかける数字を選んでください。 | 選択肢（複数） | CC が事業の説明から 3〜5 個挙げる | 初回、事業を追加するとき（事業ごと） |
+| 16 | リスク | 事業のリスクの候補のうち、残すものを選んでください。 | 選択肢（複数） | CC が事業の説明から挙げる | 初回、事業を追加するとき（事業ごと） |
+| 17 | 主セッションのモデル | 主セッションのモデル。best 推奨（使える最上位）。利用枠を節約するなら opus | 選択肢（単一） | best（推奨） / opus / fable / sonnet | 初回 |
+| 18 | Obsidian | ナレッジの閲覧に Obsidian を使いますか。使わなくても business-os の動きは同じです。 | 選択肢（単一） | 使う（推奨） / 使わない | 初回 |
+| 19 | Obsidian の導入 | Obsidian が入っていません。上のコマンドでインストールしてよいですか。 | 選択肢（単一） | インストールする / 自分で入れる | 質問 18 で「使う」を選び、Obsidian が入っていないとき |
+| 20 | 書き出しの確認 | この内容で書き出してよいですか。 | 選択肢（単一） | 書き出す / 直す | 書き出す前（ファイルの一覧と要点を示してから） |
+| 21 | コミット | 書き出したファイルをコミットしてよいですか。 | 選択肢（単一） | コミットする / しない | 書き出した後 |
+
+導入の確定（`state: active` への切り替え）の確認は、business-os の hook が出す。表には無い。
 
 ## 完了条件
 

@@ -1,6 +1,6 @@
 ---
 name: release
-description: business-os の新しい版をリリースする開発専用の手順。積まれた changeset から版を上げ、plugin.json に同期し、CHANGELOG を作り、main へのリリース PR、タグ、GitHub の pre-release まで進める。「リリースして」「新しい版を出して」「/release」と言われたときに使う。
+description: business-os の新しい版をリリースする開発専用の手順。積まれた changeset から版を上げ、plugin.json に同期し、CHANGELOG を作り、main へのリリース PR、タグ、GitHub の Release まで進める。「リリースして」「新しい版を出して」「/release」と言われたときに使う。
 disable-model-invocation: true
 ---
 
@@ -12,7 +12,7 @@ disable-model-invocation: true
 `plugin.json` の `version` が変わったときだけ、利用者に更新が届く。
 
 ```text
-develop ─ release/<版> ─(PR)→ main ─ タグ business-os--v<版> ─ GitHub の Release（1.0 までは pre-release）
+develop ─ release/<版> ─(PR)→ main ─ タグ business-os--v<版> ─ GitHub の Release
                      └────────(PR)→ develop（版の更新を戻す）
 ```
 
@@ -31,6 +31,9 @@ develop ─ release/<版> ─(PR)→ main ─ タグ business-os--v<版> ─ Git
    - `develop` が最新で、CI が通っている
    - changeset が 1 つ以上ある。無ければ「リリースする変更がありません」と告げて終える
    - 次の版を `changeset status` で確かめ、人間に示す
+   - 試験版（`-alpha.N` / `-beta.N` / `-rc.N` の付いた版）にするかを人間に聞く。
+     試験版にするなら、版上げの前に `pnpm exec changeset pre enter <alpha|beta|rc>` で pre モードに入る。
+     通常の版に戻すときは `pnpm exec changeset pre exit` で抜ける
 2. **リリースのブランチを作る**：`git switch -c release/<版> develop`
 3. **版を上げる**：`pnpm release:version`
    - `package.json` の版が上がり、`plugin.json` に同期され、`CHANGELOG.md` に節が足され、使った changeset が消える
@@ -44,8 +47,9 @@ develop ─ release/<版> ─(PR)→ main ─ タグ business-os--v<版> ─ Git
    - `main` を最新にして（`git pull` は人間に頼む）、`claude plugin tag -m "business-os %s"` でタグを作る
    - **タグを push する前に、タグの名前と指すコミットを示して確認を取る。** 了承を得たら push する
 7. **GitHub の Release を作る**
-   - 1.0 までは `--prerelease` を付ける
-   - ノートは CHANGELOG の今回の節を使う（`gh release create business-os--v<版> --prerelease --title "business-os <版>" --notes-file <ファイル>`）
+   - 版に pre-release の接尾辞（`-alpha.N` / `-beta.N` / `-rc.N`）があるときだけ `--prerelease` を付ける。
+     接尾辞の無い版は、`0.x` でも通常の Release にする（開発中であることは版の番号と README・`plugin.json` の表示で伝える）
+   - ノートは CHANGELOG の今回の節を使う（`gh release create business-os--v<版> [--prerelease] --title "business-os <版>" --notes-file <ファイル>`）
    - **公開する前に、タイトルとノートを示して確認を取る**
 8. **develop に戻す**：`main` から `develop` への PR を作る（版の更新と CHANGELOG を develop に戻すため）。マージは人間が行う
 
@@ -60,5 +64,5 @@ develop ─ release/<版> ─(PR)→ main ─ タグ business-os--v<版> ─ Git
 
 - `main` の `package.json` と `plugin.json` の版が新しい版で一致し、CHANGELOG に節がある
 - タグ `business-os--v<版>` が `main` のリリースのコミットを指し、リモートにある
-- GitHub の Release（1.0 までは pre-release）がある
+- GitHub の Release がある。版に pre-release の接尾辞があるときだけ pre-release になっている
 - develop に版の更新が戻っている（PR がマージされている）

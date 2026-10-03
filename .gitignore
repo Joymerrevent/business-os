@@ -23,3 +23,6 @@ pnpm-debug.log*
 # Misc
 .cache/
 tmp/
+
+# claude plugin eval の実行結果
+evals/results/

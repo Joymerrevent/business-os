@@ -6,5 +6,5 @@ title = "business-os"
 useDefault = true
 
 [[allowlists]]
-description = "hook と検査のテストに使う合成データ"
-paths = ['''^test/fixtures/''']
+description = "hook と検査のテスト、Skill の検証に使う合成データ（土台の検証用 company と、ケースの前提データ）"
+paths = ['''^fixtures/''', '''^evals/skills/.+/overlay/''']

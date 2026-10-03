@@ -1,0 +1,34 @@
+{
+  "description": "/adr の聞き取りを、SKILL.md の質問の表の番号の順に台本で答えて進め、影響（質問 5）で終える",
+  "scaffold": "company-active",
+  "firstMessage": "/adr",
+  "steps": [
+    {
+      "question": 1,
+      "name": "決めたこと",
+      "answer": "事業 B の教材は自社サイトだけで販売することにしました。"
+    },
+    {
+      "question": 2,
+      "name": "置き換え",
+      "answer": "置き換えない",
+      "optional": true
+    },
+    {
+      "question": 3,
+      "name": "背景",
+      "answer": "外部の販売サイトの手数料が高いためです。"
+    },
+    {
+      "question": 4,
+      "name": "他の選択肢",
+      "answer": "外部の販売サイトにも出す案がありました。手数料と規約の変更リスクで捨てました。"
+    },
+    {
+      "question": 5,
+      "name": "影響",
+      "answer": "今回はここで終わりにします。何も書かないでください。"
+    }
+  ],
+  "allowedFilesAfterDecline": [".claude/hook-log-*.jsonl"]
+}

@@ -1,6 +1,6 @@
 {
   "name": "business-os",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A Claude Code plugin for people who run several businesses alone (alpha).",
   "homepage": "https://github.com/Joymerrevent/business-os#readme",
@@ -36,11 +36,15 @@
     "check:usage": "node scripts/check-repo.ts usage",
     "check:adapters": "node scripts/check-repo.ts adapters",
     "check:version": "node scripts/check-repo.ts version",
+    "check:shell": "node scripts/check-repo.ts shell",
+    "check:evals": "node scripts/check-repo.ts evals",
     "format": "prettier --write .",
     "fix:md": "markdownlint-cli2 --fix",
     "changeset": "changeset",
     "prepare": "simple-git-hooks",
     "test": "vitest run",
+    "eval:cases": "claude plugin eval . --ablation none --runs 1 --scaffold --allow-tools Write Edit --trust-plugin --no-publish",
+    "eval:dialogue": "node evals/lib/dialogue/run.ts",
     "release:version": "changeset version && node scripts/sync-plugin-version.ts && prettier --write .claude-plugin/plugin.json"
   },
   "simple-git-hooks": {
@@ -63,7 +67,7 @@
     "simple-git-hooks": "^2.14.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.1",
-    "vitest": "^5.0.1",
+    "vitest": "^5.0.2",
     "yaml": "^2.9.1"
   }
 }

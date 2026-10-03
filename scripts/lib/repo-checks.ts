@@ -53,6 +53,66 @@ const SKILL_SECTIONS = [
   "## 完了条件",
 ];
 
+/** 質問の表の列（ADR 20261003-08） */
+const QUESTION_COLUMNS = [
+  "番号",
+  "見出し",
+  "質問文",
+  "答えの形",
+  "選択肢",
+  "聞くとき",
+];
+const ANSWER_FORMS = new Set(["自由記述", "選択肢（単一）", "選択肢（複数）"]);
+/** 見出しの上限（AskUserQuestion の header の上限） */
+const QUESTION_HEADER_MAX = 12;
+
+const tableCells = (line: string): string[] =>
+  line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+
+/** 「人に何を聞くか」の節の質問の表を確かめ、問題の一覧を返す */
+export const questionTableProblems = (text: string): string[] => {
+  const start = text.indexOf("\n## 人に何を聞くか\n");
+  if (start < 0) return [];
+  const rest = text.slice(start + 1);
+  const next = rest.indexOf("\n## ", 1);
+  const section = next < 0 ? rest : rest.slice(0, next);
+  const lines = section.split("\n").filter((line) => line.startsWith("|"));
+  const [head, , ...rows] = lines;
+  if (head === undefined) return ["質問の表が無い"];
+  if (tableCells(head).join(",") !== QUESTION_COLUMNS.join(",")) {
+    return [`質問の表の列が「${QUESTION_COLUMNS.join("・")}」ではない`];
+  }
+  if (rows.length === 0) return ["質問の表に行が無い"];
+  const problems: string[] = [];
+  rows.forEach((row, index) => {
+    const [number, header, question, form, choices] = tableCells(row);
+    const label = `質問 ${number ?? "?"}`;
+    if (number !== String(index + 1)) {
+      problems.push(
+        `${label}：番号が 1 からの連番でない（${index + 1} のはず）`,
+      );
+    }
+    if (!header) problems.push(`${label}：見出しが無い`);
+    else if (Array.from(header).length > QUESTION_HEADER_MAX) {
+      problems.push(
+        `${label}：見出し「${header}」が ${QUESTION_HEADER_MAX} 文字を超える`,
+      );
+    }
+    if (!question) problems.push(`${label}：質問文が無い`);
+    if (form === undefined || !ANSWER_FORMS.has(form)) {
+      problems.push(`${label}：答えの形「${form ?? ""}」が決まった形でない`);
+    } else if (form !== "自由記述" && (!choices || choices === "—")) {
+      problems.push(`${label}：選択肢の質問なのに選択肢が無い`);
+    }
+  });
+  return problems;
+};
+
 export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
   const category = "Skill";
   const results: CheckResult[] = [];
@@ -99,6 +159,7 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
         problems.push(`「${section.slice(3)}」の節の順番が違う`);
       else last = index;
     }
+    problems.push(...questionTableProblems(text));
     results.push(
       problems.length === 0
         ? result(category, `skills/${name}`, "pass")
@@ -250,10 +311,11 @@ export const checkTemplates = (root: string = pluginRoot()): CheckResult[] => {
     [...readme.matchAll(/`([a-z_]+)`/g)].map((m) => m[1] ?? ""),
   );
   const schema = frontmatterSchema();
+  // 雛形の説明（templates/README.md）だけを外す。下のフォルダの README.md は書き出す雛形なので検査する
   const files = walk(
     dir,
     (path) =>
-      !path.endsWith(`${sep}README.md`) &&
+      path !== join(dir, "README.md") &&
       !path.endsWith("skill-conventions.md") &&
       !path.endsWith(".schema.json"),
   );
@@ -368,6 +430,8 @@ const LEAK_SKIP = [
   /^\.changeset\//,
   /^scripts\/lib\/repo-checks\.ts$/,
   /^test\//,
+  /^fixtures\//,
+  /^evals\/skills\/.+\/overlay\//,
 ];
 
 export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
@@ -878,3 +942,123 @@ export const checkAgents = (root: string = pluginRoot()): CheckResult[] => {
 };
 
 REPO_CHECKS["agents"] = checkAgents;
+
+// ---- シェルスクリプト ----
+
+/** bash を許す唯一の場所：eval のケースの scaffold.sh（ADR 20261003-03） */
+const SCAFFOLD_SH = /^evals\/.+\/scaffold\.sh$/;
+const SHELL_EXTENSION = /\.(sh|bash|zsh|ksh)$/;
+const SHELL_SHEBANG = /^#!.*\b(sh|bash|zsh|ksh|dash)\b/;
+
+export const checkShell = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "シェルスクリプト";
+  const results: CheckResult[] = [];
+  for (const file of trackedFiles(root)) {
+    const path = join(root, file);
+    if (!existsSync(path)) continue;
+    const isShellByName = SHELL_EXTENSION.test(file);
+    const isShellByShebang =
+      !/\.[^/]+$/.test(file) &&
+      SHELL_SHEBANG.test(readFileSync(path, "utf8").split("\n", 1)[0] ?? "");
+    if (!isShellByName && !isShellByShebang) continue;
+    if (!SCAFFOLD_SH.test(file)) {
+      results.push(
+        result(
+          category,
+          file,
+          "fail",
+          "bash などのシェルスクリプトは置けません。処理は TypeScript で書きます（例外は evals/ の scaffold.sh だけ）",
+        ),
+      );
+      continue;
+    }
+    const commands = readFileSync(path, "utf8")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line !== "" && !line.startsWith("#"));
+    const ok = commands.length === 1 && commands[0]?.startsWith("exec node ");
+    results.push(
+      ok
+        ? result(category, file, "pass")
+        : result(
+            category,
+            file,
+            "fail",
+            `scaffold.sh はコメントと空行を除いて「exec node …」の 1 行だけにします（今は ${commands.length} 行）`,
+          ),
+    );
+  }
+  if (results.length === 0) {
+    results.push(result(category, "シェルスクリプトなし", "pass"));
+  }
+  return results;
+};
+
+REPO_CHECKS["shell"] = checkShell;
+
+// ---- Skill の動作の検証（evals/skills/） ----
+
+/** eval の対象外にする Skill と、その理由（ADR 20261003-02、20261003-04） */
+const EVAL_EXCLUDED: Record<string, string> = {
+  check: "Bash が要るため（判定のロジックは vitest で検査する）",
+};
+
+/** フォルダの下に eval のケース（case.yaml か prompt.md を持つフォルダ）があるか */
+const hasEvalCase = (dir: string): boolean =>
+  walk(dir, (path) => /[/\\](case\.yaml|prompt\.md)$/.test(path)).length > 0;
+
+export const checkEvals = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "Skill の検証";
+  const results: CheckResult[] = [];
+  const evalsDir = join(root, "evals", "skills");
+  const skills = new Set(
+    readdirSync(join(root, "skills")).filter((name) =>
+      statSync(join(root, "skills", name)).isDirectory(),
+    ),
+  );
+  const tested = existsSync(evalsDir)
+    ? readdirSync(evalsDir).filter((name) =>
+        statSync(join(evalsDir, name)).isDirectory(),
+      )
+    : [];
+  for (const name of tested) {
+    const path = `evals/skills/${name}`;
+    if (!skills.has(name)) {
+      results.push(
+        result(
+          category,
+          path,
+          "fail",
+          `skills/${name} がありません。Skill の名前を変えた・消したなら、検証のフォルダも合わせます`,
+        ),
+      );
+    } else if (EVAL_EXCLUDED[name] !== undefined) {
+      results.push(
+        result(
+          category,
+          path,
+          "fail",
+          `/${name} は検証の対象外として登録されています。検証を足したなら、対象外の一覧から外します`,
+        ),
+      );
+    } else if (!hasEvalCase(join(evalsDir, name))) {
+      results.push(result(category, path, "warn", "ケースが 1 つもありません"));
+    } else {
+      results.push(result(category, path, "pass"));
+    }
+  }
+  for (const name of skills) {
+    if (tested.includes(name) || EVAL_EXCLUDED[name] !== undefined) continue;
+    results.push(
+      result(
+        category,
+        `skills/${name}`,
+        "warn",
+        `evals/skills/${name}/ に検証のケースがありません`,
+      ),
+    );
+  }
+  return results;
+};
+
+REPO_CHECKS["evals"] = checkEvals;

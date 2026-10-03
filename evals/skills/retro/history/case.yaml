@@ -1,0 +1,58 @@
+schema_version: "1.1"
+name: retro-history
+description: 実行記録のある日報から Skill の実行回数とくり返しの手作業を数え、提案を書く
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: skill-started
+    type: regex
+    target: "trace"
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+  - name: retro-created
+    type: file_exists
+    path: "docs/operations/reviews/retro-*.md"
+  - name: morning-counted
+    type: regex
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/reviews/retro-\d{8}\.md"[^}]*/morning[^}]*4'
+    target: "trace"
+  - name: manual-work-found
+    type: regex
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/reviews/retro-[^}]*請求書'
+    target: "trace"
+  - name: proposal-created
+    type: file_exists
+    path: "docs/proposals/*.md"
+  - name: skills-not-written
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/\.claude/skills/'
+  - name: daily-record
+    type: regex
+    target: "trace"
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/daily/\d{4}-\d{2}-\d{2}\.md"[^}]*- (?:\d{2}|--):(?:\d{2}|--) /retro — '
+  - name: charter-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: charter-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: map-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
+  - name: map-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'

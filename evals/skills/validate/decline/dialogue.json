@@ -1,0 +1,49 @@
+{
+  "description": "/validate のインタビューを、SKILL.md の質問の表の番号の順に台本で答えて進め、リスク台帳に足すか（質問 8）で終える",
+  "scaffold": "company-active",
+  "firstMessage": "/validate",
+  "steps": [
+    {
+      "question": 1,
+      "name": "施策",
+      "answer": "事業 B でオンライン講座を始めます。"
+    },
+    {
+      "question": 2,
+      "name": "仮説",
+      "answer": "教材の購入者のうち 1 割が、1 万円の講座に申し込むと考えています。",
+      "clarify": "購入者 100 人のうち 10 人が、1 万円の講座に申し込むと考えています。これ以上は、まだ決めていません。"
+    },
+    {
+      "question": 3,
+      "name": "確かめ方",
+      "answer": "購入者 100 人に案内を送り、申し込み数を見ます。"
+    },
+    {
+      "question": 4,
+      "name": "成功の基準",
+      "answer": "2026-12-31 までに申し込みが 10 件あれば続けます。"
+    },
+    {
+      "question": 5,
+      "name": "撤退条件",
+      "answer": "2026-12-31 までに申し込みが 3 件未満ならやめます。"
+    },
+    {
+      "question": 6,
+      "name": "時間とお金の上限",
+      "answer": "時間は月 10 時間まで、お金は期間全体で 5 万円までです。"
+    },
+    {
+      "question": 7,
+      "name": "削る時間",
+      "answer": "事業 B の教材の改訂を月 5 時間減らします。"
+    },
+    {
+      "question": 8,
+      "name": "リスク台帳",
+      "answer": "今回はここで終わりにします。何も書かないでください。"
+    }
+  ],
+  "allowedFilesAfterDecline": [".claude/hook-log-*.jsonl"]
+}

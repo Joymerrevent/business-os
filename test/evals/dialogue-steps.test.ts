@@ -1,0 +1,175 @@
+// 進行役の判定（evals/lib/dialogue/steps.ts）と台本（evals/skills/**/dialogue.json）のテスト。
+// 質問は SKILL.md の質問の表の番号で見分ける（ADR 20261003-08）。
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative, sep } from "node:path";
+import { describe, expect, it } from "vitest";
+import {
+  changedFiles,
+  globToRegExp,
+  nextStep,
+  ScriptFailure,
+  type Step,
+} from "../../evals/lib/dialogue/steps.ts";
+import { repoRoot } from "../helpers.ts";
+
+const steps: Step[] = [
+  { question: 5, name: "会社の呼び名", answer: "a" },
+  { question: 9, name: "事業の一覧", answer: "b" },
+  { question: 10, name: "事業 ID", answer: "c", optional: true },
+  { question: 11, name: "任せてよい範囲", answer: "d" },
+  { question: 15, name: "追いかける数字", answer: "e" },
+  { question: 20, name: "書き出しの確認", answer: "f" },
+];
+
+describe("nextStep", () => {
+  it("前置きのあとの「質問 N/総数」で項目を見分ける", () => {
+    const text = [
+      "導入を始めます。この作業フォルダは git リポジトリで、sandbox も使えます。",
+      "",
+      "質問 5/21：会社の呼び名",
+      "会社の呼び名を教えてください。",
+    ].join("\n");
+    expect(nextStep(steps, -1, text)).toBe(0);
+  });
+
+  it("全角の ／ でも見分ける", () => {
+    expect(nextStep(steps, -1, "質問 5／21：会社の呼び名")).toBe(0);
+  });
+
+  it("任意の項目は飛ばしてよい", () => {
+    expect(nextStep(steps, 1, "質問 11/21：任せてよい範囲")).toBe(3);
+  });
+
+  it("同じ番号はくり返し（事業ごとに聞く場合）とみなす", () => {
+    expect(nextStep(steps, 4, "質問 15/21：追いかける数字（事業 B）")).toBe(4);
+  });
+
+  it("「（質問 N の確認）」だけの応答は、今の項目の聞き返しとみなす", () => {
+    const text =
+      "（質問 9 の確認）「教材の販売」は、事業 B の一言の説明でよいですか。";
+    expect(nextStep(steps, 1, text)).toBe(1);
+  });
+
+  it("補足や予告に先の項目の語が出ても、番号が 1 つなら 1 つの質問とみなす", () => {
+    const text = [
+      "質問 9/21：事業の一覧",
+      "事業の名前と、一言の説明を教えてください。",
+      "事業 ID は、このあと名前から英小文字・数字・ハイフンで作ります。",
+    ].join("\n");
+    expect(nextStep(steps, 0, text)).toBe(1);
+  });
+
+  it("番号が無い応答は不合格（質問の付け方が守られていない）", () => {
+    expect(() => nextStep(steps, 0, "事業の名前を教えてください。")).toThrow(
+      ScriptFailure,
+    );
+  });
+
+  it("1 ターンで 2 つの番号を聞くと不合格", () => {
+    const text = "質問 9/21：事業の一覧\n…\n質問 11/21：任せてよい範囲\n…";
+    expect(() => nextStep(steps, 0, text)).toThrow(/複数の質問/);
+  });
+
+  it("必須の項目を飛ばすと不合格", () => {
+    expect(() => nextStep(steps, 0, "質問 11/21：任せてよい範囲")).toThrow(
+      /飛ばしています/,
+    );
+  });
+
+  it("台本に無い番号、前に戻った番号は不合格", () => {
+    expect(() => nextStep(steps, 0, "質問 3/21：git リポジトリ")).toThrow(
+      /台本に無い/,
+    );
+    expect(() => nextStep(steps, 3, "質問 9/21：事業の一覧")).toThrow(
+      /台本に無い/,
+    );
+  });
+});
+
+/** SKILL.md の質問の表の番号と見出し */
+const questionHeaders = (skill: string): Map<number, string> => {
+  const text = readFileSync(
+    join(repoRoot, "skills", skill, "SKILL.md"),
+    "utf8",
+  );
+  const section = text.slice(text.indexOf("\n## 人に何を聞くか\n"));
+  const rows = section
+    .split("\n")
+    .filter((line) => /^\| \d+ \|/.test(line))
+    .map((line) => line.split("|").map((cell) => cell.trim()));
+  return new Map(rows.map((cells) => [Number(cells[1]), cells[2] ?? ""]));
+};
+
+const findScripts = (dir: string): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return findScripts(path);
+    return entry.name === "dialogue.json" ? [path] : [];
+  });
+
+describe("台本と SKILL.md の質問の表", () => {
+  const skillsDir = join(repoRoot, "evals", "skills");
+  const scripts = findScripts(skillsDir);
+
+  it("台本がある", () => {
+    expect(scripts.length).toBeGreaterThan(0);
+  });
+
+  it.each(scripts.map((path) => [relative(repoRoot, path), path]))(
+    "%s の各項目の番号と名前が、SKILL.md の質問の表の番号と見出しに一致する",
+    (_, path) => {
+      const skill = relative(skillsDir, path).split(sep)[0] ?? "";
+      const headers = questionHeaders(skill);
+      const script = JSON.parse(readFileSync(path, "utf8")) as {
+        steps: Step[];
+      };
+      for (const step of script.steps) {
+        expect(headers.get(step.question), `質問 ${step.question}`).toBe(
+          step.name,
+        );
+      }
+      const numbers = script.steps.map((step) => step.question);
+      expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
+    },
+  );
+});
+
+describe("changedFiles", () => {
+  const before = new Map([
+    ["docs/charter/company.md", "元の中身"],
+    [".business-os.json", "{}"],
+  ]);
+
+  it("前からあって変わらないファイルは数えない", () => {
+    expect(changedFiles(before, new Map(before), [])).toEqual([]);
+  });
+
+  it("新しく作られたファイルと、中身が変わったファイルを返す", () => {
+    const after = new Map(before);
+    after.set("docs/charter/company.md", "書き換えた中身");
+    after.set("docs/decisions/20261003-01-x.md", "新しい記録");
+    expect(changedFiles(before, after, [])).toEqual([
+      "docs/charter/company.md",
+      "docs/decisions/20261003-01-x.md",
+    ]);
+  });
+
+  it("許したファイルは、作られても変わっても数えない", () => {
+    const after = new Map(before);
+    after.set(".claude/hook-log-202610.jsonl", "ログ");
+    expect(changedFiles(before, after, [".claude/hook-log-*.jsonl"])).toEqual(
+      [],
+    );
+  });
+});
+
+describe("globToRegExp", () => {
+  it("* は / を含まない任意の文字列に合い、. はそのままの文字に合う", () => {
+    const pattern = globToRegExp(".claude/hook-log-*.jsonl");
+    expect(pattern.test(".claude/hook-log-202610.jsonl")).toBe(true);
+    expect(pattern.test(".claude/settings.json")).toBe(false);
+    expect(globToRegExp(".business-os.json").test("xbusiness-osxjson")).toBe(
+      false,
+    );
+  });
+});

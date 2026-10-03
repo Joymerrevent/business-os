@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-02
+updated: 2026-10-03
 as_of: n/a
 verified: n/a
 ---
@@ -92,14 +92,16 @@ business-os/
 │   ├── CLAUDE.md.tmpl
 │   ├── settings.json.tmpl
 │   ├── frontmatter.schema.json
-│   ├── charter/                 # company.md / decision-rules.md / repositories.md / businesses/_template.md
+│   ├── charter/                 # company.md / decision-rules.md / repositories/README.md・_template.md / businesses/_template.md
 │   ├── operations/              # obligations.md / risks.md / state/_template.md / daily/_template.md / reviews/*.md
 │   ├── decisions/_template.md   # company の意思決定記録
 │   ├── proposals/_template.md
 │   └── skill-conventions.md     # business-os の Skill の共通規約（書き出さない）
 ├── adapters/
 │   └── obsidian/                # 第 10 節
+├── fixtures/                    # vitest と eval が共有する前提データ（company/ が土台の検証用 company）
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）
+├── evals/                       # Skill の動作の検証。lib/ が共通の道具、skills/<Skill 名>/<ケース名>/ がケース
 ├── docs/
 │   ├── README.md                # 開発者向け入口
 │   ├── adr/                     # 設計判断記録
@@ -119,7 +121,7 @@ business-os/
 
 | 配布物（Plugin に含まれる） | 開発物（business-os の開発にだけ使う） |
 |---|---|
-| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `test/` `docs/` 設定ファイル群 |
+| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` 設定ファイル群 |
 
 配布専用 Skill は `skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
 `agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
@@ -167,7 +169,9 @@ company/
 │   ├── charter/                 # 憲章。人間メンテ
 │   │   ├── company.md           # 会社概要・方針・優先順位
 │   │   ├── decision-rules.md    # 承認範囲・判断委譲ルール
-│   │   ├── repositories.md      # 実装リポの場所（OS 別パス）
+│   │   ├── repositories/
+│   │   │   ├── README.md        # 実装リポの一覧（OS 別パス）と、フォルダの使い方
+│   │   │   └── <リポ名>/         # 実装リポを扱うときに CC が守ること（指示）。必要時に作成
 │   │   └── businesses/<id>.md   # 事業ごとの定義・KPI
 │   ├── proposals/               # 承認待ち。YYYYMMDD-nn-<slug>.md
 │   ├── decisions/               # ADR。YYYYMMDD-nn-<slug>.md
@@ -178,6 +182,7 @@ company/
 │   │   ├── daily/YYYY-MM-DD.md  # 日報（/morning が作り、全 Skill が実行記録を追記）
 │   │   └── reviews/             # weekly-YYYY-Www / monthly-YYYY-MM / quarterly-YYYY-Qn / check-YYYYMMDD / retro-YYYYMMDD
 │   ├── knowledge/               # 調査・SOP・育つ知識
+│   │   └── repositories/<リポ名>/ # 実装リポについて調べたこと・作業の記録。必要時に作成
 │   ├── inbox/                   # 人間の入口。attachments/ を含む
 │   ├── dashboards/              # Bases 雛形（Obsidian 使用時）
 │   ├── _templates/              # Obsidian のテンプレート（Obsidian 使用時）。フロントマター検査の対象外
@@ -202,15 +207,26 @@ company/
 
 ### 4.2 実装リポの参照
 
-シンボリックリンクは使わない。`docs/charter/repositories.md` にパスを書く。
+シンボリックリンクは使わない。`docs/charter/repositories/README.md` にパスを書く。
 
 ```markdown
-| 事業 | リポ | macOS | Windows | 用途 |
-|---|---|---|---|---|
-| <id> | <name> | ~/workspace/<name> | %USERPROFILE%\workspace\<name> | 実装 |
+| 事業 | リポ | macOS | Windows | 用途 | 指示 |
+|---|---|---|---|---|---|
+| <id> | <name> | ~/workspace/<name> | %USERPROFILE%\workspace\<name> | 実装 | [指示](<name>/instructions.md) または 無し |
 ```
 
-CC は必要時に該当パスを `--add-dir` で読み込む。
+CC は必要時に該当パスを `--add-dir` で読み込む。置き場は「その内容が、実装リポの開発に要るか」で分ける。
+
+| 置くもの | 置き場所 | 書き手 |
+|---|---|---|
+| 実装リポの開発に要るもの（コードの規約・構成・検査の方法） | 実装リポの中（AI で開発していれば実装リポの CLAUDE.md など） | 実装リポの開発者 |
+| 実装リポを扱うときに CC が守ること（指示） | `docs/charter/repositories/<リポ名>/` | 人間（CC は提案経由） |
+| 調べたこと・作業の記録（メモ） | `docs/knowledge/repositories/<リポ名>/` | CC も書く |
+
+- `README.md` は毎セッション読む。`<リポ名>/` は、その実装リポを `--add-dir` で読み込む前に中をすべて読む
+- `--add-dir` で加えたフォルダの CLAUDE.md は既定で読み込まれない。実装リポのコードを変える作業は、実装リポで CC を起動して行う
+
+<!-- 根拠: 20260929-01, 20261003-07 -->
 
 ## 5. CLAUDE.md
 
@@ -262,6 +278,9 @@ business-os を改良する CC と、貢献する人向け。配布物と開発�
 
 - SKILL.md の `description` は日本語でよい。`name` はフォルダ名と一致させる
 - Skill 本文は「何をするか」「何を読むか」「何を書くか」「人に何を聞くか」「完了条件」の順で書く
+- 「人に何を聞くか」は質問の表（番号・見出し・質問文・答えの形・選択肢・聞くとき）にする。見出しは 12 文字以内。
+  聞き方（「質問 N/総数：見出し」を付ける、質問文をそのまま使う、1 ターンに 1 問）は共通規約の「人への質問」に書く。
+  `check:skills` が表を検査し、質問の流れの進行役は番号で質問を見分ける（ADR 20261003-08）
 
 ### 6.3 業務 Skill
 

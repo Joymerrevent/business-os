@@ -1,0 +1,58 @@
+schema_version: "1.1"
+name: validate-start
+description: 新施策を始める判断を accepted で記録し、新しい事業の追加は提案にし、撤退判定を期限台帳に足す
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: skill-started
+    type: regex
+    target: "trace"
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+  - name: accepted
+    type: regex
+    pattern: '"input":\{[^}]*"file_path":"[^"]*/docs/decisions/[^}]*status: accepted'
+    target: "trace"
+  - name: new-business-proposed
+    type: regex
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/proposals/[^"]+\.md"[^}]*target: (?:docs/charter/businesses/biz-c\.md|docs/charter/company\.md)'
+    target: "trace"
+  - name: withdraw-check-scheduled
+    type: regex
+    pattern: "2026-12-31"
+    target:
+      source: "file"
+      path: "docs/operations/obligations.md"
+  - name: risks-not-written
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/operations/risks\.md"'
+  - name: daily-record
+    type: regex
+    target: "trace"
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/daily/\d{4}-\d{2}-\d{2}\.md"[^}]*- (?:\d{2}|--):(?:\d{2}|--) /validate — '
+  - name: charter-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: charter-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: map-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
+  - name: map-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'

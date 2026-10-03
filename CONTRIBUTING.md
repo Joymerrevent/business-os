@@ -22,7 +22,8 @@ business-os への関心をありがとうございます。この文書は、bu
 ## 開発環境
 
 - Node.js 24 系（`.node-version`）と pnpm（`package.json` の `packageManager`）を使います。npm は使いません
-- bash スクリプトを追加しません。hook と scripts は TypeScript で書き、Node が直接実行します
+- bash スクリプトを追加しません。hook と scripts は TypeScript で書き、Node が直接実行します。
+  例外は `evals/` の `scaffold.sh` だけで、中身は TypeScript を呼ぶ `exec node` の 1 行です
 - シンボリックリンクを使いません。パスは相対、改行は LF です
 
 ```sh
@@ -53,3 +54,14 @@ claude --plugin-dir .
 ```
 
 で、このリポジトリを Plugin として読み込めます。
+
+### Skill の動作の検証
+
+Skill を実際に動かして確かめる検証は、`pnpm check` とは別にあります。Claude Code にログインした状態で実行し、実行のたびに利用枠を消費します。
+
+```sh
+pnpm eval:cases      # claude plugin eval のケース（evals/skills/ の下）
+pnpm eval:dialogue   # 質問の流れを、台本（evals/skills/ の下の dialogue.json）どおりに答えて確かめる
+```
+
+どちらも成否は終了コードで返ります。実行の記録は `evals/results/` に残ります（git では追跡しません）。

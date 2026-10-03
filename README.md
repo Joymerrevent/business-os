@@ -1,5 +1,9 @@
 # business-os
 
+[![CI](https://github.com/Joymerrevent/business-os/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Joymerrevent/business-os/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Joymerrevent/business-os?display_name=release)](https://github.com/Joymerrevent/business-os/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/Joymerrevent/business-os)](LICENSE)
+
 > **Status: Alpha (0.x)** — 仕様は予告なく変わります。本番の経営判断に使う場合は自己責任でお願いします。
 
 1 人で複数の事業を運営する人が、Claude Code（CC）を「経営の手足」として使うための Plugin です。

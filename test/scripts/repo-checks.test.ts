@@ -17,8 +17,10 @@ import {
   checkAgents,
   checkAdrIndex,
   checkDocs,
+  checkEvals,
   checkHooks,
   checkLeak,
+  checkShell,
   checkSkills,
   checkTemplates,
   checkUsage,
@@ -39,6 +41,8 @@ describe("実際の business-os", () => {
     ["usage", checkUsage],
     ["adapters", checkAdapters],
     ["agents", checkAgents],
+    ["shell", checkShell],
+    ["evals", checkEvals],
   ] as [string, Check][])("%s に fail が無い", (_, check) => {
     expect(failsOf(check)).toEqual([]);
   });
@@ -124,6 +128,91 @@ describe("壊した business-os の一時コピー", () => {
     expect(fails.map((r) => r.name)).toContain("agents/");
   });
 
+  describe("Skill の検証", () => {
+    const addCase = (path: string) => {
+      mkdirSync(join(root, path), { recursive: true });
+      writeFileSync(join(root, path, "case.yaml"), 'schema_version: "1.1"\n');
+    };
+    const levelOf = (name: string) =>
+      checkEvals(root).find((r) => r.name === name)?.level;
+
+    it("ケースの無い Skill は warn、対象外の /check は数えない", () => {
+      expect(levelOf("skills/morning")).toBe("warn");
+      expect(levelOf("skills/check")).toBeUndefined();
+      expect(failsOf(checkEvals, root)).toEqual([]);
+    });
+
+    it("ケースのある Skill は pass", () => {
+      addCase("evals/skills/morning/daily");
+      expect(levelOf("evals/skills/morning")).toBe("pass");
+      expect(levelOf("skills/morning")).toBeUndefined();
+    });
+
+    it("skills/ に無い名前の検証は fail（改名・削除の追従漏れ）", () => {
+      addCase("evals/skills/mornings/daily");
+      expect(failsOf(checkEvals, root).map((r) => r.name)).toContain(
+        "evals/skills/mornings",
+      );
+    });
+
+    it("対象外の Skill に検証があると fail（対象外の一覧が古い）", () => {
+      addCase("evals/skills/check/run");
+      expect(failsOf(checkEvals, root).map((r) => r.name)).toContain(
+        "evals/skills/check",
+      );
+    });
+
+    it("フォルダだけでケースが無ければ warn", () => {
+      mkdirSync(join(root, "evals", "skills", "morning", "daily"), {
+        recursive: true,
+      });
+      expect(levelOf("evals/skills/morning")).toBe("warn");
+    });
+  });
+
+  describe("シェルスクリプト", () => {
+    const add = (path: string, text: string) => {
+      mkdirSync(join(root, path, ".."), { recursive: true });
+      writeFileSync(join(root, path), text);
+      spawnSync("git", ["add", "-A"], { cwd: root });
+    };
+    const shellFails = () => failsOf(checkShell, root).map((r) => r.name);
+
+    it("evals/ の scaffold.sh が exec node の 1 行なら fail にならない", () => {
+      add(
+        "evals/skills/onboard/x/scaffold.sh",
+        '#!/usr/bin/env bash\n# コメント\n\nexec node "$(dirname "$0")/../../lib/scaffold.ts" empty-repo\n',
+      );
+      expect(shellFails()).toEqual([]);
+    });
+
+    it("scaffold.sh に 2 行目の処理があると fail", () => {
+      add(
+        "evals/skills/onboard/x/scaffold.sh",
+        '#!/usr/bin/env bash\ngit init -q\nexec node "$(dirname "$0")/../../lib/scaffold.ts" empty-repo\n',
+      );
+      expect(shellFails()).toContain("evals/skills/onboard/x/scaffold.sh");
+    });
+
+    it("scaffold.sh の 1 行が exec node でないと fail", () => {
+      add(
+        "evals/skills/onboard/x/scaffold.sh",
+        "#!/usr/bin/env bash\ngit init -q\n",
+      );
+      expect(shellFails()).toContain("evals/skills/onboard/x/scaffold.sh");
+    });
+
+    it("evals/ の外の .sh と、拡張子の無い bash のファイルは fail", () => {
+      add("scripts/setup.sh", "#!/usr/bin/env bash\necho hi\n");
+      add("evals/skills/onboard/x/prepare.sh", "exec node x.ts\n");
+      add("scripts/setup", "#!/bin/bash\necho hi\n");
+      const fails = shellFails();
+      expect(fails).toContain("scripts/setup.sh");
+      expect(fails).toContain("evals/skills/onboard/x/prepare.sh");
+      expect(fails).toContain("scripts/setup");
+    });
+  });
+
   it("Skill の節が欠けると fail", () => {
     edit("skills/morning/SKILL.md", "## 完了条件", "## 終わり");
     expect(failsOf(checkSkills, root).map((r) => r.name)).toContain(
@@ -136,6 +225,56 @@ describe("壊した business-os の一時コピー", () => {
     expect(failsOf(checkSkills, root).map((r) => r.name)).toContain(
       "skills/adr",
     );
+  });
+
+  describe("質問の表", () => {
+    const detailOf = () =>
+      checkSkills(root).find(
+        (r) => r.level === "fail" && r.name === "skills/morning",
+      )?.detail ?? "";
+
+    it("質問の表が無いと fail", () => {
+      edit(
+        "skills/morning/SKILL.md",
+        "| 番号 | 見出し | 質問文 | 答えの形 | 選択肢 | 聞くとき |",
+        "- 今日の優先事項の順番",
+      );
+      expect(detailOf()).toContain("質問の表");
+    });
+
+    it("番号が 1 からの連番でないと fail", () => {
+      edit(
+        "skills/morning/SKILL.md",
+        "| 2 | 優先事項の変更 |",
+        "| 3 | 優先事項の変更 |",
+      );
+      expect(detailOf()).toContain("連番でない");
+    });
+
+    it("見出しが 12 文字を超えると fail", () => {
+      edit(
+        "skills/morning/SKILL.md",
+        "| 1 | 優先事項の順番 |",
+        "| 1 | 今日の優先事項の順番を確かめる |",
+      );
+      expect(detailOf()).toContain("12 文字を超える");
+    });
+
+    it("答えの形が決まった形でない・選択肢の質問に選択肢が無いと fail", () => {
+      edit(
+        "skills/morning/SKILL.md",
+        "| 選択肢（単一） | この順でよい / 変える |",
+        "| 選択肢（単一） | — |",
+      );
+      edit(
+        "skills/morning/SKILL.md",
+        "| 自由記述 | — | 質問 1 で",
+        "| 記述 | — | 質問 1 で",
+      );
+      const detail = detailOf();
+      expect(detail).toContain("選択肢が無い");
+      expect(detail).toContain("決まった形でない");
+    });
   });
 
   it("11 個目の Skill を足すと fail", () => {
@@ -160,6 +299,17 @@ describe("壊した business-os の一時コピー", () => {
     );
     expect(failsOf(checkTemplates, root).map((r) => r.name)).toContain(
       "templates/operations/risks.md",
+    );
+  });
+
+  it("templates/ の直下以外の README.md も雛形として検査する", () => {
+    edit(
+      "templates/charter/repositories/README.md",
+      "# 実装リポジトリ",
+      "# 実装リポジトリ {{ undocumented_var }}",
+    );
+    expect(failsOf(checkTemplates, root).map((r) => r.name)).toContain(
+      "templates/charter/repositories/README.md",
     );
   });
 

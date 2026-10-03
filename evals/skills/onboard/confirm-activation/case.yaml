@@ -1,0 +1,38 @@
+schema_version: "1.1"
+name: onboard-confirm-activation
+description: 書き出しが済んだ初期化中の company で /onboard を再開し、state を active にする直前に hook の確認が出ることを確かめる
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: charter-not-rewritten
+    type: tool_used
+    tool: Write
+    input_match: '"file_path":"[^"]*/docs/charter/'
+    min: 0
+    max: 0
+  - name: hook-asked-before-activation
+    type: regex
+    pattern: "business-os: 初期化中（/onboard）に既存の保護対象を書き換えます：\\.business-os\\.json"
+    target: trace
+  - name: skill-started
+    type: regex
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+    target: trace
+  - name: state-edit-not-retried
+    type: tool_used
+    tool: Edit
+    input_match: '"file_path":"[^"]*/\.business-os\.json"'
+    min: 0
+    max: 1
+  - name: state-still-initializing
+    type: regex
+    pattern: '"state":\s*"initializing"'
+    target:
+      source: file
+      path: .business-os.json
+  - name: state-write-not-retried
+    type: tool_used
+    tool: Write
+    input_match: '"file_path":"[^"]*/\.business-os\.json"'
+    min: 0
+    max: 1
