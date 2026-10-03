@@ -3,11 +3,11 @@ id: 20261003-12
 title: 事業ごとにくり返す質問がある Skill では、事業の数が分かるまで質問の数の見込みを出さない
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: n/a
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
