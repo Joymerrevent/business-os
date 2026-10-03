@@ -15,6 +15,20 @@ export type Step = {
    * 1 つの事業についてまとまりを聞いてから、次の事業でまとまりの前の項目へ戻ってよい
    */
   perBusiness?: boolean;
+  /** この質問を聞いた応答に含まれるべき文字列。`{socket}` は試験のソケットのパスに置き換える */
+  responseIncludes?: string[];
+};
+
+/** 台本が終わった後の状態の判定（ADR 20261003-13）。判定の正典は台本に書く */
+export type Expect = {
+  /** 作業場所のリポジトリのコミットの数 */
+  commits?: number;
+  /** 最後のコミットに署名（gpgsig）が付いているか */
+  signedHead?: boolean;
+  /** 最後の応答に含まれるべき文字列 */
+  finalTextIncludes?: string[];
+  /** 会話の記録の Bash の呼び出し（入力の JSON）に現れてはいけない正規表現 */
+  forbiddenBashInputs?: string[];
 };
 
 /** 台本どおりに進まなかったこと（不合格）。進行役そのものの失敗とは分ける */
@@ -118,3 +132,43 @@ export const changedFiles = (
       !allowed.some((pattern) => pattern.test(file)),
   );
 };
+
+/** `{socket}` を試験のソケットのパスに置き換える */
+export const fillPlaceholders = (text: string, socket: string): string =>
+  text.replaceAll("{socket}", socket);
+
+/**
+ * claude の会話の記録（JSON Lines）から、指定したツールの呼び出しの入力を JSON の文字列で取り出す。
+ * 読めない行は飛ばす（記録の途中の行が欠けても、残りの呼び出しは判定する）
+ */
+export const toolInputs = (jsonl: string, tool: string): string[] =>
+  jsonl.split("\n").flatMap((line) => {
+    if (line.trim() === "") return [];
+    let entry: unknown;
+    try {
+      entry = JSON.parse(line);
+    } catch {
+      return [];
+    }
+    const content = (entry as { message?: { content?: unknown } }).message
+      ?.content;
+    if (!Array.isArray(content)) return [];
+    return content.flatMap((item: unknown) => {
+      const use = item as { type?: unknown; name?: unknown; input?: unknown };
+      return use.type === "tool_use" && use.name === tool
+        ? [JSON.stringify(use.input)]
+        : [];
+    });
+  });
+
+/** 入力のうち、禁止の正規表現に合うものを「正規表現：入力」の形で返す */
+export const forbiddenMatches = (
+  inputs: readonly string[],
+  patterns: readonly string[],
+): string[] =>
+  patterns.flatMap((pattern) => {
+    const regexp = new RegExp(pattern);
+    return inputs
+      .filter((input) => regexp.test(input))
+      .map((input) => `${pattern}：${input}`);
+  });
