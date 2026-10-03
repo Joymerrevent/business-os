@@ -36,6 +36,7 @@
     "check:usage": "node scripts/check-repo.ts usage",
     "check:adapters": "node scripts/check-repo.ts adapters",
     "check:version": "node scripts/check-repo.ts version",
+    "check:shell": "node scripts/check-repo.ts shell",
     "format": "prettier --write .",
     "fix:md": "markdownlint-cli2 --fix",
     "changeset": "changeset",

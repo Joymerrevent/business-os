@@ -878,3 +878,56 @@ export const checkAgents = (root: string = pluginRoot()): CheckResult[] => {
 };
 
 REPO_CHECKS["agents"] = checkAgents;
+
+// ---- シェルスクリプト ----
+
+/** bash を許す唯一の場所：eval のケースの scaffold.sh（ADR 20261003-03） */
+const SCAFFOLD_SH = /^evals\/.+\/scaffold\.sh$/;
+const SHELL_EXTENSION = /\.(sh|bash|zsh|ksh)$/;
+const SHELL_SHEBANG = /^#!.*\b(sh|bash|zsh|ksh|dash)\b/;
+
+export const checkShell = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "シェルスクリプト";
+  const results: CheckResult[] = [];
+  for (const file of trackedFiles(root)) {
+    const path = join(root, file);
+    if (!existsSync(path)) continue;
+    const isShellByName = SHELL_EXTENSION.test(file);
+    const isShellByShebang =
+      !/\.[^/]+$/.test(file) &&
+      SHELL_SHEBANG.test(readFileSync(path, "utf8").split("\n", 1)[0] ?? "");
+    if (!isShellByName && !isShellByShebang) continue;
+    if (!SCAFFOLD_SH.test(file)) {
+      results.push(
+        result(
+          category,
+          file,
+          "fail",
+          "bash などのシェルスクリプトは置けません。処理は TypeScript で書きます（例外は evals/ の scaffold.sh だけ）",
+        ),
+      );
+      continue;
+    }
+    const commands = readFileSync(path, "utf8")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line !== "" && !line.startsWith("#"));
+    const ok = commands.length === 1 && commands[0]?.startsWith("exec node ");
+    results.push(
+      ok
+        ? result(category, file, "pass")
+        : result(
+            category,
+            file,
+            "fail",
+            `scaffold.sh はコメントと空行を除いて「exec node …」の 1 行だけにします（今は ${commands.length} 行）`,
+          ),
+    );
+  }
+  if (results.length === 0) {
+    results.push(result(category, "シェルスクリプトなし", "pass"));
+  }
+  return results;
+};
+
+REPO_CHECKS["shell"] = checkShell;
