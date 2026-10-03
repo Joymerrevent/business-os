@@ -14,7 +14,8 @@ business-os がどの版で何を目指すかを書く。個々の残作業と�
 
 0.x の間は、仕様が予告なく変わる。版の付け方と Release の扱いは、ADR 20260929-10 と 20261003-05 に従う。
 
-- [0.2.0](https://github.com/Joymerrevent/business-os/milestone/1)：Skill が人に聞く質問を固定し（ADR 20261003-08）、0.1.0 の後にたまった変更をリリースする
+- [0.2.0](https://github.com/Joymerrevent/business-os/milestone/1)：2026-10-03 にリリース済み。Skill が人に聞く質問を固定し（ADR 20261003-08）、実装リポの指示とメモの置き場を決めた（ADR 20261003-07）。中身は [CHANGELOG.md](CHANGELOG.md)
+- 次の 0.x の版は、まだ決めていない。残作業が版にまとまったら、マイルストーンを作ってここに足す
 
 ### 1.0.0 — 公式ディレクトリへの提出を検討する版
 
