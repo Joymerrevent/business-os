@@ -166,7 +166,7 @@ const judgeWrite = (input: HookInput, company: Company): Decision => {
       if (missing.length > 0) {
         return {
           decision: "deny",
-          reason: `厳格モード：防衛設定（.claude/settings.json）が欠けているため、保護対象への書き込みを全て止めています。防衛設定を復旧してください（${missing.join("、")}）`,
+          reason: `厳格モード：防衛設定（.claude/settings.json と .claude/settings.local.json）に足りない規則か上書きがあるため、保護対象への書き込みを全て止めています。防衛設定を復旧してください（${missing.join("、")}）`,
         };
       }
       if (!hasApprovingProposal(company.root, key)) {

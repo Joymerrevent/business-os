@@ -17,6 +17,14 @@ const gitInit = (): void => {
   if (run.status !== 0) {
     throw new Error(`git init に失敗しました：${run.stderr}`);
   }
+  // 開発者の全体の設定がコミットの署名を求めていても、eval の作業場所では署名しない。
+  // 署名の設定があると /onboard が署名の質問を足し、開発機ごとに質問の流れが変わるため
+  const config = spawnSync("git", ["config", "commit.gpgsign", "false"], {
+    encoding: "utf8",
+  });
+  if (config.status !== 0) {
+    throw new Error(`git config に失敗しました：${config.stderr}`);
+  }
 };
 
 const copyCompany = (): void => {

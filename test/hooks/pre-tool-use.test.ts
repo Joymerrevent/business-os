@@ -88,6 +88,12 @@ describe("初期化中（state: initializing）", () => {
     expect(write("docs/charter/company.md", content)).toBe("ask");
   });
 
+  it("settings.local.json は、新規作成なら通し、上書きなら ask", () => {
+    expect(write(".claude/settings.local.json", "{}")).toBe("allow");
+    writeFileSync(join(root, ".claude/settings.local.json"), "{}");
+    expect(write(".claude/settings.local.json", "{}")).toBe("ask");
+  });
+
   it("新規作成でもフロントマターが規約に合わなければ拒否", () => {
     expect(write("docs/charter/businesses/biz-c.md", "# 本文だけ\n")).toBe(
       "deny",
@@ -128,9 +134,10 @@ describe("運用中（state: active）の保護対象", () => {
     );
   });
 
-  it("CLAUDE.md・settings.json・.business-os.json は提案が無ければ拒否", () => {
+  it("CLAUDE.md・settings.json・settings.local.json・.business-os.json は提案が無ければ拒否", () => {
     expect(write("CLAUDE.md", "# 地図\n")).toBe("deny");
     expect(write(".claude/settings.json", "{}")).toBe("deny");
+    expect(write(".claude/settings.local.json", "{}")).toBe("deny");
     expect(write(".business-os.json", "{}")).toBe("deny");
   });
 
@@ -473,6 +480,48 @@ describe("厳格モード", () => {
     writeFileSync(join(root, ".claude/settings.json"), "");
     const content = readFileSync(join(root, "docs/charter/company.md"), "utf8");
     expect(write("docs/charter/company.md", content)).toBe("deny");
+  });
+
+  it("settings.local.json が sandbox を無効にすると厳格モード", () => {
+    writeFileSync(
+      join(root, ".claude/settings.local.json"),
+      JSON.stringify({ sandbox: { enabled: false } }),
+    );
+    const content = readFileSync(join(root, "docs/charter/company.md"), "utf8");
+    expect(write("docs/charter/company.md", content)).toBe("deny");
+  });
+
+  it("settings.local.json が逃げ道を開けると厳格モード", () => {
+    writeFileSync(
+      join(root, ".claude/settings.local.json"),
+      JSON.stringify({ sandbox: { allowUnsandboxedCommands: true } }),
+    );
+    const content = readFileSync(join(root, "docs/charter/company.md"), "utf8");
+    expect(write("docs/charter/company.md", content)).toBe("deny");
+  });
+
+  it("settings.local.json を読めなければ厳格モード", () => {
+    writeFileSync(join(root, ".claude/settings.local.json"), "{");
+    const content = readFileSync(join(root, "docs/charter/company.md"), "utf8");
+    expect(write("docs/charter/company.md", content)).toBe("deny");
+  });
+
+  it("settings.local.json が雛形と同じ値やソケットの許可だけなら厳格モードにならない", () => {
+    writeFileSync(
+      join(root, ".claude/settings.local.json"),
+      JSON.stringify({
+        sandbox: {
+          enabled: true,
+          network: { allowUnixSockets: ["~/agent.sock"] },
+        },
+      }),
+    );
+    // 厳格モードなら deny になるところ、approving の提案がある憲章は通る
+    const content = readFileSync(
+      join(root, "docs/charter/company.md"),
+      "utf8",
+    ).replace("事業 A と事業 B を運営する", "事業 A を運営する");
+    expect(write("docs/charter/company.md", content)).toBe("allow");
   });
 
   it("初期化中は厳格モードにならない", () => {

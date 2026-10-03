@@ -78,10 +78,11 @@ export const normalizeTarget = (target: string): string => {
   return parts.join("/").toLowerCase();
 };
 
-/** 保護対象：憲章、地図、防衛設定、business-os の状態 */
+/** 保護対象：憲章、地図、防衛設定（個人設定は sandbox の値を上書きできるため含める）、business-os の状態 */
 export const isProtected = (key: string): boolean =>
   key === "claude.md" ||
   key === ".claude/settings.json" ||
+  key === ".claude/settings.local.json" ||
   key === MARKER ||
   key.startsWith("docs/charter/");
 
