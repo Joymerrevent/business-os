@@ -7,7 +7,7 @@ import { findCompanyRoot, readCompany, type Company } from "./lib/company.ts";
 import { parseFrontmatter } from "./lib/frontmatter.ts";
 import { FOUNDATION_SKILLS, pluginRoot, pluginVersion } from "./lib/plugin.ts";
 import { readProposals } from "./lib/proposals.ts";
-import { missingRules } from "./lib/settings.ts";
+import { localWarnings, missingRules } from "./lib/settings.ts";
 
 const REQUIRED_NODE_MAJOR = 24;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -83,6 +83,10 @@ const checkSettings = (company: Company): string[] => {
         `厳格モード：防衛設定（.claude/settings.json）が欠けているため、憲章などの保護対象への書き込みを全て止めています。防衛設定を復旧してください（${missing.join("、")}）`,
       ];
 };
+
+/** 4b. 個人設定（.claude/settings.local.json）が sandbox を広く緩めていないか */
+const checkLocalSettings = (company: Company): string[] =>
+  localWarnings(company.root);
 
 /** 5. /onboard の完了 */
 const checkState = (company: Company): string[] =>
@@ -175,6 +179,7 @@ const inspect = (): string[] | undefined => {
   }
   const checks = [
     checkSettings,
+    checkLocalSettings,
     checkState,
     checkApproving,
     checkVersion,

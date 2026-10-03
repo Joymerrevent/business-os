@@ -14,7 +14,11 @@ import { readCompany, type Company } from "../../hooks/lib/company.ts";
 import { parseFrontmatter } from "../../hooks/lib/frontmatter.ts";
 import { frontmatterSchema, pluginRoot } from "../../hooks/lib/plugin.ts";
 import { validate } from "../../hooks/lib/schema.ts";
-import { missingRules } from "../../hooks/lib/settings.ts";
+import {
+  allowedSockets,
+  localWarnings,
+  missingRules,
+} from "../../hooks/lib/settings.ts";
 
 export type Level = "pass" | "warn" | "fail";
 export type CheckResult = {
@@ -261,6 +265,33 @@ export const checkSettings = (
           missing.join("、"),
         ),
   ];
+  const warnings = localWarnings(root);
+  results.push(
+    warnings.length === 0
+      ? result(
+          category,
+          "settings.local.json が sandbox を広く緩めていない",
+          "pass",
+        )
+      : result(
+          category,
+          "settings.local.json が sandbox を広く緩めていない",
+          "warn",
+          warnings.join("、"),
+        ),
+  );
+  const sockets = allowedSockets(root);
+  if (sockets.length > 0) {
+    // 判定はしない。覚えのないパスに人が気づけるよう、一覧を示す
+    results.push(
+      result(
+        category,
+        "sandbox の中から接続できる Unix ソケット",
+        "pass",
+        sockets.join("、"),
+      ),
+    );
+  }
   if (!options.pluginValidate) {
     results.push(
       result(

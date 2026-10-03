@@ -1,5 +1,6 @@
 // company の .claude/settings.json が、business-os の雛形（templates/settings.json.tmpl）の必須規則を含むかを確かめる。
 // 必須規則の正典は雛形そのもの。ここに規則を書き写さない（写すと古くなるため）。
+// .claude/settings.local.json は .claude/settings.json より優先されるため、sandbox の値の上書きもここで見る（ADR 20261003-11）。
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pluginRoot } from "./plugin.ts";
@@ -8,7 +9,9 @@ type Settings = {
   sandbox?: {
     enabled?: unknown;
     allowUnsandboxedCommands?: unknown;
+    excludedCommands?: unknown;
     filesystem?: { denyWrite?: unknown; denyRead?: unknown };
+    network?: { allowUnixSockets?: unknown; allowAllUnixSockets?: unknown };
   };
   permissions?: { deny?: unknown; ask?: unknown };
 };
@@ -94,5 +97,69 @@ export const missingRules = (root: string): string[] => {
       if (!present.has(rule)) missing.push(`${label} に ${rule} がありません`);
     }
   }
+  return [...missing, ...localOverrides(root, required)];
+};
+
+const LOCAL = ".claude/settings.local.json";
+
+/** .claude/settings.local.json を読む。無ければ undefined、読めなければ例外 */
+const readLocal = (root: string): Settings | undefined => {
+  const path = join(root, ".claude", "settings.local.json");
+  return existsSync(path) ? readJson(path) : undefined;
+};
+
+/** .claude/settings.local.json が sandbox の必須の値を上書きしていないか */
+const localOverrides = (root: string, required: Settings): string[] => {
+  let local: Settings | undefined;
+  try {
+    local = readLocal(root);
+  } catch {
+    return [`${LOCAL} を読めません`];
+  }
+  if (local === undefined) return [];
+  const missing: string[] = [];
+  for (const key of ["enabled", "allowUnsandboxedCommands"] as const) {
+    const value = local.sandbox?.[key];
+    if (value !== undefined && value !== required.sandbox?.[key]) {
+      missing.push(
+        `${LOCAL} が sandbox.${key} を ${JSON.stringify(value)} に上書きしています`,
+      );
+    }
+  }
   return missing;
+};
+
+/**
+ * .claude/settings.local.json の、sandbox を広く緩める設定（warn に使う）。
+ * 読めないときは missingRules が欠落として扱うので、ここでは何も返さない
+ */
+export const localWarnings = (root: string): string[] => {
+  let local: Settings | undefined;
+  try {
+    local = readLocal(root);
+  } catch {
+    return [];
+  }
+  const warnings: string[] = [];
+  if (local?.sandbox?.network?.allowAllUnixSockets === true) {
+    warnings.push(
+      `${LOCAL} が sandbox.network.allowAllUnixSockets を有効にしています。sandbox の中から全ての Unix ソケットに接続できます`,
+    );
+  }
+  const excluded = asStrings(local?.sandbox?.excludedCommands);
+  if (excluded.length > 0) {
+    warnings.push(
+      `${LOCAL} の sandbox.excludedCommands にあるコマンドは sandbox の外で動きます：${excluded.join(", ")}`,
+    );
+  }
+  return warnings;
+};
+
+/** .claude/settings.local.json で接続を許した Unix ソケットのパス（/check が示す） */
+export const allowedSockets = (root: string): string[] => {
+  try {
+    return asStrings(readLocal(root)?.sandbox?.network?.allowUnixSockets);
+  } catch {
+    return [];
+  }
 };
