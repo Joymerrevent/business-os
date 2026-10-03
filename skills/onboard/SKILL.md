@@ -80,7 +80,8 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
 1. `.gitignore`、`.gitattributes`、`.leak-dict.json`
    - `.leak-dict.json`：会社の呼び名、事業名、答えに出てきた人名・取引先名を `{"terms": [...]}` の形で書く（`.gitignore` 済み）
 2. `CLAUDE.md`
-3. `docs/charter/company.md`、`decision-rules.md`、`repositories.md`、`businesses/<事業 ID>.md`
+3. `docs/charter/company.md`、`decision-rules.md`、`repositories/README.md`、`businesses/<事業 ID>.md`
+   - `repositories/README.md` の「指示」の列は「無し」にする。実装リポを扱うときの指示（`repositories/<リポ名>/`）は `/onboard` では作らず、必要になったら提案として足す
 4. `docs/operations/obligations.md`、`risks.md`、`state/<事業 ID>.md`、
    人間の入口 `docs/inbox/attachments/.gitkeep`（空のファイル。空のフォルダは git に残らないため置く。
    Obsidian の新規ノートと添付の置き場でもあり、フォルダが無いと Obsidian は `docs/` の直下にノートを作る）
@@ -119,6 +120,9 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
   `docs/proposals/` に提案として書く（新規ファイルも提案の `target` にできる）。台帳（`docs/operations/`）は直接書いてよい。最後に `/approve` を案内する
 - **`--migrate`**：business-os の雛形と company の文書を比べ、business-os の更新で増えた欄や規則を提案として書く。
   `.business-os.json` の `pluginVersion` の更新も提案にする。事業の中身は変えない
+  - 古い置き場の `docs/charter/repositories.md` があれば、同じ表に「指示」の列（値は「無し」）を足した内容で
+    `docs/charter/repositories/README.md` を作る提案を書く。提案は新しいファイルを `target` にする。
+    承認されたら、古い `docs/charter/repositories.md` を消すよう人間に案内する（CC は憲章のファイルを消さない）
 
 ## 何を書くか
 

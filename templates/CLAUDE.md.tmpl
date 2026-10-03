@@ -8,7 +8,7 @@ Claude Code（CC、主セッション）はこの会社の COO。business-os の
 
 ## 何がどこにあるか
 
-- `docs/charter/`      憲章。会社概要・判断ルール・事業定義・実装リポの場所。人間メンテ。CC は直接書かない
+- `docs/charter/`      憲章。会社概要・判断ルール・事業定義・実装リポの場所と扱い（`repositories/`）。人間メンテ。CC は直接書かない
 - `docs/proposals/`    CC の提案。人間が `/approve` で憲章へ反映する
 - `docs/decisions/`    意思決定記録（ADR）。`/adr` で起票する
 - `docs/operations/`   台帳・日報・レビュー。CC が書く
@@ -28,7 +28,14 @@ Claude Code（CC、主セッション）はこの会社の COO。business-os の
 
 1. `docs/charter/company.md` を読む（会社の現在地）
 2. `docs/operations/state/` を読む（事業別の現況）
-3. 依頼された作業へ。周期業務は `/morning` `/weekly-review` `/close` `/quarterly`
+3. `docs/charter/repositories/README.md` を読む（実装リポの一覧）
+4. 依頼された作業へ。周期業務は `/morning` `/weekly-review` `/close` `/quarterly`
+
+## 実装リポを扱うとき
+
+1. `--add-dir` で読み込む前に、`docs/charter/repositories/<リポ名>/` があれば中をすべて読む
+2. 調べたことや作業の記録は `docs/knowledge/repositories/<リポ名>/` に書く。実装リポの中には書かない
+3. 実装リポのコードはここからは変えない。変える作業は、実装リポで CC を起動して行うよう人間に案内する
 
 ## 判断に迷ったら
 

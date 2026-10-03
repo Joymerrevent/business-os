@@ -250,10 +250,11 @@ export const checkTemplates = (root: string = pluginRoot()): CheckResult[] => {
     [...readme.matchAll(/`([a-z_]+)`/g)].map((m) => m[1] ?? ""),
   );
   const schema = frontmatterSchema();
+  // 雛形の説明（templates/README.md）だけを外す。下のフォルダの README.md は書き出す雛形なので検査する
   const files = walk(
     dir,
     (path) =>
-      !path.endsWith(`${sep}README.md`) &&
+      path !== join(dir, "README.md") &&
       !path.endsWith("skill-conventions.md") &&
       !path.endsWith(".schema.json"),
   );
