@@ -3,11 +3,11 @@ id: 20261003-02
 title: Skill の自動検証で残した 4 つの論点の扱い
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
