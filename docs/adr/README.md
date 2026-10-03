@@ -38,24 +38,25 @@ accepted → superseded（新しい ADR に置き換えられた）
 `accepted` への変更はメンテナが内容を確認して行う。
 CC が「accepted に変えてよいか」と聞くのは構わない。勝手に変えるのは禁止。
 
+## 新しい ADR の作り方
+
+[`_template.md`](_template.md) をコピーし、`YYYYMMDD-nn-<slug>.md` として保存する。
+フロントマターと各節は、以下の規則に沿って書き換える。保存したら、この README の一覧に 1 行足す。
+
 ## フロントマター
 
 全 ADR に以下を持つ。日付は `YYYY-MM-DD`、該当しない欄は `n/a`。
 
-```yaml
----
-id: 20260929-01
-title: シェル非依存
-type: decision
-business: n/a
-status: proposed
-created: 2026-09-30   # ファイルを書いた日
-updated: 2026-09-30   # 最後に内容を変えた日
-as_of: n/a            # 数値・事実の基準日（ADR は通常 n/a）
-verified: n/a         # 人間が「まだ正しい」と確認した日
-supersedes: n/a       # 置き換える ADR の id（あれば）
----
-```
+- `id`：ファイル名の先頭（`YYYYMMDD-nn`）と同じ値
+- `title`：決めたことを一文で。見出しと一覧の題にも同じ文を使う
+- `type`：`decision`
+- `business`：`n/a`
+- `status`：起票時は `proposed`
+- `created`：ファイルを書いた日
+- `updated`：最後に内容を変えた日
+- `as_of`：数値・事実の基準日（ADR は通常 `n/a`）
+- `verified`：人間が「まだ正しい」と確認した日
+- `supersedes`：置き換える ADR の id（無ければ `n/a`）
 
 起票日（ID の日付）とファイル作成日（`created`）は一致しなくてよい。
 議論した日と書き起こした日がずれることは普通にある。
