@@ -1,93 +1,72 @@
 // 進行役（run.ts）の判定。claude を呼ばない純粋な関数だけを置き、test/evals/ で検査する。
 
 export type Step = {
+  /** SKILL.md の質問の表の番号（ADR 20261003-08） */
+  question: number;
+  /** 記録とエラーの文に使う名前（質問の表の見出しと同じにする） */
   name: string;
-  ask: string;
   answer: string;
-  /** 同じ項目を聞き返されたときの答え。無ければ answer をくり返す */
+  /** 同じ質問を聞き返されたときの答え。無ければ answer をくり返す */
   clarify?: string;
+  /** 条件によって聞かれない質問（例：既存の記録があるときだけの置き換えの質問） */
   optional?: boolean;
 };
 
 /** 台本どおりに進まなかったこと（不合格）。進行役そのものの失敗とは分ける */
 export class ScriptFailure extends Error {}
 
-const matches = (step: Step, text: string): boolean =>
-  new RegExp(step.ask).test(text);
+/** 「質問 <番号>/<総数>」（共通規約の質問の付け方）。全角の ／ も受け付ける */
+const QUESTION_MARK = /質問\s*(\d+)\s*[/／]\s*\d+/g;
+/** 「（質問 <番号> の確認）」（聞き返しの付け方） */
+const CLARIFY_MARK = /質問\s*(\d+)\s*の確認/g;
+
+const numbersOf = (pattern: RegExp, text: string): number[] => [
+  ...new Set([...text.matchAll(pattern)].map((match) => Number(match[1]))),
+];
 
 /**
- * 応答のうち、最初に答えを求める行（質問）から最後までを取り出す。
- * 質問の前の前置き（「git リポジトリです」など）で、誤って先の項目に合わないようにする。質問の行が無ければ全文を返す
- */
-const QUESTION_LINE = /[？?]|ください|ですか|ますか|ましたか|でしょうか/;
-export const questionText = (text: string): string => {
-  const lines = text.split("\n");
-  const first = lines.findIndex((line) => QUESTION_LINE.test(line));
-  return first === -1 ? text : lines.slice(first).join("\n");
-};
-
-/**
- * 答えを求める文（質問の文）だけ。「。」「？」と改行で文に分ける。
- * 補足の文や「背景は、このあと聞きます」のような予告の文で、先の項目を聞いたと誤って判定しないようにする
- */
-const questionSentences = (text: string): string => {
-  const sentences = text
-    .split(/(?<=[。？?])|\n/)
-    .filter((sentence) => QUESTION_LINE.test(sentence));
-  return sentences.length > 0 ? sentences.join("\n") : text;
-};
-
-/**
- * 今のターンの質問が、台本のどの項目にあたるかを決める。
- * 次の必須の項目を優先する（間の任意の項目は、同じターンで軽く確かめるだけでもよい）。
- * 必須の項目に合わなければ間の任意の項目、それにも合わなければ今の項目のくり返し（事業ごとに聞く場合など）とみなす。
- * どの項目にも合わなければ、今の項目の聞き返し（答えが曖昧で言い直しを求められた など）とみなす。
- * 先の必須の項目を飛ばして聞いた、または 1 ターンで複数の項目を聞いたら不合格にする。
- * 項目の見分けは質問が始まる行から後ろ、複数の項目の判定は質問の文だけで行う（`response` は応答の全文）。
+ * 今のターンの応答が、台本のどの項目にあたるかを、応答に付いた質問の番号で決める。
+ * - 「質問 N/総数」が 1 つ：番号が N の項目。今の項目と同じ番号なら、くり返し（事業ごとに聞く場合など）
+ * - 「（質問 N の確認）」だけ：今の項目の聞き返し
+ * - 番号が無い、2 つ以上の番号を聞いた、台本に無い番号、必須の項目を飛ばした：不合格
  */
 export const nextStep = (
   steps: Step[],
   position: number,
   response: string,
 ): number => {
-  const text = questionText(response);
-  let required = position + 1;
-  while (steps[required]?.optional === true) required += 1;
-  let found = -1;
-  if (steps[required] !== undefined && matches(steps[required], text)) {
-    found = required;
-  } else {
-    for (let index = position + 1; index < required; index += 1) {
-      const step = steps[index];
-      if (step !== undefined && matches(step, text)) {
-        found = index;
-        break;
-      }
+  const asked = numbersOf(QUESTION_MARK, response);
+  const current = steps[position];
+  if (asked.length === 0) {
+    const clarified = numbersOf(CLARIFY_MARK, response);
+    if (current !== undefined && clarified.includes(current.question)) {
+      return position;
     }
+    throw new ScriptFailure(
+      "応答に質問の番号（「質問 N/総数」か「（質問 N の確認）」）がありません",
+    );
   }
+  if (asked.length > 1) {
+    throw new ScriptFailure(
+      `1 ターンで複数の質問をしています：質問 ${asked.join("、")}`,
+    );
+  }
+  const number = asked[0];
+  if (current !== undefined && current.question === number) return position;
+  const found = steps.findIndex(
+    (step, index) => index > position && step.question === number,
+  );
   if (found === -1) {
-    const current = steps[position];
-    if (current !== undefined && matches(current, text)) return position;
-    const skipped = steps
-      .slice(required + 1)
-      .some((step) => step.optional !== true && matches(step, text));
-    if (current !== undefined && !skipped) return position;
-    const expected = steps[required]?.name ?? "（台本の終わり）";
     throw new ScriptFailure(
-      `質問が台本の順番と合いません。期待した項目：${expected}`,
+      `台本に無い質問、または前に戻った質問です：質問 ${String(number)}`,
     );
   }
-  const later = steps
-    .slice(Math.max(found, required) + 1)
-    .filter(
-      (step) =>
-        step.optional !== true && matches(step, questionSentences(response)),
-    )
-    .map((step) => step.name);
-  if (later.length > 0) {
-    throw new ScriptFailure(
-      `1 ターンで複数の項目を聞いています：${steps[found]?.name ?? ""}、${later.join("、")}`,
-    );
+  const skipped = steps
+    .slice(position + 1, found)
+    .filter((step) => step.optional !== true)
+    .map((step) => `質問 ${step.question}（${step.name}）`);
+  if (skipped.length > 0) {
+    throw new ScriptFailure(`質問を飛ばしています：${skipped.join("、")}`);
   }
   return found;
 };

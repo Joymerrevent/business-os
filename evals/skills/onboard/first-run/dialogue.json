@@ -1,62 +1,81 @@
 {
-  "description": "/onboard の初回のインタビューを、SKILL.md の質問の順に台本で答えて進め、書き出す前の確認で断る",
+  "description": "/onboard の初回のインタビューを、SKILL.md の質問の表の番号の順に台本で答えて進め、書き出す前の確認（質問 20）で断る",
   "scaffold": "empty-repo",
   "firstMessage": "/onboard",
   "steps": [
     {
-      "name": "会社の呼び名・一行説明・目指すこと・優先順位",
-      "ask": "呼び名",
-      "answer": "呼び名は「検証用の会社」です。一行説明は「事業 A と事業 B を運営する」。目指すことはまだ決めていません。優先順位は事業 A を優先します。"
+      "question": 5,
+      "name": "会社の呼び名",
+      "answer": "検証用の会社です。"
     },
     {
+      "question": 6,
+      "name": "一行説明",
+      "answer": "事業 A と事業 B を運営する会社です。"
+    },
+    {
+      "question": 7,
+      "name": "目指すこと",
+      "answer": "まだ決めていない"
+    },
+    {
+      "question": 8,
+      "name": "優先順位",
+      "answer": "事業 A を優先します。"
+    },
+    {
+      "question": 9,
       "name": "事業の一覧",
-      "ask": "運営している事業|事業の一覧",
       "answer": "事業 A：受託開発。事業 B：教材の販売。"
     },
     {
-      "name": "事業 ID の確認",
-      "ask": "ID",
-      "answer": "その ID でよいです。",
-      "optional": true
+      "question": 10,
+      "name": "事業 ID",
+      "answer": "この ID でよい"
     },
     {
-      "name": "任せてよい範囲と承認が要る範囲",
-      "ask": "任せ",
-      "answer": "任せてよい範囲はまだ決めていません。追加で承認が要るのは 1 万円以上の支払いです。"
+      "question": 11,
+      "name": "任せてよい範囲",
+      "answer": "まだ決めていない"
     },
     {
-      "name": "期限や義務",
-      "ask": "期限|義務",
+      "question": 12,
+      "name": "追加の承認",
+      "answer": "1 万円以上の支払いは承認が要ります。"
+    },
+    {
+      "question": 13,
+      "name": "期限と義務",
       "answer": "2026-10-31 に月次の支払いがあります。全社にかかり、毎月です。"
     },
     {
-      "name": "実装リポジトリの場所",
-      "ask": "実装リポジトリ|リポジトリの場所",
+      "question": 14,
+      "name": "実装リポジトリ",
       "answer": "事業 A は macOS で ~/workspace/biz-a-app、Windows では使いません。事業 B は無しです。"
     },
     {
+      "question": 15,
       "name": "追いかける数字",
-      "ask": "追いかける数字|追う数字|KPI|指標",
-      "answer": "各事業とも、挙げてもらった候補の最初の 2 個にします。"
+      "answer": "挙げてもらった候補の最初の 2 個にします。"
     },
     {
+      "question": 16,
       "name": "リスク",
-      "ask": "リスク",
-      "answer": "各事業とも、挙げてもらった候補の最初の 1 個を残します。"
+      "answer": "挙げてもらった候補の最初の 1 個を残します。"
     },
     {
+      "question": 17,
       "name": "主セッションのモデル",
-      "ask": "モデル",
-      "answer": "best にします。"
+      "answer": "best"
     },
     {
-      "name": "Obsidian を使うか",
-      "ask": "Obsidian",
-      "answer": "使いません。"
+      "question": 18,
+      "name": "Obsidian",
+      "answer": "使わない"
     },
     {
-      "name": "書き出す前の確認",
-      "ask": "書き出して(よい|いい)|書き出しても",
+      "question": 20,
+      "name": "書き出しの確認",
       "answer": "書き出さないでください。今回はここで終わりにします。"
     }
   ],
