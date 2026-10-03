@@ -25,7 +25,7 @@ business-os を改良する人と CC のための地図です。利用者向け�
 ## 手で確かめるとき
 
 - `claude --plugin-dir .` で、このリポジトリを Plugin として読み込める
-- 検証用の company は `test/fixtures/company/`。手で試すときは、`/tmp` などに複製してから使い、フィクスチャを汚さない
+- 検証用の company は `fixtures/company/`。手で試すときは、`/tmp` などに複製してから使い、フィクスチャを汚さない
 - 本物の Claude Code で hook が動くかは、`node scripts/check.ts --company <複製した company> --live` を sandbox の外で実行して確かめる
 
 ## 文書の規約

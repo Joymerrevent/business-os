@@ -1,5 +1,0 @@
-schema_version: "1.1"
-name: onboard-confirm-activation
-description: 書き出しが済んだ初期化中の company で /onboard を再開し、state を active にする直前に hook の確認が出ることを確かめる
-context:
-  scaffold_script: scaffold.sh

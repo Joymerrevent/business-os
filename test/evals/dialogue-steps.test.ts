@@ -1,4 +1,4 @@
-// 進行役の判定（evals/dialogue/steps.ts）のテスト。応答の例は、実際の /onboard の応答で誤判定した形を写したもの。
+// 進行役の判定（evals/lib/dialogue/steps.ts）のテスト。応答の例は、実際の /onboard の応答で誤判定した形を写したもの。
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -8,12 +8,22 @@ import {
   questionText,
   ScriptFailure,
   type Step,
-} from "../../evals/dialogue/steps.ts";
+} from "../../evals/lib/dialogue/steps.ts";
 import { repoRoot } from "../helpers.ts";
 
 const steps = (
   JSON.parse(
-    readFileSync(join(repoRoot, "evals", "dialogue", "onboard.json"), "utf8"),
+    readFileSync(
+      join(
+        repoRoot,
+        "evals",
+        "skills",
+        "onboard",
+        "first-run",
+        "dialogue.json",
+      ),
+      "utf8",
+    ),
   ) as { steps: Step[] }
 ).steps;
 const indexOf = (name: string) => steps.findIndex((s) => s.name === name);

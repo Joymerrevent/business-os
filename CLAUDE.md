@@ -10,7 +10,9 @@
 - `hooks/`           SessionStart（軽い点検）と PreToolUse（書き込みガード）。TypeScript
 - `scripts/`         重い点検（`/check`）と `check:*` の共有実装、バージョン同期
 - `templates/`       company の雛形。`/onboard` が展開する
-- `evals/`           Skill の動作の検証。`claude plugin eval` のケースと、質問の流れを確かめる進行役（配布物の動作には関与しない）
+- `evals/`           Skill の動作の検証（配布物の動作には関与しない）。共通の道具は `evals/lib/`、
+                     Skill ごとのケース・前提データ（`overlay/`）・台本（`dialogue.json`）は `evals/skills/<Skill 名>/<ケース名>/`
+- `fixtures/`        vitest と eval が共有する前提データ。土台の検証用 company は `fixtures/company/`
 - `adapters/obsidian/` 任意アダプタ。business-os の機能に関与しない
 - `docs/adr/`        設計判断。**ここが正典**。`docs/design/architecture.md` が構造仕様
 - `docs/usage/`      利用者向け。ADR 番号を書かない
@@ -39,11 +41,12 @@
 ## ローカル検証
 
 - `claude --plugin-dir .` でこのリポを Plugin として読み込む
-- 検証用の company 相当リポ（`test/fixtures/company/`）で `/onboard` から動かす
+- 検証用の company 相当リポ（`fixtures/company/`）で `/onboard` から動かす
 - hook の fail-closed テスト：`pnpm test`
 - Skill の動作：`pnpm eval:cases`（eval のケース）と `pnpm eval:dialogue`（質問の流れ）。
   Skill・雛形・hook を変えた PR では CC が実行し、結果の要約を PR 本文に書く。実行のたびにメンテナの利用枠を消費する。
-  記録は `evals/results/`（追跡しない）。`/check` は Bash が要るため eval の対象外（判定のロジックは vitest で検査する）
+  記録は `evals/results/`（追跡しない）。`/check` は Bash が要るため eval の対象外（判定のロジックは vitest で検査する）。
+  Skill を足したら `evals/skills/<Skill 名>/` にケースを足す（無ければ `check:evals` が warn を出す）
 
 ## リリース
 

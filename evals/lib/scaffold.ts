@@ -1,11 +1,12 @@
 // eval のケースの作業場所を用意する共通の scaffold。各ケースの scaffold.sh が 1 行で呼ぶ（ADR 20261003-03）。
 // 作業場所（カレントディレクトリ）に、ケースが前提にするファイルと git リポジトリを作る。
 //
-// 使い方：node evals/lib/scaffold.ts <作業場所の種類> [重ねるファイルの組]
-// 重ねるファイルの組は evals/fixtures/<名前>/ にあり、作業場所の用意のあとに上書きで複製する
+// 使い方：node evals/lib/scaffold.ts <作業場所の種類> [重ねるもの ...]
+// 重ねるものは、共通の環境の名前（fixtures/<名前>/）か、ケースのフォルダの overlay/ のパス。
+// 作業場所の用意のあと、書いた順に上書きで複製する（土台 → 共通の環境 → ケースの前提データ）
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { manifestVersion } from "../../scripts/lib/version.ts";
 
@@ -19,7 +20,7 @@ const gitInit = (): void => {
 };
 
 const copyCompany = (): void => {
-  cpSync(join(repoRoot, "test", "fixtures", "company"), ".", {
+  cpSync(join(repoRoot, "fixtures", "company"), ".", {
     recursive: true,
   });
 };
@@ -47,28 +48,33 @@ const SCAFFOLDS: Record<string, () => void> = {
   },
 };
 
+/**
+ * 重ねるものの指定を、実際のフォルダにする。
+ * 絶対パスか、区切り（`/`、Windows では `\` も）を含めばケースのフォルダの overlay/ などのパス、
+ * それ以外は共通の環境 fixtures/<名前>/ の名前とみなす
+ */
+const overlayDir = (spec: string): string =>
+  isAbsolute(spec) || /[/\\]/.test(spec)
+    ? resolve(spec)
+    : join(repoRoot, "fixtures", spec);
+
 const main = (): number => {
   const name = process.argv[2] ?? "";
   const scaffold = SCAFFOLDS[name];
   if (scaffold === undefined) {
     process.stderr.write(
-      `使い方：node evals/lib/scaffold.ts <${Object.keys(SCAFFOLDS).join(" | ")}> [重ねるファイルの組]\n`,
+      `使い方：node evals/lib/scaffold.ts <${Object.keys(SCAFFOLDS).join(" | ")}> [重ねるもの ...]\n`,
     );
     return 2;
   }
-  const overlay = process.argv[3];
-  const overlayDir =
-    overlay === undefined
-      ? undefined
-      : join(repoRoot, "evals", "fixtures", overlay);
-  if (overlayDir !== undefined && !existsSync(overlayDir)) {
-    process.stderr.write(
-      `重ねるファイルの組がありません：evals/fixtures/${overlay ?? ""}\n`,
-    );
+  const overlays = process.argv.slice(3).map(overlayDir);
+  const missing = overlays.filter((dir) => !existsSync(dir));
+  if (missing.length > 0) {
+    process.stderr.write(`重ねるものがありません：${missing.join("、")}\n`);
     return 2;
   }
   scaffold();
-  if (overlayDir !== undefined) cpSync(overlayDir, ".", { recursive: true });
+  for (const dir of overlays) cpSync(dir, ".", { recursive: true });
   return 0;
 };
 

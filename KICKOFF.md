@@ -61,7 +61,7 @@ porters-connect と同じ流儀で揃える。
 - `hooks/hooks.json`、`hooks/session-start.ts`（軽い点検 10 項目、厳格モード）、
   `hooks/pre-tool-use.ts`（第 7.3 節の判定）、`hooks/lib/`
 - `test/`：hook の fail-closed テストを**先に**書く（合成入力で exit 2 / 0 を検証、例外注入で exit 2）
-- `test/fixtures/company/`：検証用の company 相当リポ
+- `fixtures/company/`：検証用の company 相当リポ
 
 ### Phase 4：Skills
 
@@ -70,7 +70,7 @@ porters-connect と同じ流儀で揃える。
 
 - 各 SKILL.md は第 6.2 節の順（何をするか / 何を読むか / 何を書くか / 人に何を聞くか / 完了条件）
 - `/onboard` の Obsidian 分岐は Phase 6 で有効化する。Phase 4 では「使わない」経路だけ動かす
-- 3 つ作るごとに `test/fixtures/company/` で動作確認し、報告する
+- 3 つ作るごとに `fixtures/company/` で動作確認し、報告する
 
 ### Phase 5：検査と CI
 
@@ -108,9 +108,9 @@ porters-connect と同じ流儀で揃える。
 
 - [ ] `pnpm check` が緑（Linux / Windows の CI 両方）
 - [ ] `pnpm test` が緑（hook の fail-closed テストを含む）
-- [ ] `claude --plugin-dir .` で読み込み、`test/fixtures/company/` に対して `/onboard` → `/morning` → `/check` が通る
+- [ ] `claude --plugin-dir .` で読み込み、`fixtures/company/` に対して `/onboard` → `/morning` → `/check` が通る
 - [ ] `/check` の「防衛の発火」分類が全て pass
-- [ ] `test/fixtures/company/` の `CLAUDE.md` が 70 行以内
+- [ ] `fixtures/company/` の `CLAUDE.md` が 70 行以内
 - [ ] business-os のリポに固有名詞・秘密が無い（`check:leak` が緑）
 - [ ] `0.1.0` の pre-release が切られている
 - [ ] Phase 0 の検証結果が `architecture.md` 第 11 節に反映されている
