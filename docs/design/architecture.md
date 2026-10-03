@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-02
+updated: 2026-10-03
 as_of: n/a
 verified: n/a
 ---
@@ -100,6 +100,7 @@ business-os/
 ├── adapters/
 │   └── obsidian/                # 第 10 節
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）
+├── evals/                       # Skill の動作の検証（claude plugin eval のケース、質問の流れの進行役）
 ├── docs/
 │   ├── README.md                # 開発者向け入口
 │   ├── adr/                     # 設計判断記録
