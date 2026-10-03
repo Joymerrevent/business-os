@@ -43,7 +43,7 @@
 - hook の fail-closed テスト：`pnpm test`
 - Skill の動作：`pnpm eval:cases`（eval のケース）と `pnpm eval:dialogue`（質問の流れ）。
   Skill・雛形・hook を変えた PR では CC が実行し、結果の要約を PR 本文に書く。実行のたびにメンテナの利用枠を消費する。
-  記録は `evals/results/`（追跡しない）
+  記録は `evals/results/`（追跡しない）。`/check` は Bash が要るため eval の対象外（判定のロジックは vitest で検査する）
 
 ## リリース
 
