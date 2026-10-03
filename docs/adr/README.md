@@ -96,3 +96,4 @@ accepted の ADR は書き直さないので、2 つの形式が並ぶ。古い�
 | 20261003-04 | 共通の前提データを直下の fixtures/ に置き、evals/ を共通の道具と Skill ごとのテストに分ける | accepted |
 | 20261003-05 | GitHub の pre-release は版の接尾辞があるときだけ付ける | accepted |
 | 20261003-06 | 新しい ADR は MADR 形式で書き、既存の ADR は書き直さない | accepted |
+| 20261003-07 | 実装リポの開発に要るものは実装リポに、経営側の文脈は company に置く | accepted |
