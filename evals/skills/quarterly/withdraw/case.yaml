@@ -1,0 +1,49 @@
+schema_version: "1.1"
+name: quarterly-withdraw
+description: 事業 B の撤退を決め、憲章の変更は提案にする
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: skill-started
+    type: regex
+    target: "trace"
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+  - name: quarterly-created
+    type: file_exists
+    path: "docs/operations/reviews/quarterly-*.md"
+  - name: withdraw-recorded
+    type: regex
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/reviews/quarterly-[^}]*撤退'
+    target: "trace"
+  - name: charter-change-proposed
+    type: regex
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/proposals/[^"]+\.md"[^}]*target: docs/charter/(?:businesses/biz-b|company)\.md'
+    target: "trace"
+  - name: daily-record
+    type: regex
+    target: "trace"
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/daily/\d{4}-\d{2}-\d{2}\.md"[^}]*- (?:\d{2}|--):(?:\d{2}|--) /quarterly — '
+  - name: charter-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: charter-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: map-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
+  - name: map-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
