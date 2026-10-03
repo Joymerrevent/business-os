@@ -90,3 +90,4 @@ supersedes: n/a       # 置き換える ADR の id（あれば）
 | 20260930-01 | Bash の文字列規則は粗い網 | accepted |
 | 20261002-01 | 役割エージェントは同梱せず、主セッションを COO とする。作業は作業者へ委譲する | accepted |
 | 20261003-01 | Skill の動作は claude plugin eval で CC が手元で検証する | accepted |
+| 20261003-02 | Skill の自動検証で残した 4 つの論点の扱い | proposed |
