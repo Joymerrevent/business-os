@@ -1,5 +1,5 @@
 {
-  "description": "/onboard の初回のインタビューを、SKILL.md の質問の表の番号の順に台本で答えて進め、書き出す前の確認（質問 20）で断る",
+  "description": "/onboard の初回のインタビューを、SKILL.md の質問の表の番号の順に台本で答えて進め、書き出す前の確認（質問 21）で断る",
   "scaffold": "empty-repo",
   "firstMessage": "/onboard",
   "steps": [
@@ -74,7 +74,7 @@
       "answer": "使わない"
     },
     {
-      "question": 20,
+      "question": 21,
       "name": "書き出しの確認",
       "answer": "書き出さないでください。今回はここで終わりにします。"
     }
