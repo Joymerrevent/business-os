@@ -28,7 +28,7 @@ verified: n/a
 
 {{ unused_skills }}
 
-## 地図と運用ルールへの提案
+## CC への指示書と運用ルールへの提案
 
 {{ rule_proposals }}
 

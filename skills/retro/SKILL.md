@@ -1,6 +1,6 @@
 ---
 name: retro
-description: 日報とレビューから、くり返している作業の Skill 化、使われていない Skill の削除・凍結、地図や運用ルールへの追記を提案する。週に 1 回か月に 1 回使う。
+description: 日報とレビューから、くり返している作業の Skill 化、使われていない Skill の削除・凍結、CC への指示書（CLAUDE.md）や運用ルールへの追記を提案する。週に 1 回か月に 1 回使う。
 disable-model-invocation: true
 ---
 
@@ -12,7 +12,7 @@ business-os と運用を、使われ方に合わせて直す提案を出す。�
 
 1. **2 回ルール**：同じ依頼を CC に手で頼んだのが 2 回以上あれば、業務 Skill（`.claude/skills/`）にすることを提案する
 2. **剪定**：先月 1 回も使われなかった業務 Skill の削除か凍結を提案する（business-os の 10 個の Skill は対象外）
-3. **地図と運用ルール**：くり返し起きた問題から、`CLAUDE.md` や判断ルールへの追記を提案する
+3. **CC への指示書と運用ルール**：くり返し起きた問題から、`CLAUDE.md` や判断ルールへの追記を提案する
 4. **自動起動**：2〜4 週間、決まった周期で毎回呼ばれている周期 Skill があれば、Routines（スケジュール起動）に移すことを提案する。
    設定はしない（人間が決める）
 
@@ -42,7 +42,7 @@ business-os と運用を、使われ方に合わせて直す提案を出す。�
 5. 選ばれたものを提案として書く
    - Skill 化：`target` を `.claude/skills/<名前>/SKILL.md` にし、本文に SKILL.md の案を書く
    - 剪定：削除か、`disable-model-invocation: true` を付けた凍結か
-   - 地図・運用ルール：`target` を `CLAUDE.md` か `docs/charter/decision-rules.md` にする
+   - CC への指示書・運用ルール：`target` を `CLAUDE.md` か `docs/charter/decision-rules.md` にする
 6. business-os そのもの（business-os）への改善案があれば、振り返りに「business-os への改善案」として書く。
    business-os のリポジトリへの Issue の作成は外部への行動なので、人間が頼んだときだけ、送る前に確認して行う
 7. 振り返りを雛形から書き出し、`/approve` を案内する
@@ -69,5 +69,5 @@ business-os と運用を、使われ方に合わせて直す提案を出す。�
 
 - Skill の実行回数と、2 回以上くり返した手作業が振り返りに書かれている
 - 人間が選んだ候補が全て提案（`status: proposed`）になっている
-- 業務 Skill や地図を直接書き換えていない
+- 業務 Skill や CC への指示書を直接書き換えていない
 - 日報に実行記録が 1 行ある
