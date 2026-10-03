@@ -3,11 +3,11 @@ id: 20261003-07
 title: 実装リポの開発に要るものは実装リポに、経営側の文脈は company に置く
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
