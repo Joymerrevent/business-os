@@ -1,0 +1,162 @@
+schema_version: "1.1"
+name: onboard-first-run
+description: 空の git リポジトリで /onboard の初回の導入を回答表で最後まで進める
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: company-content
+    type: llm
+    focus:
+      source: file
+      path: docs/charter/company.md
+    criteria: |-
+      PASS if the document says the company runs 事業 A (受託開発) and 事業 B (教材の販売), gives priority to 事業 A, and states 目指すこと as まだ決めていない (or equivalent wording). The company name is not required in this file.
+      FAIL if any of these are missing, contradicted, or replaced with invented facts.
+  - name: company-name-in-map
+    type: regex
+    pattern: 検証用の会社
+    target:
+      source: file
+      path: CLAUDE.md
+  - name: exists-CLAUDE-md
+    type: file_exists
+    path: CLAUDE.md
+  - name: exists-business-os-json
+    type: file_exists
+    path: .business-os.json
+  - name: exists-docs-charter-businesses-all-md
+    type: file_exists
+    path: docs/charter/businesses/*.md
+  - name: exists-docs-charter-company-md
+    type: file_exists
+    path: docs/charter/company.md
+  - name: exists-docs-charter-decision-rules-md
+    type: file_exists
+    path: docs/charter/decision-rules.md
+  - name: exists-docs-charter-repositories-md
+    type: file_exists
+    path: docs/charter/repositories.md
+  - name: exists-docs-inbox-attachments-gitkeep
+    type: file_exists
+    path: docs/inbox/attachments/.gitkeep
+  - name: exists-docs-operations-obligations-md
+    type: file_exists
+    path: docs/operations/obligations.md
+  - name: exists-docs-operations-risks-md
+    type: file_exists
+    path: docs/operations/risks.md
+  - name: exists-docs-operations-state-all-md
+    type: file_exists
+    path: docs/operations/state/*.md
+  - name: exists-gitattributes
+    type: file_exists
+    path: .gitattributes
+  - name: exists-gitignore
+    type: file_exists
+    path: .gitignore
+  - name: exists-leak-dict-json
+    type: file_exists
+    path: .leak-dict.json
+  - name: no-obsidian-dashboards
+    type: file_exists
+    path: docs/dashboards/**
+    exists: false
+  - name: no-obsidian-obsidian
+    type: file_exists
+    path: docs/.obsidian/**
+    exists: false
+  - name: no-obsidian-templates
+    type: file_exists
+    path: docs/_templates/**
+    exists: false
+  - name: no-placeholder-CLAUDE-md
+    type: regex
+    pattern: \{\{
+    match: not_contains
+    target:
+      source: file
+      path: CLAUDE.md
+  - name: no-placeholder-docs-charter-company-md
+    type: regex
+    pattern: \{\{
+    match: not_contains
+    target:
+      source: file
+      path: docs/charter/company.md
+  - name: no-placeholder-docs-charter-decision-rules-md
+    type: regex
+    pattern: \{\{
+    match: not_contains
+    target:
+      source: file
+      path: docs/charter/decision-rules.md
+  - name: no-placeholder-docs-charter-repositories-md
+    type: regex
+    pattern: \{\{
+    match: not_contains
+    target:
+      source: file
+      path: docs/charter/repositories.md
+  - name: no-placeholder-docs-operations-obligations-md
+    type: regex
+    pattern: \{\{
+    match: not_contains
+    target:
+      source: file
+      path: docs/operations/obligations.md
+  - name: no-placeholder-docs-operations-risks-md
+    type: regex
+    pattern: \{\{
+    match: not_contains
+    target:
+      source: file
+      path: docs/operations/risks.md
+  - name: obligation-recorded
+    type: regex
+    pattern: 2026-10-31
+    target:
+      source: file
+      path: docs/operations/obligations.md
+  - name: settings-after-charter
+    type: tool_order
+    before:
+      tool: Write
+      input_match: '"file_path":"[^"]*/docs/charter/company\.md"'
+    after:
+      tool: Write
+      input_match: '"file_path":"[^"]*/\.claude/settings\.json"'
+  - name: settings-after-risks
+    type: tool_order
+    before:
+      tool: Write
+      input_match: '"file_path":"[^"]*/docs/operations/risks\.md"'
+    after:
+      tool: Write
+      input_match: '"file_path":"[^"]*/\.claude/settings\.json"'
+  - name: settings-model-best
+    type: regex
+    pattern: '"file_path":"[^"]*/\.claude/settings\.json","content":"[^\n]*?\\"model\\": \\"best\\"'
+    target: trace
+  - name: settings-no-placeholder
+    type: regex
+    pattern: '"file_path":"[^"]*/\.claude/settings\.json","content":"(?:[^"\\]|\\.)*\{\{'
+    match: not_contains
+    target: trace
+  - name: settings-not-retried
+    type: tool_used
+    tool: Write
+    input_match: '"file_path":"[^"]*/\.claude/settings\.json"'
+    min: 1
+    max: 1
+  - name: skill-started
+    type: regex
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+    target: trace
+  - name: state-file-first
+    type: tool_order
+    before:
+      tool: Write
+      input_match: '"file_path":"[^"]*/\.business-os\.json"'
+    after:
+      tool: Write
+      input_match: '"file_path":"[^"]*/CLAUDE\.md"'
