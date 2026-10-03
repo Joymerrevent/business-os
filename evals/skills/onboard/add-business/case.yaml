@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: onboard-add-business
-description: 導入済みの company に事業を追加し、台帳は直接書き、憲章と地図の変更は提案にする
+description: 導入済みの company に事業を追加し、台帳は直接書き、憲章と CC への指示書の変更は提案にする
 context:
   scaffold_script: scaffold.sh
 graders:
