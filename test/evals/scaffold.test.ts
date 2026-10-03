@@ -43,8 +43,12 @@ describe("evals/lib/scaffold.ts", () => {
     });
   });
 
-  it("company-active は導入済みの company を複製し、重ねるファイルの組を上書きで足す", () => {
-    const run = scaffold(cwd, "company-active", "retro-history");
+  it("company-active は導入済みの company を複製し、ケースの overlay/ を上書きで足す", () => {
+    const run = scaffold(
+      cwd,
+      "company-active",
+      join(repoRoot, "evals", "skills", "retro", "history", "overlay"),
+    );
     expect(run.status).toBe(0);
     const state = JSON.parse(
       readFileSync(join(cwd, ".business-os.json"), "utf8"),
@@ -55,9 +59,13 @@ describe("evals/lib/scaffold.ts", () => {
     ).toBe(true);
   });
 
-  it("無い組を重ねようとすると失敗の終了コードを返す", () => {
-    const run = scaffold(cwd, "company-active", "no-such-overlay");
-    expect(run.status).not.toBe(0);
+  it("無い共通の環境や overlay/ を重ねようとすると失敗の終了コードを返す", () => {
+    expect(scaffold(cwd, "company-active", "no-such-fixture").status).not.toBe(
+      0,
+    );
+    expect(
+      scaffold(cwd, "company-active", join(cwd, "no-such-overlay")).status,
+    ).not.toBe(0);
   });
 
   it("知らない名前なら失敗の終了コードを返す", () => {
