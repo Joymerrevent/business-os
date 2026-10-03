@@ -3,11 +3,11 @@ id: 20261003-03
 title: eval の scaffold に限り、TypeScript を呼ぶ 1 行の bash を許す
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
