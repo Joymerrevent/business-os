@@ -74,6 +74,22 @@ describe("nextStep", () => {
     expect(nextStep(steps, 0, text)).toBe(1);
   });
 
+  it("前置きの文で飛ばす質問の ID に触れても、質問として数えない", () => {
+    const text = [
+      "同じ主題の既存の記録はないので、置き換えの質問（質問 ID：10）は飛ばします。",
+      "",
+      "**質問 7/16：任せてよい範囲（質問 ID：11）**",
+      "CC に任せてよいことを教えてください。",
+    ].join("\n");
+    expect(nextStep(steps, 1, text)).toBe(3);
+  });
+
+  it("全角の ／ でも見分ける", () => {
+    expect(nextStep(steps, -1, "質問 1／16：会社の呼び名（質問 ID：5）")).toBe(
+      0,
+    );
+  });
+
   it("番号が無い応答は不合格（質問の付け方が守られていない）", () => {
     expect(() => nextStep(steps, 0, "事業の名前を教えてください。")).toThrow(
       ScriptFailure,
