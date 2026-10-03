@@ -1,0 +1,65 @@
+{
+  "description": "/adr で記録を書き、コミットに「コミットする」と答える。settings.local.json で署名の agent（試験のソケット）への接続を許しているので、署名付きのコミットが 1 つできる",
+  "scaffold": "company-active",
+  "signing": "allow",
+  "firstMessage": "/adr",
+  "steps": [
+    {
+      "question": 1,
+      "name": "決めたこと",
+      "answer": "事業 B の教材は自社サイトだけで販売することにしました。"
+    },
+    {
+      "question": 2,
+      "name": "置き換え",
+      "answer": "置き換えない",
+      "optional": true
+    },
+    {
+      "question": 3,
+      "name": "背景",
+      "answer": "外部の販売サイトの手数料が高いためです。"
+    },
+    {
+      "question": 4,
+      "name": "他の選択肢",
+      "answer": "外部の販売サイトにも出す案がありました。手数料と規約の変更リスクで捨てました。"
+    },
+    {
+      "question": 5,
+      "name": "影響",
+      "answer": "販売の窓口が 1 つになります。撤退条件は、自社サイトの売上が 3 か月続けて前年を下回ったときです。"
+    },
+    {
+      "question": 6,
+      "name": "記録の確定",
+      "answer": "proposed のまま"
+    },
+    {
+      "question": 7,
+      "name": "古い記録の変更",
+      "answer": "書かない",
+      "optional": true
+    },
+    {
+      "question": 8,
+      "name": "コミット",
+      "answer": "コミットする"
+    }
+  ],
+  "allowedFilesAfterDecline": [
+    "docs/decisions/*.md",
+    "docs/operations/daily/*.md",
+    ".claude/hook-log-*.jsonl"
+  ],
+  "expect": {
+    "commits": 1,
+    "signedHead": true,
+    "forbiddenBashInputs": [
+      "--no-gpg-sign",
+      "gpgsign",
+      "git (-c|config) ",
+      "\"dangerouslyDisableSandbox\":true"
+    ]
+  }
+}

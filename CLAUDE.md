@@ -47,6 +47,7 @@
 - Skill の動作：`pnpm eval:cases`（eval のケース）と `pnpm eval:dialogue`（質問の流れ）。
   Skill・雛形・hook を変えた PR では CC が実行し、結果の要約を PR 本文に書く。実行のたびにメンテナの利用枠を消費する。
   記録は `evals/results/`（追跡しない）。`/check` は Bash が要るため eval の対象外（判定のロジックは vitest で検査する）。
+  コミットの署名の台本（`signing` を持つ `dialogue.json`）は、作業場所の安全設定を読み込んで Bash を許し、macOS でだけ動く（他の OS では飛ばす）。
   Skill を足したら `evals/skills/<Skill 名>/` にケースを足す（無ければ `check:evals` が warn を出す）
 
 ## リリース

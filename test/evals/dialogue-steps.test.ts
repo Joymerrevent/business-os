@@ -5,9 +5,12 @@ import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   changedFiles,
+  fillPlaceholders,
+  forbiddenMatches,
   globToRegExp,
   nextStep,
   ScriptFailure,
+  toolInputs,
   type Step,
 } from "../../evals/lib/dialogue/steps.ts";
 import { repoRoot } from "../helpers.ts";
@@ -257,5 +260,72 @@ describe("globToRegExp", () => {
     expect(globToRegExp(".business-os.json").test("xbusiness-osxjson")).toBe(
       false,
     );
+  });
+});
+
+describe("fillPlaceholders", () => {
+  it("{socket} を全て試験のソケットのパスに置き換える", () => {
+    expect(fillPlaceholders("{socket} と {socket}", "/tmp/a.sock")).toBe(
+      "/tmp/a.sock と /tmp/a.sock",
+    );
+  });
+});
+
+describe("toolInputs", () => {
+  const line = (content: unknown) => JSON.stringify({ message: { content } });
+  const jsonl = [
+    line([{ type: "text", text: "こんにちは" }]),
+    line([
+      { type: "tool_use", name: "Bash", input: { command: "git status" } },
+      { type: "tool_use", name: "Read", input: { file_path: "a.md" } },
+    ]),
+    "{ 壊れた行",
+    "",
+    line("文字列の content"),
+    line([
+      {
+        type: "tool_use",
+        name: "Bash",
+        input: { command: "git commit -m x", dangerouslyDisableSandbox: true },
+      },
+    ]),
+  ].join("\n");
+
+  it("指定したツールの呼び出しの入力を、JSON の文字列で順に返す", () => {
+    expect(toolInputs(jsonl, "Bash")).toEqual([
+      '{"command":"git status"}',
+      '{"command":"git commit -m x","dangerouslyDisableSandbox":true}',
+    ]);
+  });
+
+  it("読めない行と、content が配列でない行は飛ばす", () => {
+    expect(toolInputs(jsonl, "Read")).toEqual(['{"file_path":"a.md"}']);
+  });
+});
+
+describe("forbiddenMatches", () => {
+  const patterns = [
+    "--no-gpg-sign",
+    "gpgsign",
+    "git (-c|config) ",
+    '"dangerouslyDisableSandbox":true',
+  ];
+
+  it("禁止の正規表現に合う入力を返す", () => {
+    const inputs = [
+      '{"command":"git commit --no-gpg-sign -m x"}',
+      '{"command":"git -c commit.gpgsign=false commit -m x"}',
+      '{"command":"git commit -m x","dangerouslyDisableSandbox":true}',
+    ];
+    // 1 行目は --no-gpg-sign、2 行目は gpgsign と git -c、3 行目は dangerouslyDisableSandbox
+    expect(forbiddenMatches(inputs, patterns)).toHaveLength(4);
+  });
+
+  it("ふつうの git add と git commit は合わない", () => {
+    const inputs = [
+      '{"command":"git add docs/decisions/x.md"}',
+      '{"command":"git commit -m \\"docs: 記録を足す\\""}',
+    ];
+    expect(forbiddenMatches(inputs, patterns)).toEqual([]);
   });
 });
