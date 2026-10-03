@@ -48,7 +48,7 @@
 ## リリース
 
 `/release`（`.claude/skills/release/`）：changeset → version → `plugin.json` 同期 → CHANGELOG → `main` へのリリース PR →
-タグ `business-os--v<版>` → GitHub の pre-release。タグの push と Release の公開は、実行の前にメンテナに確認する。
+タグ `business-os--v<版>` → GitHub の Release（版に `-beta.N` などの接尾辞があるときだけ pre-release）。タグの push と Release の公開は、実行の前にメンテナに確認する。
 0.x は開発中。1.0 で公式ディレクトリ提出を検討する。
 
 ## 迷ったら
