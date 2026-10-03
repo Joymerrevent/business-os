@@ -33,9 +33,9 @@ graders:
   - name: exists-docs-charter-decision-rules-md
     type: file_exists
     path: docs/charter/decision-rules.md
-  - name: exists-docs-charter-repositories-md
+  - name: exists-docs-charter-repositories-readme-md
     type: file_exists
-    path: docs/charter/repositories.md
+    path: docs/charter/repositories/README.md
   - name: exists-docs-inbox-attachments-gitkeep
     type: file_exists
     path: docs/inbox/attachments/.gitkeep
@@ -90,13 +90,13 @@ graders:
     target:
       source: file
       path: docs/charter/decision-rules.md
-  - name: no-placeholder-docs-charter-repositories-md
+  - name: no-placeholder-docs-charter-repositories-readme-md
     type: regex
     pattern: \{\{
     match: not_contains
     target:
       source: file
-      path: docs/charter/repositories.md
+      path: docs/charter/repositories/README.md
   - name: no-placeholder-docs-operations-obligations-md
     type: regex
     pattern: \{\{

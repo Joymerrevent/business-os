@@ -252,6 +252,17 @@ describe("壊した business-os の一時コピー", () => {
     );
   });
 
+  it("templates/ の直下以外の README.md も雛形として検査する", () => {
+    edit(
+      "templates/charter/repositories/README.md",
+      "# 実装リポジトリ",
+      "# 実装リポジトリ {{ undocumented_var }}",
+    );
+    expect(failsOf(checkTemplates, root).map((r) => r.name)).toContain(
+      "templates/charter/repositories/README.md",
+    );
+  });
+
   it("雛形のフロントマターがスキーマに合わないと fail", () => {
     edit("templates/operations/risks.md", "type: ledger", "type: memo");
     expect(failsOf(checkTemplates, root).length).toBeGreaterThan(0);
