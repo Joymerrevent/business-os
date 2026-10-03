@@ -1,0 +1,78 @@
+name: Tag
+
+# リリース PR が main にマージされたら、タグ business-os--v<版> を作って push する（ADR 20261003-09）。
+# 版の誤り（package.json と plugin.json の食い違い、版の逆行、CHANGELOG の節の漏れ、使い残しの changeset）は、
+# リリース PR の CI（pnpm check の check:release）で止めてある。ここではタグを作ることだけをする。
+# GitHub の Release は、タグを確かめてから CC か人が作る（ここでは作らない）。
+#
+# GITHUB_TOKEN で push したタグは、ほかのワークフローを起動しない（GitHub の仕様）。
+# タグの push を合図にするワークフローは置いていないので、問題にならない。
+on:
+  push:
+    branches: [main]
+  # タグを作り損ねたときに、Actions の画面から手で動かし直すため
+  workflow_dispatch:
+
+# 既定は読み取りだけ。書き込みは、タグを作るジョブにだけ与える
+permissions:
+  contents: read
+
+concurrency:
+  group: tag-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # ci.yml の CLAUDE_CODE_VERSION と同じ版にそろえる（claude plugin tag --push がある版）
+  CLAUDE_CODE_VERSION: "2.1.281"
+
+jobs:
+  tag:
+    name: tag
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # タグの作成と push に要る
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # 既存のタグの有無を確かめるため、全履歴と全タグを取る
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: echo "version=$(node -p "require('./package.json').version")" >> "${GITHUB_OUTPUT}"
+
+      - name: Check existing tag
+        id: existing
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="business-os--v${VERSION}"
+          if git rev-parse -q --verify "refs/tags/${tag}" > /dev/null; then
+            echo "タグ ${tag} はすでにあります。リリース以外の main への push なので、何もしません。"
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Install Claude Code（claude plugin tag 用）
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+
+      # plugin.json とマーケットプレイスの記述の一致を確かめてから、注釈付きのタグを作って push する
+      - name: Create and push tag
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          claude plugin tag -m "business-os %s" --push
