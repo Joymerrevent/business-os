@@ -30,6 +30,10 @@ supersedes: n/a
 | 1 | `state: initializing` の `.business-os.json` を Edit で `active` に変えさせた | business-os の hook の確認（ask）が、`-p` では拒否として返った。拒否の文言（`business-os: 初期化中（/onboard）に既存の保護対象を書き換えます：.business-os.json`）が記録（trace）に残る |
 | 2 | `DOCKER_CONFIG` を空のフォルダに向けて、Bash を許可した実行を始めた | 始まらない。`~/.docker` そのものも検査され、Docker Desktop が `cli-plugins/` に置く標準のシンボリックリンクで止まる |
 | 2 | Linux のコンテナ（`node:24-bookworm-slim`）で bubblewrap を動かした | 既定の設定と、seccomp・AppArmor を外した設定では動かない。`--privileged` なら動く。コンテナの中で eval を最後まで動かすことは未検証 |
+| 3 | `claude -p --plugin-dir .` を `--safe-mode` で起動した | 使えない。`--plugin-dir` の Plugin は一覧に載るが、その Skill と hook が読み込まれない |
+| 3 | `--bare` の説明を読んだ | 使えない。認証が API キーに限られ、サブスクリプションのログインを読まない |
+| 3 | `--setting-sources ""` と `--strict-mcp-config` を付けて起動した | 使える。Skill は business-os の 10 個と Claude Code に組み込みのものだけ、Plugin は business-os と組み込みのものだけ、MCP は無し。hook は business-os の SessionStart だけが走った。利用者の `CLAUDE.md` の一節を引用させると「無い」と答え、入力のトークン数は通常の起動より約 6,500 少ない。認証はサブスクリプションのまま |
+| 3 | 同じ条件で `--resume <session_id>` で次のターンを送った | 前のターンの内容を引き継いだ |
 | 4 | scaffold で `"$(dirname "$0")"` を基準に `test/fixtures/company/` を複製した | 成功。scaffold は元のケースのフォルダから実行される |
 
 Bash が要る Skill の手順は、`/check`（`scripts/check.ts` を Bash で実行する）と、`/onboard` の Obsidian のファイルのコピーとコミットだけである。
@@ -54,13 +58,15 @@ Bash が要る Skill の手順は、`/check`（`scripts/check.ts` を Bash で�
 ### 3. 質問の流れを確かめる進行役
 
 1. 作る。TypeScript で書き、Node が直接実行する。置き場は `evals/` の下とし、`pnpm check` には含めない
-2. `claude -p --plugin-dir . --output-format json` で始め、`--resume <session_id>` で 1 ターンずつ進める
+2. 一時フォルダに作った作業場所で、`claude -p --plugin-dir <business-os> --setting-sources "" --strict-mcp-config --output-format json` で始め、
+   同じ引数に `--resume <session_id>` を足して 1 ターンずつ進める。`/onboard` は最初に `.business-os.json` を書くため、作業場所への Write は許可する
 3. 答えは台本で決める。台本は「期待する質問の手がかり（キーワード）」と「答え」の組を質問の順に並べたもの。
    進行役は、各ターンの質問が台本の順番と合うか、1 ターンに 1 つの項目だけを聞いているかを判定し、成否を終了コードで返す
 4. 対象は質問の流れに絞る。「書き出す前の確認」で書き出しを断り、ファイルは書かせない（書き出しは eval のケースで確かめる）
 5. `-p` には AskUserQuestion が無いため、選択肢の画面そのものは確かめられない。質問はテキストで受け、答えもテキストで返す
-6. 進行役は eval の隔離された環境の外で動く。利用者の設定・`CLAUDE.md`・他の Plugin を読み込まずに起動する方法を、実装時に検証する。
-   検証できなければ、実装せずにメンテナに相談する
+6. 進行役は eval の隔離された環境の外で動く。利用者の設定・`CLAUDE.md`・他の Plugin・MCP は、2 の引数で読み込まない。
+   Claude Code に組み込みの Skill と Plugin、管理者の設定（managed settings）は読み込まれるが、許容する
+7. 会話の記録は、通常の起動と同じく `~/.claude/projects/` の下に作業場所ごとのフォルダとして残る。進行役は終わるときに、自分の作業場所のフォルダだけを消す
 
 ### 4. 導入済みの company を前提にするケース
 
