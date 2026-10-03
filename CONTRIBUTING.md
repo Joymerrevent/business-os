@@ -60,8 +60,8 @@ claude --plugin-dir .
 Skill を実際に動かして確かめる検証は、`pnpm check` とは別にあります。Claude Code にログインした状態で実行し、実行のたびに利用枠を消費します。
 
 ```sh
-pnpm eval:cases      # claude plugin eval のケース（evals/ の下）
-pnpm eval:dialogue   # /onboard の質問の流れを、台本どおりに答えて確かめる
+pnpm eval:cases      # claude plugin eval のケース（evals/skills/ の下）
+pnpm eval:dialogue   # 質問の流れを、台本（evals/skills/ の下の dialogue.json）どおりに答えて確かめる
 ```
 
 どちらも成否は終了コードで返ります。実行の記録は `evals/results/` に残ります（git では追跡しません）。

@@ -99,8 +99,9 @@ business-os/
 │   └── skill-conventions.md     # business-os の Skill の共通規約（書き出さない）
 ├── adapters/
 │   └── obsidian/                # 第 10 節
+├── fixtures/                    # vitest と eval が共有する前提データ（company/ が土台の検証用 company）
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）
-├── evals/                       # Skill の動作の検証（claude plugin eval のケース、質問の流れの進行役）
+├── evals/                       # Skill の動作の検証。lib/ が共通の道具、skills/<Skill 名>/<ケース名>/ がケース
 ├── docs/
 │   ├── README.md                # 開発者向け入口
 │   ├── adr/                     # 設計判断記録
@@ -120,7 +121,7 @@ business-os/
 
 | 配布物（Plugin に含まれる） | 開発物（business-os の開発にだけ使う） |
 |---|---|
-| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `test/` `docs/` 設定ファイル群 |
+| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` 設定ファイル群 |
 
 配布専用 Skill は `skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
 `agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
