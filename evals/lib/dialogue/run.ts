@@ -18,13 +18,7 @@ import {
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  globToRegExp,
-  nextStep,
-  questionText,
-  ScriptFailure,
-  type Step,
-} from "./steps.ts";
+import { changedFiles, nextStep, ScriptFailure, type Step } from "./steps.ts";
 
 const repoRoot = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -35,6 +29,8 @@ const repoRoot = join(
 const skillsDir = join(repoRoot, "evals", "skills");
 /** 1 回の台本で送るメッセージの上限。超えたら不合格（質問が終わらない） */
 const MAX_MESSAGES = 25;
+/** 同じ項目が続けて聞かれてよい回数。超えたら不合格（聞き返しが終わらない） */
+const MAX_REPEATS = 3;
 /** claude -p の 1 回の呼び出しの上限（ミリ秒） */
 const CALL_TIMEOUT_MS = 10 * 60 * 1000;
 
@@ -139,6 +135,15 @@ const listFiles = (dir: string, prefix = ""): string[] =>
       : [path];
   });
 
+/** 作業場所の全ファイルの中身。scaffold の直後と終わった後を比べ、新しく作られた・変わったファイルを見つける */
+const snapshot = (workspace: string): Map<string, string> =>
+  new Map(
+    listFiles(workspace).map((file) => [
+      file,
+      readFileSync(join(workspace, file), "utf8"),
+    ]),
+  );
+
 /** claude が作業場所ごとに残す会話の記録のフォルダ。作業場所のパスの英数字以外を - にした名前になる */
 const sessionDir = (workspace: string): string =>
   join(
@@ -164,6 +169,7 @@ const runScript = (scriptPath: string, model: string): number => {
   const label = scriptLabel(scriptPath);
   const script = readScript(scriptPath);
   const workspace = prepareWorkspace(script.scaffold);
+  const before = snapshot(workspace);
   const log: string[] = [`# ${label}（${model}）`, ""];
   let cost = 0;
   let verdict = 1;
@@ -171,6 +177,7 @@ const runScript = (scriptPath: string, model: string): number => {
     let sessionId: string | null = null;
     let message = script.firstMessage;
     let position = -1;
+    let repeats = 0;
     for (let count = 1; ; count += 1) {
       if (count > MAX_MESSAGES) {
         throw new ScriptFailure(
@@ -193,19 +200,31 @@ const runScript = (scriptPath: string, model: string): number => {
       if (turn.isError)
         throw new ScriptFailure("claude がエラーで止まりました");
       if (position === script.steps.length - 1) break;
-      position = nextStep(script.steps, position, questionText(turn.text));
+      const next = nextStep(script.steps, position, turn.text);
+      repeats = next === position ? repeats + 1 : 0;
+      if (repeats >= MAX_REPEATS) {
+        throw new ScriptFailure(
+          `同じ項目で ${MAX_REPEATS} 回続けて聞かれ、先に進みません`,
+        );
+      }
+      position = next;
       const step = script.steps[position];
       if (step === undefined) break;
-      log.push(`→ 台本の項目：${step.name}`, "");
-      message = step.answer;
+      log.push(
+        `→ 台本の項目：${step.name}${repeats > 0 ? "（くり返し・聞き返し）" : ""}`,
+        "",
+      );
+      message =
+        repeats > 0 && step.clarify !== undefined ? step.clarify : step.answer;
     }
-    const allowed = script.allowedFilesAfterDecline.map(globToRegExp);
-    const extra = listFiles(workspace).filter(
-      (file) => !allowed.some((pattern) => pattern.test(file)),
+    const extra = changedFiles(
+      before,
+      snapshot(workspace),
+      script.allowedFilesAfterDecline,
     );
     if (extra.length > 0) {
       throw new ScriptFailure(
-        `書き出しを断ったのにファイルが書かれました：${extra.join("、")}`,
+        `書き出しを断ったのにファイルが書かれた・変わりました：${extra.join("、")}`,
       );
     }
     verdict = 0;

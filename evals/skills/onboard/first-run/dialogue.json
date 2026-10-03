@@ -15,7 +15,7 @@
     },
     {
       "name": "事業 ID の確認",
-      "ask": "事業 ?ID|ID は",
+      "ask": "ID",
       "answer": "その ID でよいです。",
       "optional": true
     },
