@@ -3,11 +3,11 @@ id: 20261003-11
 title: コミットの署名に使う agent のソケットは保護した個人設定で許し、署名で失敗したら人にコミットを頼む
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-03
 updated: 2026-10-03
 as_of: 2026-10-03
-verified: n/a
+verified: 2026-10-03
 supersedes: n/a
 ---
 
