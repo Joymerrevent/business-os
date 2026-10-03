@@ -53,6 +53,66 @@ const SKILL_SECTIONS = [
   "## 完了条件",
 ];
 
+/** 質問の表の列（ADR 20261003-08） */
+const QUESTION_COLUMNS = [
+  "番号",
+  "見出し",
+  "質問文",
+  "答えの形",
+  "選択肢",
+  "聞くとき",
+];
+const ANSWER_FORMS = new Set(["自由記述", "選択肢（単一）", "選択肢（複数）"]);
+/** 見出しの上限（AskUserQuestion の header の上限） */
+const QUESTION_HEADER_MAX = 12;
+
+const tableCells = (line: string): string[] =>
+  line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+
+/** 「人に何を聞くか」の節の質問の表を確かめ、問題の一覧を返す */
+export const questionTableProblems = (text: string): string[] => {
+  const start = text.indexOf("\n## 人に何を聞くか\n");
+  if (start < 0) return [];
+  const rest = text.slice(start + 1);
+  const next = rest.indexOf("\n## ", 1);
+  const section = next < 0 ? rest : rest.slice(0, next);
+  const lines = section.split("\n").filter((line) => line.startsWith("|"));
+  const [head, , ...rows] = lines;
+  if (head === undefined) return ["質問の表が無い"];
+  if (tableCells(head).join(",") !== QUESTION_COLUMNS.join(",")) {
+    return [`質問の表の列が「${QUESTION_COLUMNS.join("・")}」ではない`];
+  }
+  if (rows.length === 0) return ["質問の表に行が無い"];
+  const problems: string[] = [];
+  rows.forEach((row, index) => {
+    const [number, header, question, form, choices] = tableCells(row);
+    const label = `質問 ${number ?? "?"}`;
+    if (number !== String(index + 1)) {
+      problems.push(
+        `${label}：番号が 1 からの連番でない（${index + 1} のはず）`,
+      );
+    }
+    if (!header) problems.push(`${label}：見出しが無い`);
+    else if (Array.from(header).length > QUESTION_HEADER_MAX) {
+      problems.push(
+        `${label}：見出し「${header}」が ${QUESTION_HEADER_MAX} 文字を超える`,
+      );
+    }
+    if (!question) problems.push(`${label}：質問文が無い`);
+    if (form === undefined || !ANSWER_FORMS.has(form)) {
+      problems.push(`${label}：答えの形「${form ?? ""}」が決まった形でない`);
+    } else if (form !== "自由記述" && (!choices || choices === "—")) {
+      problems.push(`${label}：選択肢の質問なのに選択肢が無い`);
+    }
+  });
+  return problems;
+};
+
 export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
   const category = "Skill";
   const results: CheckResult[] = [];
@@ -99,6 +159,7 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
         problems.push(`「${section.slice(3)}」の節の順番が違う`);
       else last = index;
     }
+    problems.push(...questionTableProblems(text));
     results.push(
       problems.length === 0
         ? result(category, `skills/${name}`, "pass")
