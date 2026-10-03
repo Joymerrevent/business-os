@@ -933,3 +933,70 @@ export const checkShell = (root: string = pluginRoot()): CheckResult[] => {
 };
 
 REPO_CHECKS["shell"] = checkShell;
+
+// ---- Skill の動作の検証（evals/skills/） ----
+
+/** eval の対象外にする Skill と、その理由（ADR 20261003-02、20261003-04） */
+const EVAL_EXCLUDED: Record<string, string> = {
+  check: "Bash が要るため（判定のロジックは vitest で検査する）",
+};
+
+/** フォルダの下に eval のケース（case.yaml か prompt.md を持つフォルダ）があるか */
+const hasEvalCase = (dir: string): boolean =>
+  walk(dir, (path) => /[/\\](case\.yaml|prompt\.md)$/.test(path)).length > 0;
+
+export const checkEvals = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "Skill の検証";
+  const results: CheckResult[] = [];
+  const evalsDir = join(root, "evals", "skills");
+  const skills = new Set(
+    readdirSync(join(root, "skills")).filter((name) =>
+      statSync(join(root, "skills", name)).isDirectory(),
+    ),
+  );
+  const tested = existsSync(evalsDir)
+    ? readdirSync(evalsDir).filter((name) =>
+        statSync(join(evalsDir, name)).isDirectory(),
+      )
+    : [];
+  for (const name of tested) {
+    const path = `evals/skills/${name}`;
+    if (!skills.has(name)) {
+      results.push(
+        result(
+          category,
+          path,
+          "fail",
+          `skills/${name} がありません。Skill の名前を変えた・消したなら、検証のフォルダも合わせます`,
+        ),
+      );
+    } else if (EVAL_EXCLUDED[name] !== undefined) {
+      results.push(
+        result(
+          category,
+          path,
+          "fail",
+          `/${name} は検証の対象外として登録されています。検証を足したなら、対象外の一覧から外します`,
+        ),
+      );
+    } else if (!hasEvalCase(join(evalsDir, name))) {
+      results.push(result(category, path, "warn", "ケースが 1 つもありません"));
+    } else {
+      results.push(result(category, path, "pass"));
+    }
+  }
+  for (const name of skills) {
+    if (tested.includes(name) || EVAL_EXCLUDED[name] !== undefined) continue;
+    results.push(
+      result(
+        category,
+        `skills/${name}`,
+        "warn",
+        `evals/skills/${name}/ に検証のケースがありません`,
+      ),
+    );
+  }
+  return results;
+};
+
+REPO_CHECKS["evals"] = checkEvals;

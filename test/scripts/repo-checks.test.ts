@@ -17,6 +17,7 @@ import {
   checkAgents,
   checkAdrIndex,
   checkDocs,
+  checkEvals,
   checkHooks,
   checkLeak,
   checkShell,
@@ -41,6 +42,7 @@ describe("実際の business-os", () => {
     ["adapters", checkAdapters],
     ["agents", checkAgents],
     ["shell", checkShell],
+    ["evals", checkEvals],
   ] as [string, Check][])("%s に fail が無い", (_, check) => {
     expect(failsOf(check)).toEqual([]);
   });
@@ -124,6 +126,48 @@ describe("壊した business-os の一時コピー", () => {
     const fails = failsOf(checkAgents, root);
     expect(fails.map((r) => r.name)).toContain("agents/worker.md");
     expect(fails.map((r) => r.name)).toContain("agents/");
+  });
+
+  describe("Skill の検証", () => {
+    const addCase = (path: string) => {
+      mkdirSync(join(root, path), { recursive: true });
+      writeFileSync(join(root, path, "case.yaml"), 'schema_version: "1.1"\n');
+    };
+    const levelOf = (name: string) =>
+      checkEvals(root).find((r) => r.name === name)?.level;
+
+    it("ケースの無い Skill は warn、対象外の /check は数えない", () => {
+      expect(levelOf("skills/morning")).toBe("warn");
+      expect(levelOf("skills/check")).toBeUndefined();
+      expect(failsOf(checkEvals, root)).toEqual([]);
+    });
+
+    it("ケースのある Skill は pass", () => {
+      addCase("evals/skills/morning/daily");
+      expect(levelOf("evals/skills/morning")).toBe("pass");
+      expect(levelOf("skills/morning")).toBeUndefined();
+    });
+
+    it("skills/ に無い名前の検証は fail（改名・削除の追従漏れ）", () => {
+      addCase("evals/skills/mornings/daily");
+      expect(failsOf(checkEvals, root).map((r) => r.name)).toContain(
+        "evals/skills/mornings",
+      );
+    });
+
+    it("対象外の Skill に検証があると fail（対象外の一覧が古い）", () => {
+      addCase("evals/skills/check/run");
+      expect(failsOf(checkEvals, root).map((r) => r.name)).toContain(
+        "evals/skills/check",
+      );
+    });
+
+    it("フォルダだけでケースが無ければ warn", () => {
+      mkdirSync(join(root, "evals", "skills", "morning", "daily"), {
+        recursive: true,
+      });
+      expect(levelOf("evals/skills/morning")).toBe("warn");
+    });
   });
 
   describe("シェルスクリプト", () => {
