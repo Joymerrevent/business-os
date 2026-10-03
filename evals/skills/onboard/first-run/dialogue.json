@@ -51,17 +51,20 @@
     {
       "question": 14,
       "name": "実装リポジトリ",
-      "answer": "事業 A は macOS で ~/workspace/biz-a-app、Windows では使いません。事業 B は無しです。"
+      "answer": "事業 A は macOS で ~/workspace/biz-a-app、Windows では使いません。事業 B は無しです。",
+      "perBusiness": true
     },
     {
       "question": 15,
       "name": "追いかける数字",
-      "answer": "挙げてもらった候補の最初の 2 個にします。"
+      "answer": "挙げてもらった候補の最初の 2 個にします。",
+      "perBusiness": true
     },
     {
       "question": 16,
       "name": "リスク",
-      "answer": "挙げてもらった候補の最初の 1 個を残します。"
+      "answer": "挙げてもらった候補の最初の 1 個を残します。",
+      "perBusiness": true
     },
     {
       "question": 17,
