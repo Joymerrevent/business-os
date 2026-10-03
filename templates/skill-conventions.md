@@ -95,6 +95,8 @@ business-os の Skill（`/onboard` など 10 個）は、実行の最初にこ�
 - 利用者が「まだ決めていない」と答えたら、その文言をそのまま記録し、先へ進む
 - 質問は本文脈（Skill を呼んだ会話）で行う。サブエージェントの中からは質問できない
 - Claude Code や business-os の hook が出す権限の確認は、Skill の質問ではないので表に無い
+- 利用者に見せる文では、company の `CLAUDE.md` を「CC への指示書（`CLAUDE.md`）」と書く。
+  古い版で導入した company の `CLAUDE.md` に「地図」とあっても、利用者には「地図」と呼ばない
 
 ## 作業者への委譲
 

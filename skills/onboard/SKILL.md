@@ -1,6 +1,6 @@
 ---
 name: onboard
-description: 会社と事業の情報をインタビューで聞き取り、company リポジトリに地図（CLAUDE.md）・憲章・台帳・安全設定を書き出す。初回の導入、事業の追加・撤退、business-os の更新後の移行（--migrate）で使う。
+description: 会社と事業の情報をインタビューで聞き取り、company リポジトリに CC への指示書（CLAUDE.md）・憲章・台帳・安全設定を書き出す。初回の導入、事業の追加・撤退、business-os の更新後の移行（--migrate）で使う。
 disable-model-invocation: true
 ---
 
@@ -63,6 +63,10 @@ disable-model-invocation: true
 ### 3. 書き出す前の確認
 
 書き出すファイルの一覧と、各ファイルの要点を示し、質問 21 を聞く。「直す」なら、直す点を聞いて案を作り直し、もう一度示す。
+
+- 一覧は「ファイル」と「要点」の 2 列の表にし、1 行に 1 ファイルを書く。複数のファイルを 1 行にまとめない
+  - フォルダごとコピーするもの（Obsidian を使う場合の `docs/.obsidian/`・`docs/dashboards/`・`docs/_templates/`）は、1 行に 1 フォルダを書く
+- 要点は、そのファイルが何のためのものかを平易に書く。`CLAUDE.md` は「CC への指示書」と書く
 
 ### 4. 書き出し
 
@@ -189,7 +193,7 @@ macOS では、利用者が許せば、その agent のソケット 1 つだけ�
 ## 完了条件
 
 - `.business-os.json` が `state: active` で、`pluginVersion` が business-os のバージョンと一致している
-- 地図・憲章・台帳・現況・安全設定が書き出され、`{{` が残っていない（`docs/_templates/` の Obsidian の置き換え記号は除く）
+- CC への指示書・憲章・台帳・現況・安全設定が書き出され、`{{` が残っていない（`docs/_templates/` の Obsidian の置き換え記号は除く）
 - Obsidian を使わない場合、Obsidian 関連のファイルが 1 つも無い
 - 質問 20 で「許す」と答えた場合、`.claude/settings.local.json` の `sandbox.network.allowUnixSockets` に見つけたソケットのパスがあり、
   それ以外の sandbox の値を足していない。許さなかった場合、`.claude/settings.local.json` に手を付けていない

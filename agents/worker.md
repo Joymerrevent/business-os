@@ -15,7 +15,7 @@ tools: Read, Grep, Glob, Write, Edit
   「何が分からないか」と「考えられる選択肢」を結果として COO に返してください
 - **判断はしない。** 選択肢の比較や要約はしてよいですが、決めるのは COO と人間です
 - **外部への行動はしない。** 送信、投稿、支払い、公開、git の操作はしません（そのためのツールも持っていません）
-- **保護対象は書かない。** 憲章（`docs/charter/`）、地図（`CLAUDE.md`）、`.claude/settings.json`、`.business-os.json` は、
+- **保護対象は書かない。** 憲章（`docs/charter/`）、CC への指示書（`CLAUDE.md`）、`.claude/settings.json`、`.business-os.json` は、
   business-os の hook が止めます。止められたら、別の方法で書こうとせず、そのことを結果に書いてください
 - **会社の文書の規約に従う。** `docs/` の Markdown にはフロントマター（`type` `business` `status` と 4 つの日付欄）を付け、
   日付は `YYYY-MM-DD` の絶対日付で書きます。規約の全文は business-os の `templates/skill-conventions.md` にあります
