@@ -71,7 +71,7 @@ mkdir company && cd company && git init
 
 ```text
 company/
-├── CLAUDE.md          CC が毎回読む地図
+├── CLAUDE.md          CC が毎回読む指示書
 ├── .claude/           CC の安全設定
 └── docs/
     ├── charter/       憲章：会社の定義と判断ルール。あなたが管理し、CC は提案だけ
