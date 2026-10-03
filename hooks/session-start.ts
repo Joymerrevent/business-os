@@ -80,7 +80,7 @@ const checkSettings = (company: Company): string[] => {
   return missing.length === 0
     ? []
     : [
-        `厳格モード：防衛設定（.claude/settings.json）が欠けているため、憲章などの保護対象への書き込みを全て止めています。防衛設定を復旧してください（${missing.join("、")}）`,
+        `厳格モード：防衛設定（.claude/settings.json と .claude/settings.local.json）に足りない規則か上書きがあるため、憲章などの保護対象への書き込みを全て止めています。防衛設定を復旧してください（${missing.join("、")}）`,
       ];
 };
 
