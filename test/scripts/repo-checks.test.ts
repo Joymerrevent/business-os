@@ -227,6 +227,56 @@ describe("壊した business-os の一時コピー", () => {
     );
   });
 
+  describe("質問の表", () => {
+    const detailOf = () =>
+      checkSkills(root).find(
+        (r) => r.level === "fail" && r.name === "skills/morning",
+      )?.detail ?? "";
+
+    it("質問の表が無いと fail", () => {
+      edit(
+        "skills/morning/SKILL.md",
+        "| 番号 | 見出し | 質問文 | 答えの形 | 選択肢 | 聞くとき |",
+        "- 今日の優先事項の順番",
+      );
+      expect(detailOf()).toContain("質問の表");
+    });
+
+    it("番号が 1 からの連番でないと fail", () => {
+      edit(
+        "skills/morning/SKILL.md",
+        "| 2 | 優先事項の変更 |",
+        "| 3 | 優先事項の変更 |",
+      );
+      expect(detailOf()).toContain("連番でない");
+    });
+
+    it("見出しが 12 文字を超えると fail", () => {
+      edit(
+        "skills/morning/SKILL.md",
+        "| 1 | 優先事項の順番 |",
+        "| 1 | 今日の優先事項の順番を確かめる |",
+      );
+      expect(detailOf()).toContain("12 文字を超える");
+    });
+
+    it("答えの形が決まった形でない・選択肢の質問に選択肢が無いと fail", () => {
+      edit(
+        "skills/morning/SKILL.md",
+        "| 選択肢（単一） | この順でよい / 変える |",
+        "| 選択肢（単一） | — |",
+      );
+      edit(
+        "skills/morning/SKILL.md",
+        "| 自由記述 | — | 質問 1 で",
+        "| 記述 | — | 質問 1 で",
+      );
+      const detail = detailOf();
+      expect(detail).toContain("選択肢が無い");
+      expect(detail).toContain("決まった形でない");
+    });
+  });
+
   it("11 個目の Skill を足すと fail", () => {
     mkdirSync(join(root, "skills", "extra"));
     expect(failsOf(checkSkills, root).length).toBeGreaterThan(0);

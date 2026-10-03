@@ -1,6 +1,7 @@
-// 進行役の判定（evals/lib/dialogue/steps.ts）のテスト。応答の例は、実際の /onboard の応答で誤判定した形を写したもの。
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+// 進行役の判定（evals/lib/dialogue/steps.ts）と台本（evals/skills/**/dialogue.json）のテスト。
+// 質問は SKILL.md の質問の表の番号で見分ける（ADR 20261003-08）。
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   changedFiles,
@@ -11,175 +12,126 @@ import {
 } from "../../evals/lib/dialogue/steps.ts";
 import { repoRoot } from "../helpers.ts";
 
-const steps = (
-  JSON.parse(
-    readFileSync(
-      join(
-        repoRoot,
-        "evals",
-        "skills",
-        "onboard",
-        "first-run",
-        "dialogue.json",
-      ),
-      "utf8",
-    ),
-  ) as { steps: Step[] }
-).steps;
-const indexOf = (name: string) => steps.findIndex((s) => s.name === name);
-const judge = (position: number, text: string) =>
-  nextStep(steps, position, text);
+const steps: Step[] = [
+  { question: 5, name: "会社の呼び名", answer: "a" },
+  { question: 9, name: "事業の一覧", answer: "b" },
+  { question: 10, name: "事業 ID", answer: "c", optional: true },
+  { question: 11, name: "任せてよい範囲", answer: "d" },
+  { question: 15, name: "追いかける数字", answer: "e" },
+  { question: 20, name: "書き出しの確認", answer: "f" },
+];
 
-describe("questionText と nextStep", () => {
-  it("質問の前の前置き（git リポジトリ）で、先の項目（実装リポジトリ）に合わない", () => {
+describe("nextStep", () => {
+  it("前置きのあとの「質問 N/総数」で項目を見分ける", () => {
     const text = [
-      "導入を始めます。この作業ディレクトリは git リポジトリで、macOS なので sandbox も使えます。",
+      "導入を始めます。この作業フォルダは git リポジトリで、sandbox も使えます。",
       "",
-      "**質問 1:会社の呼び名を教えてください。**あわせて、一行説明、目指すこと、優先順位が決まっていれば教えてください。",
+      "質問 5/21：会社の呼び名",
+      "会社の呼び名を教えてください。",
     ].join("\n");
-    expect(judge(-1, text)).toBe(0);
+    expect(nextStep(steps, -1, text)).toBe(0);
   });
 
-  it("質問の中身が箇条書きの行にあっても項目に合う", () => {
-    const text = [
-      "**質問 1：会社について教えてください。**",
-      "- 会社の呼び名",
-      "- 一行説明",
-    ].join("\n");
-    expect(judge(-1, text)).toBe(0);
+  it("全角の ／ でも見分ける", () => {
+    expect(nextStep(steps, -1, "質問 5／21：会社の呼び名")).toBe(0);
   });
 
-  it("事業 ID の軽い確認と次の質問が同じターンでも、次の必須の項目に進む", () => {
-    const text = [
-      "事業 ID は `business-a` と `business-b` で進めます。変えたい場合はお知らせください。",
-      "",
-      "**質問 3：任せる範囲と承認が要る範囲**",
-      "1. CC に任せてよい作業はどこまでですか。",
-    ].join("\n");
-    expect(judge(indexOf("事業の一覧"), text)).toBe(
-      indexOf("任せてよい範囲と承認が要る範囲"),
-    );
+  it("任意の項目は飛ばしてよい", () => {
+    expect(nextStep(steps, 1, "質問 11/21：任せてよい範囲")).toBe(3);
   });
 
-  it("事業 ID の作り方の説明（英小文字・数字・ハイフン）を、追いかける数字の質問と取り違えない", () => {
-    const text = [
-      "**質問 2：運営している事業の一覧を教えてください。**",
-      "事業 ID は、名前から私が英小文字・数字・ハイフンで作ります（例：`business-a`）。そのあと確認します。",
-    ].join("\n");
-    expect(
-      judge(indexOf("会社の呼び名・一行説明・目指すこと・優先順位"), text),
-    ).toBe(indexOf("事業の一覧"));
+  it("同じ番号はくり返し（事業ごとに聞く場合）とみなす", () => {
+    expect(nextStep(steps, 4, "質問 15/21：追いかける数字（事業 B）")).toBe(4);
   });
 
-  it("「〜ですか。」で終わる書き出しの確認を、書き出す前の確認と判定する", () => {
-    const text = [
-      "全社のリスク（支払いの見落とし）も書きません。入れたい場合は言ってください。",
-      "",
-      "この内容で書き出してよいですか。",
-    ].join("\n");
-    expect(judge(indexOf("Obsidian を使うか"), text)).toBe(
-      indexOf("書き出す前の確認"),
-    );
-  });
-
-  it("事業 ID だけを確かめるターンは、任意の項目（事業 ID の確認）と判定する", () => {
-    const text = [
-      "事業 ID の案です。",
-      "",
-      "- 事業 A「受託開発」→ `contract-dev`",
-      "",
-      "この ID でよければ「OK」と答えてください。",
-    ].join("\n");
-    expect(judge(indexOf("事業の一覧"), text)).toBe(indexOf("事業 ID の確認"));
-  });
-
-  it("事業ごとに同じ項目をくり返し聞くのは、今の項目のくり返しとみなす", () => {
-    const position = indexOf("追いかける数字");
-    expect(judge(position, "事業 B で追いかける数字を選んでください。")).toBe(
-      position,
-    );
-  });
-
-  it("1 ターンで 2 つの必須の項目を聞くと不合格", () => {
-    const text = "期限や義務と、各事業の実装リポジトリの場所を教えてください。";
-    expect(() =>
-      judge(indexOf("任せてよい範囲と承認が要る範囲"), text),
-    ).toThrow(ScriptFailure);
-  });
-
-  it("項目を飛ばすと不合格", () => {
-    expect(() =>
-      judge(
-        indexOf("会社の呼び名・一行説明・目指すこと・優先順位"),
-        "リスクを選んでください。",
-      ),
-    ).toThrow(ScriptFailure);
-  });
-});
-
-describe("ほかの Skill の台本", () => {
-  const load = (skill: string, name: string) =>
-    (
-      JSON.parse(
-        readFileSync(
-          join(repoRoot, "evals", "skills", skill, name, "dialogue.json"),
-          "utf8",
-        ),
-      ) as { steps: Step[] }
-    ).steps;
-
-  it("/adr：補足の文の「外部に影響が出る行動」を、影響の質問と取り違えない", () => {
-    const adr = load("adr", "record");
-    const text = [
-      "記録のテーマとして、何を決めましたか。決めた内容を教えてください。",
-      "",
-      "補足です。",
-      "- 外部に影響が出る行動（送信・投稿・支払い・公開など）にあたる判断なら、提案も要ります。",
-      "- 承認の途中のまま 1 日以上たった提案があります。あとで `/approve` で完了させてください。",
-    ].join("\n");
-    expect(nextStep(adr, -1, text)).toBe(0);
-  });
-
-  it("/adr：同じ文の後ろの予告（背景は、このあと聞きます）を、複数の項目の質問と取り違えない", () => {
-    const adr = load("adr", "record");
+  it("「（質問 N の確認）」だけの応答は、今の項目の聞き返しとみなす", () => {
     const text =
-      "起票の前に、何を決めたかを教えてください。主題を一言でも構いません。背景、検討した他の選択肢と捨てた理由、影響は、このあと 1 つずつ聞きます。";
-    expect(nextStep(adr, -1, text)).toBe(0);
+      "（質問 9 の確認）「教材の販売」は、事業 B の一言の説明でよいですか。";
+    expect(nextStep(steps, 1, text)).toBe(1);
   });
 
-  it("/validate：どの項目にも合わない聞き返しは、今の項目のくり返しとみなす", () => {
-    const validate = load("validate", "decline");
-    const position = validate.findIndex((s) => s.name === "仮説");
+  it("補足や予告に先の項目の語が出ても、番号が 1 つなら 1 つの質問とみなす", () => {
     const text = [
-      "「一部」が曖昧なので、数字で言い直せますか。",
-      "- 教材の購入者のうち何 % が、講座に申し込むと考えているか",
+      "質問 9/21：事業の一覧",
+      "事業の名前と、一言の説明を教えてください。",
+      "事業 ID は、このあと名前から英小文字・数字・ハイフンで作ります。",
     ].join("\n");
-    expect(nextStep(validate, position, text)).toBe(position);
+    expect(nextStep(steps, 0, text)).toBe(1);
   });
 
-  it("/validate：リスクという語の無い「risks.md に足してよいですか」を、リスク台帳の質問と判定する", () => {
-    const validate = load("validate", "decline");
-    const position = validate.findIndex(
-      (s) => s.name === "既存の事業から削る時間",
+  it("番号が無い応答は不合格（質問の付け方が守られていない）", () => {
+    expect(() => nextStep(steps, 0, "事業の名前を教えてください。")).toThrow(
+      ScriptFailure,
     );
-    const text = [
-      "次は、リスク台帳に照らした確認です。",
-      "",
-      "この 4 件を `docs/operations/risks.md` に足してよいですか。",
-    ].join("\n");
-    expect(nextStep(validate, position, text)).toBe(position + 1);
+  });
+
+  it("1 ターンで 2 つの番号を聞くと不合格", () => {
+    const text = "質問 9/21：事業の一覧\n…\n質問 11/21：任せてよい範囲\n…";
+    expect(() => nextStep(steps, 0, text)).toThrow(/複数の質問/);
+  });
+
+  it("必須の項目を飛ばすと不合格", () => {
+    expect(() => nextStep(steps, 0, "質問 11/21：任せてよい範囲")).toThrow(
+      /飛ばしています/,
+    );
+  });
+
+  it("台本に無い番号、前に戻った番号は不合格", () => {
+    expect(() => nextStep(steps, 0, "質問 3/21：git リポジトリ")).toThrow(
+      /台本に無い/,
+    );
+    expect(() => nextStep(steps, 3, "質問 9/21：事業の一覧")).toThrow(
+      /台本に無い/,
+    );
   });
 });
 
-describe("globToRegExp", () => {
-  it("* は / を含まない任意の文字列に合い、. はそのままの文字に合う", () => {
-    const pattern = globToRegExp(".claude/hook-log-*.jsonl");
-    expect(pattern.test(".claude/hook-log-202610.jsonl")).toBe(true);
-    expect(pattern.test(".claude/settings.json")).toBe(false);
-    expect(globToRegExp(".business-os.json").test("xbusiness-osxjson")).toBe(
-      false,
-    );
+/** SKILL.md の質問の表の番号と見出し */
+const questionHeaders = (skill: string): Map<number, string> => {
+  const text = readFileSync(
+    join(repoRoot, "skills", skill, "SKILL.md"),
+    "utf8",
+  );
+  const section = text.slice(text.indexOf("\n## 人に何を聞くか\n"));
+  const rows = section
+    .split("\n")
+    .filter((line) => /^\| \d+ \|/.test(line))
+    .map((line) => line.split("|").map((cell) => cell.trim()));
+  return new Map(rows.map((cells) => [Number(cells[1]), cells[2] ?? ""]));
+};
+
+const findScripts = (dir: string): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return findScripts(path);
+    return entry.name === "dialogue.json" ? [path] : [];
   });
+
+describe("台本と SKILL.md の質問の表", () => {
+  const skillsDir = join(repoRoot, "evals", "skills");
+  const scripts = findScripts(skillsDir);
+
+  it("台本がある", () => {
+    expect(scripts.length).toBeGreaterThan(0);
+  });
+
+  it.each(scripts.map((path) => [relative(repoRoot, path), path]))(
+    "%s の各項目の番号と名前が、SKILL.md の質問の表の番号と見出しに一致する",
+    (_, path) => {
+      const skill = relative(skillsDir, path).split(sep)[0] ?? "";
+      const headers = questionHeaders(skill);
+      const script = JSON.parse(readFileSync(path, "utf8")) as {
+        steps: Step[];
+      };
+      for (const step of script.steps) {
+        expect(headers.get(step.question), `質問 ${step.question}`).toBe(
+          step.name,
+        );
+      }
+      const numbers = script.steps.map((step) => step.question);
+      expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
+    },
+  );
 });
 
 describe("changedFiles", () => {
@@ -207,6 +159,17 @@ describe("changedFiles", () => {
     after.set(".claude/hook-log-202610.jsonl", "ログ");
     expect(changedFiles(before, after, [".claude/hook-log-*.jsonl"])).toEqual(
       [],
+    );
+  });
+});
+
+describe("globToRegExp", () => {
+  it("* は / を含まない任意の文字列に合い、. はそのままの文字に合う", () => {
+    const pattern = globToRegExp(".claude/hook-log-*.jsonl");
+    expect(pattern.test(".claude/hook-log-202610.jsonl")).toBe(true);
+    expect(pattern.test(".claude/settings.json")).toBe(false);
+    expect(globToRegExp(".business-os.json").test("xbusiness-osxjson")).toBe(
+      false,
     );
   });
 });
