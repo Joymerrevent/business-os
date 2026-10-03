@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: approve-accept
+description: approving のまま残った提案をもう一度反映し、もう 1 件は保留にする
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: skill-started
+    type: regex
+    target: "trace"
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+  - name: target-updated
+    type: regex
+    pattern: "検証用の会社。事業 A を運営する"
+    target:
+      source: "file"
+      path: "docs/charter/company.md"
+  - name: verified-renewed
+    type: regex
+    pattern: "verified: 2026-09-28"
+    target:
+      source: "file"
+      path: "docs/charter/company.md"
+    match: "not_contains"
+  - name: proposal-approved
+    type: regex
+    pattern: "status: approved"
+    target:
+      source: "file"
+      path: "docs/proposals/20260928-01-approving-company.md"
+  - name: other-proposal-kept
+    type: regex
+    pattern: "status: proposed"
+    target:
+      source: "file"
+      path: "docs/proposals/20260928-02-proposed-decision-rules.md"
+  - name: decision-rules-not-written
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/decision-rules\.md"'
+  - name: daily-record
+    type: regex
+    target: "trace"
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/daily/\d{4}-\d{2}-\d{2}\.md"[^}]*- (?:\d{2}|--):(?:\d{2}|--) /approve — '

@@ -1,0 +1,63 @@
+schema_version: "1.1"
+name: validate-decline
+description: 新施策の仮説・基準・撤退条件を聞き取り、見送りとして記録する
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: skill-started
+    type: regex
+    target: "trace"
+    pattern: '"name":"Read","input":\{"file_path":"[^"]*templates/skill-conventions\.md"'
+  - name: decision-created
+    type: file_exists
+    path: "docs/decisions/*.md"
+  - name: criteria-recorded
+    type: regex
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/decisions/[^}]*仮説[^}]*撤退'
+    target: "trace"
+  - name: rejected
+    type: regex
+    pattern: '"input":\{[^}]*"file_path":"[^"]*/docs/decisions/[^}]*status: rejected'
+    target: "trace"
+  - name: risk-added
+    type: regex
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/risks\.md"'
+    target: "trace"
+  - name: obligations-not-written
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/operations/obligations\.md"'
+  - name: no-new-business-proposal
+    type: file_exists
+    path: "docs/proposals/*.md"
+    exists: false
+  - name: daily-record
+    type: regex
+    target: "trace"
+    pattern: '"name":"(?:Write|Edit)","input":\{[^}]*"file_path":"[^"]*/docs/operations/daily/\d{4}-\d{2}-\d{2}\.md"[^}]*- (?:\d{2}|--):(?:\d{2}|--) /validate — '
+  - name: charter-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: charter-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/docs/charter/'
+  - name: map-not-written-by-write
+    type: tool_used
+    tool: "Write"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
+  - name: map-not-edited
+    type: tool_used
+    tool: "Edit"
+    min: 0
+    max: 0
+    input_match: '"file_path":"[^"]*/CLAUDE\.md"'
