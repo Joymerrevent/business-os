@@ -94,4 +94,4 @@ supersedes: n/a       # 置き換える ADR の id（あれば）
 | 20261003-03 | eval の scaffold に限り、TypeScript を呼ぶ 1 行の bash を許す | accepted |
 | 20261003-04 | 共通の前提データを直下の fixtures/ に置き、evals/ を共通の道具と Skill ごとのテストに分ける | accepted |
 | 20261003-05 | GitHub の pre-release は版の接尾辞があるときだけ付ける | accepted |
-| 20261003-06 | 新しい ADR は MADR 形式で書き、既存の ADR は書き直さない | proposed |
+| 20261003-06 | 新しい ADR は MADR 形式で書き、既存の ADR は書き直さない | accepted |
