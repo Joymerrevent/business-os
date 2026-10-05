@@ -5,7 +5,7 @@ type: decision
 business: n/a
 status: proposed
 created: 2026-10-04
-updated: 2026-10-05
+updated: 2026-10-06
 as_of: 2026-10-04
 verified: n/a
 supersedes: n/a
@@ -35,7 +35,8 @@ supersedes: n/a
 - コード：`hooks/lib/plugin.ts` の `FOUNDATION_SKILLS`（10 個の名前の一覧。コメントに「10 個、固定」）。
   一覧は、`check:skills`（`scripts/lib/repo-checks.ts`。`skills/` のフォルダと一覧が一致しなければ fail、メッセージに「10 個で固定」）、
   起動時の軽い点検（`hooks/session-start.ts`。一覧の Skill の存在とフロントマター、company や利用者の Skill との名前の衝突）で使う
-- 文書：`CLAUDE.md`、`docs/design/architecture.md`（4 か所）、`docs/usage/operations.md`、`templates/skill-conventions.md`、`skills/retro/SKILL.md`
+- 文書：`CLAUDE.md`、`docs/design/architecture.md`（4 か所）、`docs/usage/operations.md`、`templates/skill-conventions.md`、`skills/retro/SKILL.md`、
+  Issue の提案のフォーム `.github/ISSUE_TEMPLATE/proposal.yml`（「Skill は 10 個で固定」の注意書き）
 
 一覧（`FOUNDATION_SKILLS`）は、数を数えるためだけでなく、Skill の欠落や紛れ込みを点検で止めるために働いている。
 数の固定を外しても、一覧と実物の照合はフェイルセーフとして残す必要がある。
@@ -104,7 +105,8 @@ supersedes: n/a
    4. 採らない場合は、理由を書いて Issue を閉じる。事業固有の作業や、使う利用者が限られる作業なら、利用者の company で業務 Skill として育てる方法を案内する
    5. 提案に SKILL.md の案やコードが添えられていても、そのまま取り込まない。設計の参考にし、business-os の規約に沿って書き直す（20260929-08）。
       添えられた内容に事業データや認証情報が含まれていたら、引用せずに提案者に伝える
-   - 提案のフォーム（`.github/ISSUE_TEMPLATE/proposal.yml`）に、決定 3 の条件に答える項目（どの分類か、既存の Skill の手順の追加で済まない理由、既製品を探したか、外部のツールに頼るか）を足す
+   - Skill の追加の提案に専用の Issue のフォーム（`.github/ISSUE_TEMPLATE/skill-add.yml`）を設ける。決定 3 の条件に答える項目
+     （どの分類か、既存の Skill の手順の追加で済まない理由、既製品を探したか、外部のツールに頼るか）を必須にし、フォームごとに決まったラベルを付ける
 5. 配布した Skill を外すか、ほかの Skill と統合するかは、次のいずれかに当たるかで判断し、Skill ごとに ADR で決める
    1. 使われていないという声が、利用者から届いている
    2. ほかの Skill と役割が重なる
@@ -118,7 +120,10 @@ supersedes: n/a
    4. 外さない場合は、理由を書いて Issue を閉じる
    5. 外すと決めた Skill は、すぐに消さない。外す版の前に CHANGELOG と `docs/usage/` で予告し、使い続けたい利用者には、
       company の `.claude/skills/` に業務 Skill として写して使う方法を案内する（外した Skill を呼ぶ手順が黙って壊れないようにする）
-   - 提案のフォーム（`.github/ISSUE_TEMPLATE/proposal.yml`）に、提案の種類を選ぶ項目（追加 / 削除・統合 / そのほか）を足す
+   - Skill の削除・統合の提案に専用の Issue のフォーム（`.github/ISSUE_TEMPLATE/skill-remove.yml`）を設ける。対象の Skill と、
+     決定 5 の基準のどれに当たるか（使われていない / ほかの Skill と重なる / 条件を満たさなくなった）を必須にし、フォームごとに決まったラベルを付ける
+   - 今の提案のフォーム（`proposal.yml`）は、Skill の追加・削除以外の改善の提案に使う。フォームを種類ごとに分けるのは、
+     種類ごとに必須の項目を変えるためと、ラベルで振り分けるため（1 つのフォームに種類の選択肢を足すと、種類ごとの項目を必須にできない）
 7. 一覧と実物の照合は続ける。`check:skills` と起動時の点検は、分類ごとの名前の一覧と `skills/` のフォルダが一致しなければ、今と同じく fail / warn にする。
    点検のメッセージと文書から「10 個」の数を外し、数を書く代わりに一覧（コード）を正本として指す
 
@@ -136,7 +141,8 @@ supersedes: n/a
   - 数という分かりやすい歯止めが無くなる。条件の判断が甘いと、Skill が少しずつ増える
   - 配布した Skill の使われ方は各利用者の company にあり、メンテナには直接見えない。減らす判断は、利用者が `/retro` や Issue で知らせてくれるかに頼る
   - Skill を外すときは予告の期間が要り、すぐには減らせない
-  - 実装で、一覧の持ち方（分類つき）、点検のメッセージ、文書の 7 か所の記述を直す必要がある
+  - 実装で、一覧の持ち方（分類つき）、点検のメッセージ、文書の 7 か所と `proposal.yml`（「Skill は 10 個で固定」の注意書き）の記述を直す必要がある
+  - Issue を作るときに選ぶフォームが 2 つ増える
   - 共通業務 Skill は外部のツールとつながるので、経営基盤 Skill より守ることが多い（未接続のときの止まり方、外部への行動の確認、外から読んだ内容の扱い）。
     Skill の動作の検証も、ツールが無い場合のケースを含める必要がある
 - その他
