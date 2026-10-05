@@ -3,11 +3,11 @@ id: 20261004-02
 title: 配布する Skill の数を 10 個に固定せず、分類ごとの追加の条件と ADR で増減を決める。一覧と実物の照合は続ける
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-04
 updated: 2026-10-06
 as_of: 2026-10-04
-verified: n/a
+verified: 2026-10-06
 supersedes: n/a
 ---
 
