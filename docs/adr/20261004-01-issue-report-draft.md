@@ -5,7 +5,7 @@ type: decision
 business: n/a
 status: proposed
 created: 2026-10-04
-updated: 2026-10-04
+updated: 2026-10-06
 as_of: 2026-10-04
 verified: n/a
 supersedes: n/a
@@ -74,7 +74,8 @@ business-os の利用者が不具合や改善の提案を伝える経路は、�
 送信を人がブラウザで行うので、sandbox の通信先と `gh` の準備に依存しない。
 
 1. 報告の Skill `/report` を、サポート Skill として `skills/report/` に足す（20261004-02 の追加の条件に沿う）
-   1. 不具合の報告（`bug_report.yml`）か、改善の提案（`proposal.yml`）かを聞く
+   1. 報告の種類を聞き、種類に合った Issue のフォームを選ぶ：不具合の報告（`bug-report.yml`）、改善の提案（`improvement.yml`）、
+      Skill の追加の提案（`skill-add.yml`）、Skill の削除・統合の提案（`skill-remove.yml`）。フォームの分け方とファイル名は 20261004-02 に従う
    2. 起きたこと・期待した動き・再現の手順を利用者と一緒にまとめる。会社名・事業名・人名・金額は「事業 A」「CEO」のような置き換えで書く
    3. 共通のスクリプトに渡し、検査の結果と URL を示す
    4. 実行記録を日報に 1 行書く（`templates/skill-conventions.md`）
@@ -95,7 +96,7 @@ business-os の利用者が不具合や改善の提案を伝える経路は、�
    3. `docs/usage/` の「困ったとき」の不具合・提案の行を、`/report` の案内に改める
 5. 安全装置の不具合は非公開の経路に振り分ける。`/check` の「防衛の発火」が fail のときは、公開の Issue ではなく `SECURITY.md` の非公開の報告を案内する。
    `/check` の対処の表の該当の行も、`SECURITY.md` に合わせて直す。スクリプトは、防衛の発火の fail を含む下書きには Issue 作成の URL を作らず、非公開の報告の URL を示す
-6. Issue のフォーム（`bug_report.yml`）に、検証に要る項目を足す：設定が雛形と違うキー、`.claude/settings.local.json` の有無、対話モードか `claude -p` か。
+6. 不具合の報告のフォーム（`bug-report.yml`。今の `bug_report.yml` を 20261004-02 で改名したもの）に、検証に要る項目を足す：設定が雛形と違うキー、`.claude/settings.local.json` の有無、対話モードか `claude -p` か。
    項目の `id` はスクリプトが事前入力に使うので、スクリプトと合わせて決める
 7. 下書きのファイルの置き場は、company の追跡されない場所にする。置き場（雛形の `.gitignore` に 1 行足すか、OS の一時フォルダか）は、
    sandbox の中から書けるかと、既存の company の `.gitignore` に無い場合の扱いを確かめてから、実装の PR で決める
