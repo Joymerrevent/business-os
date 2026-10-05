@@ -6,7 +6,7 @@ business: n/a
 status: proposed
 created: 2026-10-04
 updated: 2026-10-06
-as_of: 2026-10-04
+as_of: 2026-10-06
 verified: n/a
 supersedes: n/a
 ---
@@ -31,7 +31,7 @@ business-os の利用者が不具合や改善の提案を伝える経路は、�
 
 メンテナからは、報告を手伝う Skill を business-os に同梱する案が出ている。検討の前提になる事実：
 
-- 配布する Skill の数は 20260929-07 で 10 個に固定されている。数の固定をやめ、business-os そのものを扱う「サポート Skill」の分類を設ける案を、20261004-02 で起票した
+- 配布する Skill の数は 20260929-07 で 10 個に固定されていた。20261004-02（accepted）が数の固定をやめ、business-os そのものを扱う「サポート Skill」の分類を設けた
 - 外部に影響が出る行動（送信・投稿・公開）は、実行の前に人に確認する（20260929-05、`templates/skill-conventions.md`）
 - business-os の Issues は公開で、事業データは各利用者の非公開の company リポにある（20260929-10）。
   company の作業場所で CC が報告の文面を組み立てると、事業データが公開の Issue に混ざる経路になる
@@ -39,10 +39,25 @@ business-os の利用者が不具合や改善の提案を伝える経路は、�
 - 雛形の sandbox は通信先を許可していない。#61 の検証では、`claude -p` の sandbox の中から `api.github.com` へ届かなかった。利用者が `gh` の認証を済ませているとも限らない
 - 雛形の sandbox は `~/.config/gh/**` の読み取りを止めている（`sandbox.filesystem.denyRead`、20260929-05）。sandbox の中の `gh` は認証情報を読めない。
   `gh` を sandbox の外で動かす（`sandbox.excludedCommands`）形は、20261003-11 で退けている
-- 雛形の `permissions.ask` には `mcp__*__create_*` があり、名前がこの型に合う MCP の道具は、呼ぶ前に Claude Code が人に確認する。
-  GitHub のコネクタ（MCP）の Issue を作る道具の名前がこの型に合うかは、確かめていない
 - GitHub は、Issue 作成の URL のクエリで、題・本文・テンプレートと、Issue フォームの各項目（項目の `id` で指定）を事前に入力できる。
   長すぎる URL は 414 で拒否される。`labels` などの指定は、指定する権限を持つ人にだけ効く
+
+2026-10-06 に、送信の方法と下書きの置き場について次を確かめた（「実行」は手元で動かした結果、「文書」は公式の文書）。
+
+- **Issue のフォームの事前入力**（実行。ログインしたブラウザで business-os の `bug_report.yml` を URL で開き、送信はしていない）：
+  題（`title`）、`textarea` の項目、`input` の項目は入力された。`dropdown` の項目は、選択肢の文字（`os=Linux`）でも番号（`os=3`）でも選ばれなかった。
+  `checkboxes` の項目は、business-os のフォームに無いので試していない
+- **URL の長さ**（実行。ログインしていない状態で、Issue 作成のページを GET で開いた）：項目の値が 6,500 文字までは受け付け（ログインページへの転送）、
+  7,000 文字で 500、8,500 文字以上で 414 になった。日本語は URL で 1 文字が 9 バイトになる。ログインした状態では Cookie のぶんだけ上限が下がりうる
+- **GitHub のコネクタ（MCP）**（文書）：公式の GitHub MCP サーバー（v1.14.0、2026-10-02）で Issue を作る道具は `issue_write`（`method` に `create`）で、
+  `mcp__*__create_*` に合わない。雛形の `permissions.ask` の今の規則では、Issue を作る前に確認が出ない。
+  claude.ai のコネクタの道具は `mcp__claude_ai_<サーバー>__<道具>` の名前になる
+- **ask の規則**（文書）：ask の規則は道具の名前の位置にワイルドカードを書ける（名前全体に合う必要がある）。auto モードでも確認が出る
+- **sandbox の範囲**（文書）：sandbox が囲むのはシェルのコマンドだけで、MCP サーバー・ファイルの道具・hook は sandbox の外で動く
+- **REST API での Issue の作成**（文書）：push の権限が無い利用者が付けたラベル・担当者・マイルストーンは、黙って捨てられる。
+  コネクタで作る Issue はフォームを通らないので、フォームのラベルも付かない
+- **下書きの置き場**（実行。雛形の設定の sandbox の中で書き込みを試した）：sandbox は既定で、作業場所の中と、利用者ごとの一時フォルダ（`$TMPDIR`。macOS では `/tmp/claude-<uid>`）に書ける。
+  一時フォルダは company の外なので、git に追跡されない
 - `SECURITY.md` は、hook が例外時に通してしまう（fail-open）問題を、公開の Issue ではなく非公開の報告（private vulnerability reporting）で受けると定めている。
   一方で `/check` の対処の表は、「防衛の発火」の fail を公開の Issues に報告するよう案内しており、`SECURITY.md` と食い違っている
 
@@ -94,19 +109,25 @@ business-os の利用者が不具合や改善の提案を伝える経路は、�
    3. Skill が書いた「起きたこと」「期待した動き」「再現の手順」と、`/check` の fail / warn の行を受け取る
    4. 下書き全体を検査する：`.leak-dict.json` の語、`check:leak` と同じ型（メールアドレス、通貨付きの金額、許可リストに無いドメイン）、ホームのパスに含まれる利用者名。
       1 件でも見つかれば、下書きのファイルを作らずに見つかった箇所を示して終わる（終了コードは 0 以外）。`.leak-dict.json` が無いか読めないときも、下書きを作らない
-   5. 検査を通ったら、送る中身（題・フォームの各項目・ラベル）をそのまま Markdown のファイルに書き出す。ファイルの中身の要約値（ハッシュ）も控える
+   5. 検査を通ったら、送る中身（題と本文）をそのまま Markdown のファイルに書き出す。ファイルの中身の要約値（ハッシュ）も控える
+      - 本文は、フォームから作った Issue と同じ形（項目ごとに `### <項目の見出し>` と値）にする。コネクタで送ってもフォームで送っても、メンテナが同じ形で読める
+      - 本文の先頭に、報告の種類（不具合・改善・Skill の追加・Skill の削除と統合）を書く。コネクタで送るとラベルが付かないので、メンテナが種類で振り分ける手がかりにする
    6. 送る直前に呼ばれたら、ファイルをもう一度検査する。人がファイルを手で直した場合も含めて、1 件でも見つかれば送らずに止める（終了コードは 0 以外）
 3. 送信は、人がファイルを確かめて承認してから行う
    1. `/report` は、スクリプトでファイルを検査して要約値を控えてから、下書きのファイルを開いて中身を確かめるよう人に頼み、
       「このファイルの中身で Issue を送ってよいか」を聞く（送る / 直してから送る / 送らない）。
-      承認は `/report` の質問で取る。Claude Code の権限の確認（`permissions.ask`）だけに頼らない（道具の名前が型に合わないと確認が出ないため）
+      承認は `/report` の質問で取る。Claude Code の権限の確認（`permissions.ask`）だけに頼らない（道具の名前が規則に合わないと確認が出ないため。2026-10-06 時点の雛形では実際に合わない）
    2. 「直してから送る」なら、人がファイルを直したあとに、手順 1 からやり直す
    3. 承認されたら、スクリプトでファイルをもう一度検査し、承認した時点から中身が変わっていないこと（要約値の一致）を確かめる。変わっていたら、送らずに手順 1 に戻る
-   4. GitHub のコネクタ（MCP）が接続されていれば、CC がコネクタの Issue を作る道具で、ファイルの中身をそのまま送る。送ったら Issue の URL を示す
-   5. コネクタが無ければ、フォームの項目を事前に入力した Issue 作成の URL を示し、「ブラウザで中身を確かめてから送信してください」と伝えて終える。
-      URL が長くなりすぎる部分（長いログ）は URL に入れず、下書きのファイルから人が貼る
+   4. 公式の GitHub MCP サーバーの `issue_write` が接続されていれば、CC が `method: create` で、ファイルの題と本文をそのまま送る。送ったら Issue の URL を示す
+      - 送る道具は、名前と引数の形を確かめた `issue_write` に限る。ほかの GitHub のコネクタ（claude.ai のコネクタなど）の道具は、名前と引数を確かめるまで使わず、手順 5 の URL に回す
+      - ラベルは指定しない（push の権限が無い利用者のラベルは黙って捨てられるため）。種類は本文の先頭で示す（決定 2.5）
+   5. `issue_write` が無ければ、フォームの項目を事前に入力した Issue 作成の URL を示し、「ブラウザで中身を確かめてから送信してください」と伝えて終える
+      - 事前に入力するのは、題と `textarea` と `input` の項目だけにする（`dropdown` は URL で入力できないため）
+      - URL は、符号化した後の長さを 4,000 バイトまでにする（ログインしていない状態で 6,500 文字まで受け付けた結果に、Cookie のぶんの余裕を見た値）。
+        収まらない項目は URL に入れず、下書きのファイルから人が貼る
    6. CC は `gh issue create` を使わない。sandbox の中の `gh` は認証情報を読めず、読めるように緩めると GitHub の認証情報を sandbox に晒すため
-   7. 雛形の `permissions.ask` に、GitHub のコネクタの Issue を作る道具を名前で足す（`mcp__*__create_*` に合わない名前のときの備え）。道具の名前は実装時に確かめる
+   7. 雛形の `permissions.ask` に `mcp__*__issue_write` を足す。`/report` の承認の質問に加えて、Claude Code が送る直前にもう一度確認を出す（auto モードでも出る）
 4. ほかの入口からは `/report` を案内する
    1. `/check`：「防衛の発火」以外の分類で、business-os の不具合と見られる fail があれば、`/report` を案内する
    2. `/retro`：手順 6 の「business-os への改善案」を報告したいと人が頼んだら、`/report` を案内する
@@ -115,8 +136,11 @@ business-os の利用者が不具合や改善の提案を伝える経路は、�
    `/check` の対処の表の該当の行も、`SECURITY.md` に合わせて直す。スクリプトは、防衛の発火の fail を含む報告では下書きを作らず、`/report` も送らない。非公開の報告の URL を示す
 6. 不具合の報告のフォーム（`bug-report.yml`。今の `bug_report.yml` を 20261004-02 で改名したもの）に、検証に要る項目を足す：設定が雛形と違うキー、`.claude/settings.local.json` の有無、対話モードか `claude -p` か。
    項目の `id` はスクリプトが事前入力に使うので、スクリプトと合わせて決める
-7. 下書きのファイルの置き場は、company の追跡されない場所にする。置き場（雛形の `.gitignore` に 1 行足すか、OS の一時フォルダか）は、
-   sandbox の中から書けるかと、既存の company の `.gitignore` に無い場合の扱いを確かめてから、実装の PR で決める
+   - スクリプトが事前に入力する項目は、`input` か `textarea` にする。今の `os`（`dropdown`）は `input` に改め、書き方の例を説明に示す
+7. 下書きのファイルは、sandbox の中の利用者ごとの一時フォルダ（`$TMPDIR`）に、報告ごとに重ならない名前（日時と乱数）で書く
+   - company の外なので git に追跡されず、company の `.gitignore` に頼らない（既存の company の `.gitignore` を直す必要も無い）
+   - CC と人には、ファイルの絶対パスで示す（sandbox の外のシェルでは `$TMPDIR` が別の場所を指すため、変数で示さない）
+   - 送ったあと、または送らないと決めたあとに、ファイルを消す
 
 ## 影響
 
@@ -135,9 +159,10 @@ business-os の利用者が不具合や改善の提案を伝える経路は、�
   - `.leak-dict.json` に無い固有名詞（`/onboard` の後に増えた取引先など）は、検査で見つけられない。人の目に頼る部分が残る
   - スクリプトと Issue のフォームの項目の `id` を合わせて保つ必要がある（片方だけ変えると事前入力が黙って外れる）。合っているかを `check:*` で確かめる
 - その他
-  - Issue のフォームの項目のうち、どの種類（入力欄・選択肢など）が URL で事前に入力できるかは、GitHub の文書に書かれていない。実装時に実機で確かめる
-  - 下書きのファイルが company の追跡される場所に残ると、非公開とはいえ company の履歴に報告の文面が残る。置き場は決定 7 のとおり実装時に決める
-  - GitHub のコネクタの Issue を作る道具の名前と、`mcp__*__create_*` に合うかは、実装時に確かめる。合わなければ決定 3.7 の規則を雛形に足す
+  - 雛形の `permissions.ask` の `mcp__*__create_*` などの規則は、公式の GitHub MCP の `issue_write` のように動詞が名前の先頭に無い道具に合わない。
+    Issue 以外の外部への行動（メールの送信など）にも同じ穴がありうる。雛形の MCP の確認の規則全体の見直しは、この ADR では扱わず、別の Issue で扱う
+  - 確かめられていないもの：ログインした状態での URL の長さの上限（決定 3.5 は余裕を見た値にした）、`checkboxes` の項目の事前入力（スクリプトが入力する項目には使わない）、
+    claude.ai の GitHub のコネクタの道具の名前（確かめるまで使わない）、フォームから作った Issue に push の権限が無い利用者でもフォームのラベルが付くか
   - 利用者が GitHub のアカウントを持っていないと送信できない。GitHub のアカウントを持たない利用者の報告経路は、この ADR では扱わない
   - `/report` を足したら、Skill の動作の検証のケース（`evals/skills/report/`）を足す。検査に引っかかる下書きで送られないこと、承認のあとにファイルが変わったら送られないことを、ケースで確かめる
 
@@ -168,6 +193,10 @@ business-os の利用者が不具合や改善の提案を伝える経路は、�
 
 - GitHub 公式「Creating an issue」（Creating an issue from a URL query）<https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue>
 - GitHub 公式「Syntax for GitHub's form schema」（項目の `id` が URL の事前入力の識別子になる）<https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema>
+- GitHub 公式「REST API endpoints for issues」（Create an issue。push の権限が無い利用者のラベルは黙って捨てられる）<https://docs.github.com/en/rest/issues/issues#create-an-issue>
+- github/github-mcp-server の README（v1.14.0、`issue_write`）<https://github.com/github/github-mcp-server>
+- Claude Code 公式「Configure permissions」（ask の規則のワイルドカード、auto モード）<https://code.claude.com/docs/en/permissions>
+- Claude Code 公式「Configure the sandboxed Bash tool」（sandbox の範囲、一時フォルダ）<https://code.claude.com/docs/en/sandboxing>
 - Issue #61 と、その検証のコメント（報告に要る情報の実例）
 - 関連 ADR：20261004-02（配布する Skill の数の固定をやめ、サポート Skill を設ける。この ADR の前提）、20260929-01（シェル非依存）、
   20260929-04（事業非依存、`.leak-dict.json`）、20260929-05（ステージングと承認、外部への行動）、20260929-07（経営基盤 Skill）、
