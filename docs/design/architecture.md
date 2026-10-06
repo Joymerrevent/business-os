@@ -356,6 +356,7 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
   そのため `charter/` などを更新する `git pull` / `checkout` / `merge` は sandbox 内で失敗する。これらは人が実行する
 - MCP の道具の確認の本命は hook（§7.3）。`ask` の MCP パターンは、hook が時間切れで通ったときの予備として、動詞で網をかけたもの。
   公式の GitHub MCP と Gmail のコネクタの書き換える道具をすべて拾い、読む道具を拾わないことをテストで確かめる（`test/scripts/template-mcp-ask.test.ts`）。
+  MCP の規則は必須規則の照合（厳格モード）に含めず、`.claude/settings.json` に無い予備の規則は、起動時の点検と `/check` が warn で示す（含めると、足していない company で保護対象への書き込みが全て止まるため）。
   `/onboard` は接続済みの MCP の道具のうち外部に影響が出るものを具体名で足す（3 つ目の網）
 
 <!-- 根拠: 20261006-02 -->
