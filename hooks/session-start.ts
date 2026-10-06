@@ -98,7 +98,7 @@ const checkMcpAskRules = (company: Company): string[] => {
   return missing.length === 0
     ? []
     : [
-        `.claude/settings.json の permissions.ask に、外部のツール（MCP）の操作を確認に回す予備の規則が ${String(missing.length)} 個ありません。business-os の更新の案内（CHANGELOG）に沿って足してください（${missing.join(", ")}）`,
+        `.claude/settings.json の permissions.ask に、外部のツール（MCP）の操作を確認に回す予備の規則が ${String(missing.length)} 個ありません。/onboard --migrate で足す提案を書けます（/approve で反映。手で足してもかまいません）（${missing.join(", ")}）`,
       ];
 };
 

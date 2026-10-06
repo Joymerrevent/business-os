@@ -278,7 +278,7 @@ export const checkSettings = (
           category,
           "settings.json が外部のツール（MCP）の確認の予備の規則を含む",
           "warn",
-          `permissions.ask に無い規則：${mcpMissing.join(", ")}。business-os の更新の案内（CHANGELOG）に沿って足してください`,
+          `permissions.ask に無い規則：${mcpMissing.join(", ")}。/onboard --migrate で足す提案を書けます（/approve で反映。手で足してもかまいません）`,
         ),
   );
   const warnings = localWarnings(root);
