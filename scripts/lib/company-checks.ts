@@ -17,6 +17,7 @@ import { validate } from "../../hooks/lib/schema.ts";
 import {
   allowedSockets,
   localWarnings,
+  missingMcpAskRules,
   missingRules,
 } from "../../hooks/lib/settings.ts";
 
@@ -265,6 +266,21 @@ export const checkSettings = (
           missing.join("、"),
         ),
   ];
+  const mcpMissing = missingMcpAskRules(root);
+  results.push(
+    mcpMissing.length === 0
+      ? result(
+          category,
+          "settings.json が外部のツール（MCP）の確認の予備の規則を含む",
+          "pass",
+        )
+      : result(
+          category,
+          "settings.json が外部のツール（MCP）の確認の予備の規則を含む",
+          "warn",
+          `permissions.ask に無い規則：${mcpMissing.join(", ")}。business-os の更新の案内（CHANGELOG）に沿って足してください`,
+        ),
+  );
   const warnings = localWarnings(root);
   results.push(
     warnings.length === 0

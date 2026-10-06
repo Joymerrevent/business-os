@@ -166,6 +166,26 @@ describe("壊れた company", () => {
     expect(sockets?.detail).toBe("~/agent.sock");
   });
 
+  it("MCP の確認の予備の規則の欠落を warn にする（fail にしない）", () => {
+    const path = join(root, ".claude/settings.json");
+    const settings = JSON.parse(readFileSync(path, "utf8")) as {
+      permissions: { ask: string[] };
+    };
+    settings.permissions.ask = settings.permissions.ask.filter(
+      (rule) => rule !== "mcp__*__forward*",
+    );
+    writeFileSync(path, JSON.stringify(settings));
+    const results = runCompanyChecks(root, options);
+    expect(failsOf(results)).toEqual([]);
+    const warned = results.find(
+      (r) =>
+        r.name ===
+        "settings.json が外部のツール（MCP）の確認の予備の規則を含む",
+    );
+    expect(warned?.level).toBe("warn");
+    expect(warned?.detail).toContain("mcp__*__forward*");
+  });
+
   it("リンク切れを fail にする", () => {
     const path = join(root, "docs/charter/company.md");
     writeFileSync(path, `${readFileSync(path, "utf8")}\n[無い](nowhere.md)\n`);

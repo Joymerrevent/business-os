@@ -155,6 +155,28 @@ export const localWarnings = (root: string): string[] => {
   return warnings;
 };
 
+/**
+ * 雛形の MCP の ask の規則（hook が時間切れで通ったときの予備）のうち、.claude/settings.json に無いもの（warn に使う）。
+ * 必須規則（missingRules）には含めない。含めると、足していない company が厳格モードになり、保護対象への書き込みが全て止まるため。
+ * 読めないときは missingRules が欠落として扱うので、ここでは何も返さない
+ */
+export const missingMcpAskRules = (root: string): string[] => {
+  const path = join(root, ".claude", "settings.json");
+  let actual: Settings;
+  try {
+    actual = readJson(path);
+  } catch {
+    return [];
+  }
+  const template = readJson(
+    join(pluginRoot(), "templates", "settings.json.tmpl"),
+  );
+  const present = new Set(asStrings(actual.permissions?.ask));
+  return asStrings(template.permissions?.ask).filter(
+    (rule) => rule.startsWith("mcp__") && !present.has(rule),
+  );
+};
+
 /** .claude/settings.local.json で接続を許した Unix ソケットのパス（/check が示す） */
 export const allowedSockets = (root: string): string[] => {
   try {
