@@ -3,11 +3,11 @@ id: 20261006-01
 title: 雛形の env で Node にプロキシを使わせ、npm のキャッシュを sandbox の一時フォルダに置く。通信先と書き込み先の許可は雛形に足さない
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-06
 updated: 2026-10-06
 as_of: 2026-10-06
-verified: n/a
+verified: 2026-10-06
 supersedes: n/a
 ---
 
