@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-03
+updated: 2026-10-06
 as_of: n/a
 verified: n/a
 ---
@@ -332,7 +332,13 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
       "Edit(./docs/charter/**)", "Edit(./CLAUDE.md)",
       "Edit(./.claude/settings.json)", "Edit(./.claude/settings.local.json)", "Edit(./.business-os.json)",
       "Bash(rm -rf:*)",
-      "mcp__*__send_*", "mcp__*__post_*", "mcp__*__create_*", "mcp__*__pay_*"
+      "mcp__*__send_*", "mcp__*__post_*", "mcp__*__create_*", "mcp__*__pay_*",
+      "mcp__*__*write*", "mcp__*__issue_write", "mcp__*__delete*", "mcp__*__update*", "mcp__*__merge*",
+      "mcp__*__push*", "mcp__*__reply*", "mcp__*__forward*", "mcp__*__trash*", "mcp__*__untrash*",
+      "mcp__*__add_*", "mcp__*__assign*", "mcp__*__dismiss*", "mcp__*__fork*", "mcp__*__manage*",
+      "mcp__*__mark*", "mcp__*__unmark*", "mcp__*__request*", "mcp__*__star*", "mcp__*__unstar*",
+      "mcp__*__*trigger*", "mcp__*__label_*", "mcp__*__unlabel_*", "mcp__*__apply_*", "mcp__*__move*",
+      "mcp__*__copy*", "mcp__*__share*", "mcp__*__upload*", "mcp__*__respond*"
     ],
     "allow": [
       "Edit(./docs/operations/**)", "Edit(./docs/knowledge/**)",
@@ -348,7 +354,11 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
   `Write(...)` 規則は判定に使われない（Claude Code が起動時に警告を出す）
 - `allowUnsandboxedCommands: false` で、sandbox で失敗したコマンドを sandbox の外で再実行する逃げ道を塞ぐ。
   そのため `charter/` などを更新する `git pull` / `checkout` / `merge` は sandbox 内で失敗する。これらは人が実行する
-- `ask` の MCP パターンは動詞で網をかけたもの。`/onboard` が接続済み MCP を検出したら具体名に置き換える
+- MCP の道具の確認の本命は hook（§7.3）。`ask` の MCP パターンは、hook が時間切れで通ったときの予備として、動詞で網をかけたもの。
+  公式の GitHub MCP と Gmail のコネクタの書き換える道具をすべて拾い、読む道具を拾わないことをテストで確かめる（`test/scripts/template-mcp-ask.test.ts`）。
+  `/onboard` は接続済みの MCP の道具のうち外部に影響が出るものを具体名で足す（3 つ目の網）
+
+<!-- 根拠: 20261006-02 -->
 - `company`（非公開）への通常 `git push` は allow。force は deny（粗い網）と hook（本命）で止める
 - sandbox のキー名は実装初日に公式ドキュメントで確認する
 - `.claude/settings.local.json` は `.claude/settings.json` より優先され、sandbox の値を上書きできる。
@@ -387,6 +397,7 @@ hook は入力の `cwd` から上位へ辿り、`.business-os.json` のあるデ
 | Bash（拒否） | 引数を解析し、`git push` に force 系フラグ（`-f` / `--force` / `--force-with-lease` / `--force-if-includes`、位置不問）、`+` 付き refspec、`--no-verify` があるか | 該当は exit 2 |
 | Bash（確認） | `rm -r*`、`git reset --hard`、`git clean -f*`、`git branch -D` | 該当は ask |
 | Bash（共通） | `sh -c` / `bash -c` / `eval` の内側も同じ規則で解析する | — |
+| MCP の道具（状態によらない） | 道具の名前（`mcp__<サーバー>__<道具>` の最後の部分）の先頭が `get_` / `list_` / `search_` / `read_` か、読むだけと確かめた道具の一覧（`hooks/lib/mcp.ts`）に入っているか | どちらでもなければ ask。名前の末尾では判定しない |
 | 厳格モード | `state: active` かつ、`settings.json` の必須規則が欠けているか、`settings.local.json` が sandbox の必須の値を上書きしている・読めない場合 | 保護対象への Write / Edit を提案の有無に関わらず全拒否 |
 | hook 自身の例外 | 判定中に例外 | **exit 2（fail-closed）** |
 
@@ -397,7 +408,10 @@ hook は作業者（サブエージェント）のツール呼び出しにも、
 
 全判定を `company/.claude/hook-log-YYYYMM.jsonl` に 1 行ずつ記録する（月次でファイルを分ける。gitignore）。
 
-<!-- 根拠: 20260929-05, 20260930-01 -->
+hook の `matcher` は `Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell|mcp__.*`。hook が時間切れになると Claude Code は呼び出しを通すので、
+MCP の道具は `permissions.ask` の予備の規則（§7.2）でも止める。
+
+<!-- 根拠: 20260929-05, 20260930-01, 20261006-02 -->
 
 ### 7.4 提案ファイル
 
