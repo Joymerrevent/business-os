@@ -3,11 +3,11 @@ id: 20261006-02
 title: MCP の道具は、読むだけと分かるもの以外を hook が確認に回す。雛形の名前の型の規則は予備として広げて残す
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-06
 updated: 2026-10-06
 as_of: 2026-10-06
-verified: n/a
+verified: 2026-10-06
 supersedes: n/a
 ---
 
