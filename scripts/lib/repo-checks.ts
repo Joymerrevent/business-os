@@ -215,9 +215,13 @@ export const checkHooks = (root: string = pluginRoot()): CheckResult[] => {
     .map((group) => group.matcher ?? "")
     .join("|");
   const tools = matcher.split("|");
-  const missingTools = ["Write", "Edit", "Bash", "PowerShell"].filter(
-    (tool) => !tools.includes(tool),
-  );
+  const missingTools = [
+    "Write",
+    "Edit",
+    "Bash",
+    "PowerShell",
+    "mcp__.*",
+  ].filter((tool) => !tools.includes(tool));
   results.push(
     missingTools.length === 0
       ? result(category, "PreToolUse の対象ツール", "pass")

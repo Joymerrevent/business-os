@@ -291,6 +291,11 @@ describe("壊した business-os の一時コピー", () => {
     expect(failsOf(checkHooks, root).length).toBeGreaterThan(0);
   });
 
+  it("PreToolUse の matcher から MCP の道具の型を外すと fail", () => {
+    edit("hooks/hooks.json", "|mcp__.*", "");
+    expect(failsOf(checkHooks, root).length).toBeGreaterThan(0);
+  });
+
   it("README に無い変数を雛形に足すと fail", () => {
     edit(
       "templates/operations/risks.md",
