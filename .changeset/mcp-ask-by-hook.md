@@ -11,8 +11,10 @@
 **導入済みの company の方へ**：確認は business-os の更新だけで効きます。あわせて、確認の仕組みが動かなかったときの予備として、
 `.claude/settings.json` に規則を足してください。足していない間は、起動時の点検と `/check` が「予備の規則が無い」と知らせます（作業は止まりません）。
 
-CC は `.claude/settings.json` を書き換えられないので、あなたがエディタで `.claude/settings.json` を開き、`permissions.ask` の `"mcp__*__pay_*"` の行末にカンマ（`,`）を足し、
-その次の行に次の内容を足してください。足した後に `/check` で確かめてください。
+足し方は 2 つあります。どちらか一方で足りるので、足した後に `/check` で確かめてください。
+
+- `/onboard --migrate` を実行すると、CC が足す規則を提案に書きます。`/approve` で承認すると反映されます（反映の直前に権限確認が 1 回出ます）
+- 手で足す場合は、エディタで `.claude/settings.json` を開き、`permissions.ask` の `"mcp__*__pay_*"` の行末にカンマ（`,`）を足し、その次の行に次の内容を足します
 
 ```json
 "mcp__*__*write*", "mcp__*__issue_write", "mcp__*__delete*", "mcp__*__update*", "mcp__*__merge*",
