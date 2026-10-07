@@ -277,7 +277,7 @@ describe("壊した business-os の一時コピー", () => {
     });
   });
 
-  it("11 個目の Skill を足すと fail", () => {
+  it("配布する Skill の一覧に無い Skill を足すと fail", () => {
     mkdirSync(join(root, "skills", "extra"));
     expect(failsOf(checkSkills, root).length).toBeGreaterThan(0);
   });

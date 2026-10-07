@@ -5,7 +5,7 @@
 
 ## 何がどこにあるか
 
-- `skills/`          配布される経営基盤 Skill 10 個。増やさない（増やすなら ADR）
+- `skills/`          配布する Skill（経営基盤・共通業務・サポート）。一覧の正本は `hooks/lib/plugin.ts`。足す・外すは Skill ごとに ADR
 - `agents/`          作業者エージェント `worker` だけ。役割エージェントは同梱しない（ADR 20261002-01）
 - `hooks/`           SessionStart（軽い点検）と PreToolUse（書き込みガード）。TypeScript
 - `scripts/`         重い点検（`/check`）と `check:*` の共有実装、バージョン同期
