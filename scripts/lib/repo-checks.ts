@@ -10,6 +10,7 @@ import {
   pluginRoot,
 } from "../../hooks/lib/plugin.ts";
 import { validate } from "../../hooks/lib/schema.ts";
+import { dictionaryTerms, LEAK_PATTERNS } from "./leak-patterns.ts";
 import type { CheckResult, Level } from "./company-checks.ts";
 import { compareVersions, manifestVersion, packageVersion } from "./version.ts";
 
@@ -372,69 +373,13 @@ export const checkTemplates = (root: string = pluginRoot()): CheckResult[] => {
 
 // ---- 漏洩 ----
 
-const ALLOWED_EMAILS = new Set([
-  "noreply@anthropic.com",
-  "conduct@joymerrevent.com",
-]);
-const ALLOWED_HOSTS = [
-  "github.com",
-  "raw.githubusercontent.com",
-  "joymerrevent.com",
-  "claude.com",
-  "code.claude.com",
-  "docs.claude.com",
-  "anthropic.com",
-  "contributor-covenant.org",
-  "conventionalcommits.org",
-  "json.schemastore.org",
-  "json-schema.org",
-  "unpkg.com",
-  "editorconfig.org",
-  "localhost",
-];
-const hostAllowed = (host: string): boolean =>
-  ALLOWED_HOSTS.some(
-    (allowed) => host === allowed || host.endsWith(`.${allowed}`),
-  );
-
-type Pattern = {
-  name: string;
-  regex: RegExp;
-  ignore?: (match: string) => boolean;
-};
-const PATTERNS: Pattern[] = [
-  {
-    name: "メールアドレス",
-    regex: /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g,
-    ignore: (m) =>
-      ALLOWED_EMAILS.has(m.toLowerCase()) ||
-      m.endsWith("@users.noreply.github.com"),
-  },
-  {
-    name: "電話番号",
-    regex: /(?<![\d-])(?:\+81[- ]?|0)\d{1,4}-\d{1,4}-\d{3,4}(?![\d-])/g,
-  },
-  {
-    name: "法人格",
-    regex: /株式会社|有限会社|合同会社|一般社団法人|一般財団法人/g,
-  },
-  {
-    name: "通貨付きの金額",
-    regex: /[¥￥]\s?\d|\d[\d,.]*\s?円|\$\s?\d[\d,]{2,}/g,
-  },
-  {
-    name: "許可リストに無いドメイン",
-    regex: /https?:\/\/([A-Za-z0-9.-]+)/g,
-    ignore: (m) => hostAllowed(m.replace(/^https?:\/\//, "").toLowerCase()),
-  },
-];
-
 /** 検査の対象外（生成物・ロックファイル・この検査の定義そのもの） */
 const LEAK_SKIP = [
   /^pnpm-lock\.yaml$/,
   /^CHANGELOG\.md$/,
   /^\.changeset\//,
   /^scripts\/lib\/repo-checks\.ts$/,
+  /^scripts\/lib\/leak-patterns\.ts$/,
   /^test\//,
   /^fixtures\//,
   /^evals\/skills\/.+\/overlay\//,
@@ -501,14 +446,9 @@ export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
       ),
     );
   } else {
-    const dict = JSON.parse(readFileSync(resolve(dictPath), "utf8")) as {
-      terms?: unknown;
-    };
-    const terms = Array.isArray(dict.terms)
-      ? dict.terms.filter(
-          (t): t is string => typeof t === "string" && t.trim().length >= 2,
-        )
-      : [];
+    const terms = dictionaryTerms(
+      JSON.parse(readFileSync(resolve(dictPath), "utf8")) as unknown,
+    );
     const hits: string[] = [];
     for (const { file, text } of texts) {
       const lower = text.toLowerCase();
@@ -530,7 +470,7 @@ export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
   }
 
   // 3. 汎用のパターン（warn）
-  for (const pattern of PATTERNS) {
+  for (const pattern of LEAK_PATTERNS) {
     const found: string[] = [];
     for (const { file, text } of texts) {
       for (const match of text.matchAll(pattern.regex)) {
