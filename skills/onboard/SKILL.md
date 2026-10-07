@@ -93,6 +93,7 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
    - `.claude/settings.local.json` がすでにあれば、中身を読んでキーを足す。ほかの設定を消さない（既存のファイルの上書きなので、hook が確認を出す）
    - `.claude/settings.json` には書かない（パスは利用者ごとに違い、`.claude/settings.local.json` は `.gitignore` 済み）
 7. **最後に** `.claude/settings.json`
+   - `env` の `npm_config_cache` の値（`${TMPDIR}/npm-cache`）は、`${TMPDIR}` を展開せずにそのまま書く（npm が実行のたびに sandbox の一時フォルダへ展開するため）
    - `ask` にある MCP の規則（`mcp__*__send_*` など）は残したうえで、
      この会話で使える MCP ツールのうち送信・投稿・作成・支払いにあたるものを具体名で追加する
 

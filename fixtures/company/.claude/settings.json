@@ -1,6 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "model": "best",
+  "env": {
+    "NODE_USE_ENV_PROXY": "1",
+    "npm_config_cache": "${TMPDIR}/npm-cache",
+    "DO_NOT_TRACK": "1"
+  },
   "sandbox": {
     "enabled": true,
     "allowUnsandboxedCommands": false,
