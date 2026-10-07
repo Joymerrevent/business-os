@@ -1043,6 +1043,8 @@ REPO_CHECKS["shell"] = checkShell;
 /** eval の対象外にする Skill と、その理由（ADR 20261003-02、20261003-04） */
 const EVAL_EXCLUDED: Record<string, string> = {
   check: "Bash が要るため（判定のロジックは vitest で検査する）",
+  report:
+    "下書きのスクリプトを Bash で動かすため（事業データの検査と送る前の照合は vitest で検査する）",
 };
 
 /** フォルダの下に eval のケース（case.yaml か prompt.md を持つフォルダ）があるか */
