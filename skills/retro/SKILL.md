@@ -40,7 +40,12 @@ business-os と運用を、使われ方に合わせて直す提案を出す。�
 3. 集計を、元の日報の行と突き合わせてから使う（作業者の要約をそのまま信じない）
 4. 提案の候補を示し、質問 3 と質問 4 を聞く
 5. 選ばれたものを提案として書く
-   - Skill 化：`target` を `.claude/skills/<名前>/SKILL.md` にし、本文に SKILL.md の案を書く
+   - Skill 化：書く前に、既製の Skill を探す
+     - `npx skills find <作業を表す語>` で探し、見つかった Skill の名前・入れた人の数・中身の説明を提案に書く。
+       「見つからない」と出たら、通信の失敗を疑う（共通規約の「sandbox の中で起きる失敗」）
+     - 既製の Skill を使うかどうかは人間が決める。使うなら、人間が入力欄で `!` を付けて（または通常のターミナルで）
+       `gh skill preview` で中身を確かめ、`gh skill install` に `--pin <タグかコミットの SHA>` を付けて版を固定して入れる。CC は第三者の Skill を入れない
+     - 既製の Skill を使わないなら、`target` を `.claude/skills/<名前>/SKILL.md` にし、本文に SKILL.md の案を書く
    - 剪定：削除か、`disable-model-invocation: true` を付けた凍結か
    - CC への指示書・運用ルール：`target` を `CLAUDE.md` か `docs/charter/decision-rules.md` にする
 6. business-os そのもの（business-os）への改善案があれば、振り返りに「business-os への改善案」として書く。
