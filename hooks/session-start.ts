@@ -7,7 +7,11 @@ import { findCompanyRoot, readCompany, type Company } from "./lib/company.ts";
 import { parseFrontmatter } from "./lib/frontmatter.ts";
 import { FOUNDATION_SKILLS, pluginRoot, pluginVersion } from "./lib/plugin.ts";
 import { readProposals } from "./lib/proposals.ts";
-import { localWarnings, missingRules } from "./lib/settings.ts";
+import {
+  localWarnings,
+  missingMcpAskRules,
+  missingRules,
+} from "./lib/settings.ts";
 
 const REQUIRED_NODE_MAJOR = 24;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -87,6 +91,16 @@ const checkSettings = (company: Company): string[] => {
 /** 4b. 個人設定（.claude/settings.local.json）が sandbox を広く緩めていないか */
 const checkLocalSettings = (company: Company): string[] =>
   localWarnings(company.root);
+
+/** 4c. 雛形の MCP の確認の規則（予備）が .claude/settings.json にそろっているか */
+const checkMcpAskRules = (company: Company): string[] => {
+  const missing = missingMcpAskRules(company.root);
+  return missing.length === 0
+    ? []
+    : [
+        `.claude/settings.json の permissions.ask に、外部のツール（MCP）の操作を確認に回す予備の規則が ${String(missing.length)} 個ありません。/onboard --migrate で足す提案を書けます（/approve で反映。手で足してもかまいません）（${missing.join(", ")}）`,
+      ];
+};
 
 /** 5. /onboard の完了 */
 const checkState = (company: Company): string[] =>
@@ -180,6 +194,7 @@ const inspect = (): string[] | undefined => {
   const checks = [
     checkSettings,
     checkLocalSettings,
+    checkMcpAskRules,
     checkState,
     checkApproving,
     checkVersion,

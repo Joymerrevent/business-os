@@ -1,5 +1,5 @@
 {
-  "description": "business-os の軽い点検（SessionStart）と書き込みガード（PreToolUse）",
+  "description": "business-os の軽い点検（SessionStart）と、書き込みガード・MCP の道具の確認（PreToolUse）",
   "hooks": {
     "SessionStart": [
       {
@@ -13,7 +13,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell",
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell|mcp__.*",
         "hooks": [
           {
             "type": "command",

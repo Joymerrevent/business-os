@@ -374,6 +374,64 @@ describe("Bash の解析（確認）", () => {
   });
 });
 
+describe("MCP の道具", () => {
+  beforeEach(() => ({ root, cleanup } = makeCompany()));
+
+  const mcp = (tool: string) =>
+    decisionOf(runHook("pre-tool-use", toolInput(root, tool, {})));
+
+  it.each([
+    "mcp__github__issue_write",
+    "mcp__github__merge_pull_request",
+    "mcp__github__delete_repository",
+    "mcp__github__push_files",
+    "mcp__github__add_issue_comment",
+    "mcp__github__mark_all_notifications_read",
+    "mcp__claude_ai_Gmail__reply",
+    "mcp__claude_ai_Gmail__forward",
+    "mcp__claude_ai_Gmail__send_message",
+    "mcp__some_server__do_something",
+    "mcp__broken",
+    "mcp__server__",
+  ])("%s は ask（読むだけと分からない道具）", (tool) => {
+    expect(mcp(tool)).toBe("ask");
+  });
+
+  it.each([
+    "mcp__github__get_file_contents",
+    "mcp__github__list_issues",
+    "mcp__github__search_code",
+    "mcp__github__issue_read",
+    "mcp__github__pull_request_read",
+    "mcp__claude_ai_Gmail__search_threads",
+    "mcp__claude_ai_Gmail__get_thread",
+    "mcp__plugin_x_db__read_rows",
+  ])("%s は通す（読むだけと分かる道具）", (tool) => {
+    expect(mcp(tool)).toBe("allow");
+  });
+
+  it("確認の理由に道具の名前を示す", () => {
+    const result = runHook(
+      "pre-tool-use",
+      toolInput(root, "mcp__github__issue_write", {}),
+    );
+    expect(result.stdout).toContain("mcp__github__issue_write");
+  });
+});
+
+describe("MCP の道具（company ではないディレクトリ）", () => {
+  beforeEach(() => ({ root, cleanup } = makePlainDir()));
+
+  it("判定せず無言で通す", () => {
+    const result = runHook(
+      "pre-tool-use",
+      toolInput(root, "mcp__github__issue_write", {}),
+    );
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("");
+  });
+});
+
 describe("シェルで docs/ の文書を書き換える操作", () => {
   beforeEach(() => ({ root, cleanup } = makeCompany()));
 
