@@ -11,6 +11,7 @@ import {
 } from "../../hooks/lib/plugin.ts";
 import { validate } from "../../hooks/lib/schema.ts";
 import { dictionaryTerms, LEAK_PATTERNS } from "./leak-patterns.ts";
+import { REPORT_FORMS, REPORT_KINDS } from "./report-forms.ts";
 import type { CheckResult, Level } from "./company-checks.ts";
 import { compareVersions, manifestVersion, packageVersion } from "./version.ts";
 
@@ -1103,3 +1104,71 @@ export const checkEvals = (root: string = pluginRoot()): CheckResult[] => {
 };
 
 REPO_CHECKS["evals"] = checkEvals;
+
+// ---- Issue のフォーム ----
+
+type ParsedForm = {
+  name: string;
+  labels: string[];
+  fields: { type: string; id: string; label: string }[];
+};
+
+/** Issue のフォーム（決まった字下げで書いた YAML）から、名前・ラベル・項目を読む */
+export const parseIssueForm = (text: string): ParsedForm => {
+  const form: ParsedForm = { name: "", labels: [], fields: [] };
+  let current: { type: string; id: string; label: string } | undefined;
+  for (const line of text.split("\n")) {
+    const name = /^name:\s*(.+)$/.exec(line);
+    if (name) form.name = (name[1] ?? "").trim();
+    const labels = /^labels:\s*(\[.*\])\s*$/.exec(line);
+    if (labels) form.labels = JSON.parse(labels[1] ?? "[]") as string[];
+    const type = /^ {2}- type:\s*(\S+)/.exec(line);
+    if (type) {
+      current = { type: type[1] ?? "", id: "", label: "" };
+      form.fields.push(current);
+      continue;
+    }
+    const id = /^ {4}id:\s*(\S+)/.exec(line);
+    if (id && current) current.id = id[1] ?? "";
+    const label = /^ {6}label:\s*(.+)$/.exec(line);
+    if (label && current) current.label = (label[1] ?? "").trim();
+  }
+  form.fields = form.fields.filter((f) => f.type !== "markdown");
+  return form;
+};
+
+export const checkForms = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "Issue のフォーム";
+  return REPORT_KINDS.map((kind) => {
+    const name = `.github/ISSUE_TEMPLATE/${kind}.yml`;
+    const path = join(root, name);
+    if (!existsSync(path)) {
+      return result(category, name, "fail", "フォームがありません");
+    }
+    const actual = parseIssueForm(readFileSync(path, "utf8"));
+    const expected = REPORT_FORMS[kind];
+    const problems: string[] = [];
+    if (actual.name !== expected.name)
+      problems.push(`name が「${expected.name}」ではない`);
+    if (actual.labels.join(",") !== expected.labels.join(","))
+      problems.push(`labels が ${JSON.stringify(expected.labels)} ではない`);
+    const have = actual.fields.map((f) => `${f.id}:${f.label}`).join("、");
+    const want = expected.fields.map((f) => `${f.id}:${f.label}`).join("、");
+    if (have !== want)
+      problems.push(
+        `項目の id と label が scripts/lib/report-forms.ts と違う（フォーム：${have}）`,
+      );
+    for (const f of expected.fields) {
+      const type = actual.fields.find((a) => a.id === f.id)?.type;
+      if (f.prefill && type !== "input" && type !== "textarea")
+        problems.push(
+          `${f.id} は URL で事前に入力する項目なので input か textarea にする`,
+        );
+    }
+    return problems.length === 0
+      ? result(category, name, "pass")
+      : result(category, name, "fail", problems.join("、"));
+  });
+};
+
+REPO_CHECKS["forms"] = checkForms;
