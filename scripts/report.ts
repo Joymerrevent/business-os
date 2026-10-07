@@ -21,6 +21,7 @@ import {
   findLeaks,
   isSecurityReport,
   parseDraft,
+  unescapeHeadings,
   replaceHome,
   sha256,
   type ReportInput,
@@ -315,7 +316,7 @@ const sectionsOf = (
     const [heading, ...rest] = chunk.split("\n");
     const label = (heading ?? "").trim();
     const id = reportFieldId(kind, label);
-    if (id !== undefined) fields[id] = rest.join("\n").trim();
+    if (id !== undefined) fields[id] = unescapeHeadings(rest.join("\n").trim());
   }
   return fields;
 };

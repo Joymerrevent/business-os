@@ -25,11 +25,19 @@ export const buildBody = (input: ReportInput): string => {
   const sections = form.fields
     .map((field) => ({ field, value: (input.fields[field.id] ?? "").trim() }))
     .filter(({ value }) => value !== "")
-    .map(({ field, value }) => `### ${field.label}\n\n${value}`);
+    // 値の中の行頭の「### 」は項目の見出しと区別できなくなるので逃がす（読み戻すときに unescapeHeadings で戻す）
+    .map(
+      ({ field, value }) =>
+        `### ${field.label}\n\n${value.replace(/^### /gm, "\\### ")}`,
+    );
   return [kindLine(input.kind), "", ...sections.flatMap((s) => [s, ""])]
     .join("\n")
     .trimEnd();
 };
+
+/** buildBody が逃がした行頭の「\### 」を戻す */
+export const unescapeHeadings = (value: string): string =>
+  value.replace(/^\\### /gm, "### ");
 
 /** 下書きのファイルの中身。1 行目が題、空行の後が本文 */
 export const draftText = (title: string, body: string): string =>

@@ -219,6 +219,27 @@ describe("node scripts/report.ts", () => {
     expect(readFileSync(out.file, "utf8")).not.toContain(homedir());
   });
 
+  it("項目の値に「### 」で始まる行があっても、見出しと取り違えず URL に値を入れる", () => {
+    const out = JSON.parse(
+      draft({ problem: "前半\n### 提案\n後半", proposal: "本物の提案" }).stdout,
+    ) as { file: string; sha256: string };
+    const text = readFileSync(out.file, "utf8");
+    expect(text).toContain("\\### 提案");
+    const result = run([
+      "verify",
+      "--company",
+      company,
+      "--file",
+      out.file,
+      "--sha256",
+      out.sha256,
+    ]);
+    const sent = JSON.parse(result.stdout) as { url: string };
+    const params = new URL(sent.url).searchParams;
+    expect(params.get("problem")).toBe("前半\n### 提案\n後半");
+    expect(params.get("proposal")).toBe("本物の提案");
+  });
+
   it("確かめた中身のままなら、送る題・本文・URL を返す", () => {
     const out = JSON.parse(
       draft({ problem: "困った", proposal: "直したい" }).stdout,
