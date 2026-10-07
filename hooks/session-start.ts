@@ -9,6 +9,7 @@ import { FOUNDATION_SKILLS, pluginRoot, pluginVersion } from "./lib/plugin.ts";
 import { readProposals } from "./lib/proposals.ts";
 import {
   localWarnings,
+  missingEnv,
   missingMcpAskRules,
   missingRules,
 } from "./lib/settings.ts";
@@ -99,6 +100,16 @@ const checkMcpAskRules = (company: Company): string[] => {
     ? []
     : [
         `.claude/settings.json の permissions.ask に、外部のツール（MCP）の操作を確認に回す予備の規則が ${String(missing.length)} 個ありません。/onboard --migrate で足す提案を書けます（/approve で反映。手で足してもかまいません）（${missing.join(", ")}）`,
+      ];
+};
+
+/** 4d. 雛形の env（Node のプロキシ、npm のキャッシュの置き場など）が .claude/settings.json にそろっているか */
+const checkEnv = (company: Company): string[] => {
+  const missing = missingEnv(company.root);
+  return missing.length === 0
+    ? []
+    : [
+        `.claude/settings.json の env に、sandbox の中の通信の失敗を見えるようにする設定がありません。/onboard --migrate で足す提案を書けます（/approve で反映。手で足してもかまいません）（${missing.join(", ")}）`,
       ];
 };
 
@@ -195,6 +206,7 @@ const inspect = (): string[] | undefined => {
     checkSettings,
     checkLocalSettings,
     checkMcpAskRules,
+    checkEnv,
     checkState,
     checkApproving,
     checkVersion,

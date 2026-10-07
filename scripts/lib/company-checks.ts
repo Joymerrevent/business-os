@@ -17,6 +17,7 @@ import { validate } from "../../hooks/lib/schema.ts";
 import {
   allowedSockets,
   localWarnings,
+  missingEnv,
   missingMcpAskRules,
   missingRules,
 } from "../../hooks/lib/settings.ts";
@@ -279,6 +280,17 @@ export const checkSettings = (
           "settings.json が外部のツール（MCP）の確認の予備の規則を含む",
           "warn",
           `permissions.ask に無い規則：${mcpMissing.join(", ")}。/onboard --migrate で足す提案を書けます（/approve で反映。手で足してもかまいません）`,
+        ),
+  );
+  const envMissing = missingEnv(root);
+  results.push(
+    envMissing.length === 0
+      ? result(category, "settings.json が雛形の env を含む", "pass")
+      : result(
+          category,
+          "settings.json が雛形の env を含む",
+          "warn",
+          `env に無いか値が違う設定：${envMissing.join(", ")}。sandbox の中の通信の失敗が見えにくくなります。/onboard --migrate で足す提案を書けます（/approve で反映。手で足してもかまいません）`,
         ),
   );
   const warnings = localWarnings(root);
