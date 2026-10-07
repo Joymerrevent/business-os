@@ -93,6 +93,7 @@ Claude Code は書き出された安全設定をその場で読み込み、`docs
    - `.claude/settings.local.json` がすでにあれば、中身を読んでキーを足す。ほかの設定を消さない（既存のファイルの上書きなので、hook が確認を出す）
    - `.claude/settings.json` には書かない（パスは利用者ごとに違い、`.claude/settings.local.json` は `.gitignore` 済み）
 7. **最後に** `.claude/settings.json`
+   - `env` の `npm_config_cache` の値（`${TMPDIR}/npm-cache`）は、`${TMPDIR}` を展開せずにそのまま書く（npm が実行のたびに sandbox の一時フォルダへ展開するため）
    - `ask` にある MCP の規則（`mcp__*__send_*` など）は残したうえで、
      この会話で使える MCP ツールのうち送信・投稿・作成・支払いにあたるものを具体名で追加する
 
@@ -144,8 +145,10 @@ macOS では、利用者が許せば、その agent のソケット 1 つだけ�
   （`.claude/settings.local.json` のほかの設定を、追跡される提案に写さない）。最後に `/approve` を案内する
 - **`--migrate`**：business-os の雛形と company の文書を比べ、business-os の更新で増えた欄や規則を提案として書く。
   `.business-os.json` の `pluginVersion` の更新も提案にする。事業の中身は変えない
-  - 雛形の安全設定の規則が company の `.claude/settings.json` に欠けていれば（厳格モード）、提案にしない。
+  - 起動時の点検が「厳格モード」と告げたときだけ、欠けている設定を提案にしない。
     厳格モードでは承認しても書き込めないため、欠けている規則と、`.claude/settings.json` のどこに足すかを示し、人に手で足してもらう
+  - 起動時の点検や `/check` が warn だけを出す欠落（外部のツール（MCP）の確認の予備の規則、`env` の設定など）は厳格モードではない。
+    雛形との差分として、`.claude/settings.json` を `target` にした提案を書く
   - 古い置き場の `docs/charter/repositories.md` があれば、同じ表に「指示」の列（値は「無し」）を足した内容で
     `docs/charter/repositories/README.md` を作る提案を書く。提案は新しいファイルを `target` にする。
     承認されたら、古い `docs/charter/repositories.md` を消すよう人間に案内する（CC は憲章のファイルを消さない）

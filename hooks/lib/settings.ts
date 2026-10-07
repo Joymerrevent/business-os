@@ -177,6 +177,33 @@ export const missingMcpAskRules = (root: string): string[] => {
   );
 };
 
+/**
+ * 雛形の env（Node のプロキシ、npm のキャッシュの置き場など）のうち、.claude/settings.json に無いか値が違うもの（warn に使う）。
+ * 無くても安全は損なわれず、通信の失敗が見えにくくなるだけなので、必須規則（厳格モード）には含めない（ADR 20261006-01）。
+ * 読めないときは missingRules が欠落として扱うので、ここでは何も返さない
+ */
+export const missingEnv = (root: string): string[] => {
+  let actual: { env?: unknown };
+  try {
+    actual = readJson(join(root, ".claude", "settings.json")) as {
+      env?: unknown;
+    };
+  } catch {
+    return [];
+  }
+  const template = readJson(
+    join(pluginRoot(), "templates", "settings.json.tmpl"),
+  ) as { env?: unknown };
+  const asRecord = (value: unknown): Record<string, unknown> =>
+    typeof value === "object" && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  const have = asRecord(actual.env);
+  return Object.entries(asRecord(template.env))
+    .filter(([key, value]) => have[key] !== value)
+    .map(([key, value]) => `${key}=${String(value)}`);
+};
+
 /** .claude/settings.local.json で接続を許した Unix ソケットのパス（/check が示す） */
 export const allowedSockets = (root: string): string[] => {
   try {

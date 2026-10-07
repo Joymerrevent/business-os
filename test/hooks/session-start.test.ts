@@ -76,6 +76,18 @@ describe("company", () => {
     expect(message).not.toContain("厳格モード");
   });
 
+  it("雛形の env が欠けると知らせる（厳格モードにはしない）", () => {
+    const path = join(root, ".claude/settings.json");
+    const settings = JSON.parse(readFileSync(path, "utf8")) as {
+      env?: Record<string, string>;
+    };
+    delete settings.env;
+    writeFileSync(path, JSON.stringify(settings));
+    const message = messageOf(start().stdout);
+    expect(message).toContain("NODE_USE_ENV_PROXY=1");
+    expect(message).not.toContain("厳格モード");
+  });
+
   it("settings.local.json が sandbox を無効にすると厳格モードを知らせる", () => {
     writeFileSync(
       join(root, ".claude/settings.local.json"),

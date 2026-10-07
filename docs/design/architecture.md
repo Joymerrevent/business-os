@@ -327,6 +327,11 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
 
 ```jsonc
 {
+  "env": {
+    "NODE_USE_ENV_PROXY": "1",
+    "npm_config_cache": "${TMPDIR}/npm-cache",
+    "DO_NOT_TRACK": "1"
+  },
   "sandbox": {
     "enabled": true,
     "allowUnsandboxedCommands": false,
@@ -381,6 +386,19 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
   雛形には書かない（パスは利用者ごとに違う）。Linux / WSL2 にはパスごとの許可が無いため、Skill は署名で失敗したら止め、人にコミットを頼む
 
 <!-- 根拠: 20261003-11 -->
+
+- `env` の 3 つは、sandbox の許可（通信先・書き込み先）を広げずに、sandbox の中の Node 製の道具を動かすためのもの
+  - `NODE_USE_ENV_PROXY`：Node の `fetch` は sandbox のプロキシの環境変数を使わず、許可した通信先にも届かない（`ENOTFOUND`）。
+    プロキシを通せば、許可していない通信先では Claude Code の確認が出て、黙った失敗にならない
+  - `npm_config_cache`：npm と `npx` のキャッシュを sandbox の一時フォルダに置く。`${TMPDIR}` は npm が展開する。
+    `TMPDIR` を sandbox の一時フォルダに向けるのは、sandbox のファイルの隔離が有効なとき（雛形の既定）の Claude Code。
+    隔離を無効にすると親シェルの `TMPDIR` を継ぎ、未設定（Linux に多い）なら npm は展開せず、書き込めない `/${TMPDIR}/npm-cache` を使う
+    `~/.npm/_npx` を書き込み可にすると、sandbox の外で動くコードを sandbox の中から書き換えられるため、書き込み先を広げない
+  - `DO_NOT_TRACK`：skills CLI などのテレメトリを止める
+- 通信先（`sandbox.network.allowedDomains`）は雛形に書かない。必要になったときに Claude Code の確認で人が許す
+- 雛形の `env` が `.claude/settings.json` に無いか値が違えば、起動時の点検と `/check` が warn で示す（必須規則には含めない）
+
+<!-- 根拠: 20261006-01 -->
 
 ### 7.3 `pre-tool-use.ts` の判定
 
