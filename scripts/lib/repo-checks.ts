@@ -1044,7 +1044,7 @@ REPO_CHECKS["shell"] = checkShell;
 const EVAL_EXCLUDED: Record<string, string> = {
   check: "Bash が要るため（判定のロジックは vitest で検査する）",
   report:
-    "下書きのスクリプトを Bash で動かすため（事業データの検査と送る前の照合は vitest で検査する）",
+    "下書きのスクリプトの判定（事業データの検査と送る前の照合）は vitest で検査し、Bash を許す対話の台本は macOS でだけ動くため省く",
 };
 
 /** フォルダの下に eval のケース（case.yaml か prompt.md を持つフォルダ）があるか */
