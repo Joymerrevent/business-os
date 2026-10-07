@@ -1,0 +1,45 @@
+name: Skill の削除・統合の提案
+description: business-os が配布している Skill を外す、またはほかの Skill とまとめる提案
+labels: ["enhancement", "skill-remove"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **事業データ（会社名・事業名・人名・金額・顧客の情報）や認証情報は、絶対に貼らないでください。**
+        提案は、Skill を外すときの基準に照らして判定し、結果をこの Issue にコメントで返します。
+        外すと決めた Skill はすぐには消さず、外す版の前に予告します。使い続けたい場合は、あなたの company に写して使えます。
+  - type: input
+    id: skill
+    attributes:
+      label: 対象の Skill
+      placeholder: "/validate"
+    validations:
+      required: true
+  - type: dropdown
+    id: reason
+    attributes:
+      label: 当てはまる理由
+      multiple: true
+      options:
+        - 使われていない
+        - ほかの Skill と役割が重なる
+        - 既製の Skill で足りるようになった・頼っていた外部のツールが使えなくなった
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: 詳しく
+      description: 使われていない期間（/retro の振り返りに出た回数など）、重なる Skill の名前、代わりになる既製の Skill など
+    validations:
+      required: true
+  - type: dropdown
+    id: action
+    attributes:
+      label: 望む扱い
+      options:
+        - 外す
+        - ほかの Skill とまとめる
+        - 分からない
+    validations:
+      required: true
