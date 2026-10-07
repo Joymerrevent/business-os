@@ -38,6 +38,7 @@
     "check:release": "node scripts/check-repo.ts release",
     "check:shell": "node scripts/check-repo.ts shell",
     "check:evals": "node scripts/check-repo.ts evals",
+    "check:forms": "node scripts/check-repo.ts forms",
     "format": "prettier --write .",
     "fix:md": "markdownlint-cli2 --fix",
     "changeset": "changeset",

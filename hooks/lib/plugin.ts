@@ -28,7 +28,7 @@ export const FOUNDATION_SKILLS = [
 export const COMMON_WORK_SKILLS: readonly string[] = [];
 
 /** サポート Skill：事業の運営ではなく、business-os そのもの（導入・点検・報告など）を扱い、必要なときだけ呼ぶもの */
-export const SUPPORT_SKILLS: readonly string[] = [];
+export const SUPPORT_SKILLS: readonly string[] = ["report"];
 
 /** 配布する Skill の全て */
 export const DISTRIBUTED_SKILLS: readonly string[] = [

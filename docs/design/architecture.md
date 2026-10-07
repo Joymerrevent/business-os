@@ -77,7 +77,9 @@ business-os/
 │   ├── close/SKILL.md
 │   ├── quarterly/SKILL.md
 │   ├── retro/SKILL.md
-│   └── validate/SKILL.md
+│   ├── validate/SKILL.md
+│   └── report/SKILL.md          # サポート Skill。business-os への報告
+
 ├── hooks/
 │   ├── hooks.json               # hook の登録定義
 │   ├── session-start.ts         # 軽い点検
@@ -85,6 +87,8 @@ business-os/
 │   └── lib/                     # フロントマター検証、日付検証、シェル引数解析
 ├── scripts/
 │   ├── check.ts                 # 重い点検（company 向け）と check:*（business-os 向け）の共有実装
+│   ├── report.ts                # /report の下書きの作成・検査・送る前の照合
+│   ├── issue-label.ts           # 開発用。作られた Issue に報告の種類のラベルを付ける（.github/workflows/issue-label.yml）
 │   ├── lib/                     # 点検の中身（company-checks.ts など）
 │   ├── sync-plugin-version.ts   # changesets の version を plugin.json へ同期
 │   └── pre-commit.ts            # 開発用。git の pre-commit（lint-staged と gitleaks）
@@ -254,7 +258,7 @@ Skill は次の 4 つに分ける。配布する 3 つの分類の一覧は `hoo
 |---|---|---|
 | 経営基盤 Skill | business-os（配布） | 事業非依存で、会社を運営する以上必要な仕組み（下の表） |
 | 共通業務 Skill | business-os（配布） | 事業非依存で、どの事業の利用者も日々行う業務の作業（今は無い） |
-| サポート Skill | business-os（配布） | business-os そのもの（導入・点検・報告など）を扱い、必要なときだけ呼ぶもの（今は無い） |
+| サポート Skill | business-os（配布） | business-os そのもの（導入・点検・報告など）を扱い、必要なときだけ呼ぶもの（`/report`） |
 | 業務 Skill | company の `.claude/skills/` | 事業固有の作業。2 回ルールで育て、月次で剪定する |
 
 <!-- 根拠: 20261004-02 -->
@@ -275,6 +279,20 @@ Skill は次の 4 つに分ける。配布する 3 つの分類の一覧は `hoo
 | `/validate` | 新施策前 | `charter/company.md`、`decision-rules.md`、`risks.md` | `decisions/` に検証結果（ADR 形式） | 施策の開始 / 見送り | 仮説、検証方法、撤退条件 |
 
 <!-- 根拠: 20260929-07 -->
+
+### 6.1b サポート Skill
+
+| Skill | 起動 | 読む | 書く（直接） | 外部への行動 | 人に聞く |
+|---|---|---|---|---|---|
+| `/report` | 人間が呼ぶ | business-os の `scripts/lib/report-forms.ts`、直近の `/check` のレポート | 下書き（sandbox の一時フォルダ。送った後に消す）、日報の実行記録 | business-os のリポジトリへの Issue の作成（人の承認と送る直前の照合の後） | 種類、伝えたいこと、足りない項目、動かし方、置き換え、送信の承認 |
+
+- 下書きは `scripts/report.ts` が作る。事業データの型・固有名詞の辞書・利用者の名前のどれかが見つかれば下書きを作らない。辞書が無い・読めない・語が 1 つも無いときも作らない
+- `/report` は eval の対象から外す。下書きのスクリプトの判定は vitest（`test/scripts/report.test.ts`）で検査し、Bash を許す対話の台本は macOS でだけ動くため省く
+- 送る直前に `verify` が要約値の一致と再検査を確かめる。送る手段は公式の GitHub MCP の `issue_write`、無ければ入力済みの Issue 作成の URL（符号化後 4,000 バイトまで）
+- 送られた Issue には、`.github/workflows/issue-label.yml` が本文の先頭の種類の行から種類のラベルを付ける（コネクタで作ると、push の権限が無い人のラベルは捨てられるため）
+- 安全装置の不具合（`/check` の防衛の発火）は、公開の Issue にせず非公開の経路を案内する
+
+<!-- 根拠: 20261004-01 -->
 
 ### 6.2 共通規約
 
