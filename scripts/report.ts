@@ -2,6 +2,7 @@
 //
 // 使い方：
 //   node scripts/report.ts draft --company <dir>   標準入力に {"kind","title","fields"} の JSON を渡す
+//   node scripts/report.ts inspect --company <dir> --file <下書き>   人が直した下書きを検査し直し、新しい要約値を返す
 //   node scripts/report.ts verify --company <dir> --file <下書き> --sha256 <要約値>
 //
 // 終了コード：0 成功、1 止めた（事業データの混入・辞書が無い・中身が変わった）、2 使い方の誤り、3 安全装置の不具合（非公開の経路へ）
@@ -224,6 +225,28 @@ const draft = (args: string[]): string => {
   return JSON.stringify({ file, sha256: sha256(text) });
 };
 
+/** 人が直した下書きを検査し直し、承認を取り直すための新しい要約値を返す */
+const inspect = (args: string[]): string => {
+  const company = resolve(option(args, "--company"));
+  const file = resolve(option(args, "--file"));
+  if (!existsSync(file)) throw new Stop("下書きのファイルがありません", 1);
+  const text = readFileSync(file, "utf8");
+  if (isSecurityReport(text)) {
+    throw new Stop(
+      `安全装置の不具合（防衛の発火）は、公開の Issue ではなく非公開の経路で報告してください：${SECURITY_URL(repository())}`,
+      3,
+    );
+  }
+  checkLeaks(text, company);
+  if (parseDraft(text) === undefined) {
+    throw new Stop(
+      "下書きのファイルの形が崩れています（1 行目は「# 題：」）",
+      1,
+    );
+  }
+  return JSON.stringify({ file, sha256: sha256(text) });
+};
+
 const verify = (args: string[]): string => {
   const company = resolve(option(args, "--company"));
   const file = resolve(option(args, "--file"));
@@ -299,9 +322,13 @@ const main = (): number => {
   const [command, ...args] = process.argv.slice(2);
   try {
     if (command === "draft") process.stdout.write(`${draft(args)}\n`);
+    else if (command === "inspect") process.stdout.write(`${inspect(args)}\n`);
     else if (command === "verify") process.stdout.write(`${verify(args)}\n`);
     else
-      throw new Stop("使い方：node scripts/report.ts <draft | verify> ...", 2);
+      throw new Stop(
+        "使い方：node scripts/report.ts <draft | inspect | verify> ...",
+        2,
+      );
     return 0;
   } catch (error) {
     if (error instanceof Stop) {

@@ -254,6 +254,43 @@ describe("node scripts/report.ts", () => {
     expect(result.stdout).toBe("");
   });
 
+  it("人が直した下書きは inspect で検査し直し、新しい要約値で verify を通る", () => {
+    const out = JSON.parse(
+      draft({ problem: "困った", proposal: "直したい" }).stdout,
+    ) as { file: string; sha256: string };
+    writeFileSync(out.file, `${readFileSync(out.file, "utf8")}\n補足を書いた`);
+    const inspected = run([
+      "inspect",
+      "--company",
+      company,
+      "--file",
+      out.file,
+    ]);
+    expect(inspected.status).toBe(0);
+    const again = JSON.parse(inspected.stdout) as { sha256: string };
+    expect(again.sha256).not.toBe(out.sha256);
+    const result = run([
+      "verify",
+      "--company",
+      company,
+      "--file",
+      out.file,
+      "--sha256",
+      again.sha256,
+    ]);
+    expect(result.status).toBe(0);
+  });
+
+  it("人が直した下書きに辞書の語が入っていれば、inspect が止める", () => {
+    const out = JSON.parse(
+      draft({ problem: "困った", proposal: "直したい" }).stdout,
+    ) as { file: string };
+    writeFileSync(out.file, `${readFileSync(out.file, "utf8")}\nサクラ商店`);
+    const result = run(["inspect", "--company", company, "--file", out.file]);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+  });
+
   it("人が直したファイルに辞書の語が入っていれば、要約値が合っても送らない", () => {
     const out = JSON.parse(
       draft({ problem: "困った", proposal: "直したい" }).stdout,
