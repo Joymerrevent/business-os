@@ -1,6 +1,6 @@
 # business-os の Skill の共通規約
 
-business-os の Skill（`/onboard` など 10 個）は、実行の最初にこの文書を読み、ここに書いた規約に従う。
+business-os の Skill（`/onboard` など、business-os が配布する全ての Skill）は、実行の最初にこの文書を読み、ここに書いた規約に従う。
 各 Skill の SKILL.md には、この規約との差分だけを書く。
 
 ## 場所
