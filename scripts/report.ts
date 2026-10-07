@@ -66,7 +66,7 @@ const repository = (): string => {
   return match[1].replace(/\.git$/, "");
 };
 
-/** 固有名詞の辞書。無いか読めなければ止める（検査できないまま下書きを作らない） */
+/** 固有名詞の辞書。無い・読めない・語が 1 つも無いときは止める（検査できないまま下書きを作らない） */
 const leakTerms = (company: string): string[] => {
   const path = join(company, ".leak-dict.json");
   if (!existsSync(path)) {
@@ -75,14 +75,22 @@ const leakTerms = (company: string): string[] => {
       1,
     );
   }
+  let terms: string[];
   try {
-    return dictionaryTerms(readJson(path));
+    terms = dictionaryTerms(readJson(path));
   } catch {
     throw new Stop(
       "固有名詞の辞書（.leak-dict.json）を読めないため、事業データの検査ができません",
       1,
     );
   }
+  if (terms.length === 0) {
+    throw new Stop(
+      "固有名詞の辞書（.leak-dict.json）に語が 1 つも無いため、事業データの検査ができません。会社の呼び名や事業名を辞書に足してから、もう一度試してください",
+      1,
+    );
+  }
+  return terms;
 };
 
 const userName = (): string => {

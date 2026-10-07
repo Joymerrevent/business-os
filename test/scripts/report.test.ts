@@ -186,6 +186,17 @@ describe("node scripts/report.ts", () => {
     expect(drafts()).toEqual([]);
   });
 
+  it.each([['{"terms":[]}'], ["{}"]])(
+    "辞書に語が 1 つも無ければ（%s）検査できないので下書きを作らない",
+    (dict) => {
+      writeFileSync(join(company, ".leak-dict.json"), dict);
+      const result = draft({ problem: "x", proposal: "y" });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("語が 1 つも無い");
+      expect(drafts()).toEqual([]);
+    },
+  );
+
   it("安全装置の不具合（防衛の発火）は非公開の経路を示して止める（終了コード 3）", () => {
     const result = draft(
       {
