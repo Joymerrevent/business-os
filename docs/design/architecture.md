@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-06
+updated: 2026-10-07
 as_of: n/a
 verified: n/a
 ---
@@ -18,7 +18,7 @@ verified: n/a
 business-os は、1 人で複数事業を運営する人が Claude Code（CC）を「経営の手足」として使うための
 **Plugin** である。事業に依存しない形で配布し、利用者は自分の事業情報を `/onboard` で注入する。
 
-範囲に含むもの：Skill 10 個、hook、テンプレート、検査、Obsidian アダプタ、設計文書。
+範囲に含むもの：配布する Skill（経営基盤・共通業務・サポート）、hook、テンプレート、検査、Obsidian アダプタ、設計文書。
 範囲に含まないもの：事業固有の Skill、事業データ、実装リポの中身。
 
 ## 2. 全体像
@@ -64,10 +64,10 @@ business-os/
 ├── .changeset/                  # 変更履歴の元
 ├── .github/
 │   ├── workflows/               # check + gitleaks + audit を Linux / Windows で
-│   └── ISSUE_TEMPLATE/          # 不具合 / 提案 / 環境情報
+│   └── ISSUE_TEMPLATE/          # 不具合 / 改善 / Skill の追加 / Skill の削除・統合
 ├── agents/
 │   └── worker.md                # 作業者エージェント（sonnet、ファイルの読み書きと検索のみ）。COO から委譲される
-├── skills/                      # 配布される経営基盤 Skill（10 個）
+├── skills/                      # 配布する Skill（一覧と分類の正本は hooks/lib/plugin.ts）
 │   ├── onboard/SKILL.md
 │   ├── approve/SKILL.md
 │   ├── check/SKILL.md
@@ -247,7 +247,19 @@ business-os を改良する CC と、貢献する人向け。配布物と開発�
 
 ## 6. Skills
 
-### 6.1 経営基盤 Skill（10 個、固定）
+Skill は次の 4 つに分ける。配布する 3 つの分類の一覧は `hooks/lib/plugin.ts` が正本で、`check:skills` と起動時の点検が `skills/` のフォルダと照合する。
+数は固定しない。配布する Skill を足すときは条件を満たし、Skill ごとに ADR で決める。外すときも基準に照らして ADR で決め、外す版の前に予告する。
+
+| 分類 | 置き場 | 中身 |
+|---|---|---|
+| 経営基盤 Skill | business-os（配布） | 事業非依存で、会社を運営する以上必要な仕組み（下の表） |
+| 共通業務 Skill | business-os（配布） | 事業非依存で、どの事業の利用者も日々行う業務の作業（今は無い） |
+| サポート Skill | business-os（配布） | business-os そのもの（導入・点検・報告など）を扱い、必要なときだけ呼ぶもの（今は無い） |
+| 業務 Skill | company の `.claude/skills/` | 事業固有の作業。2 回ルールで育て、月次で剪定する |
+
+<!-- 根拠: 20261004-02 -->
+
+### 6.1 経営基盤 Skill
 
 | Skill | 起動 | 読む | 書く（直接） | 提案（承認要） | 人に聞く |
 |---|---|---|---|---|---|
@@ -628,5 +640,6 @@ CI：GitHub Actions の ubuntu-latest / windows-latest / macos-latest（Node 24.
 | ADR | 設計判断記録。business-os では `docs/adr/`、company では `docs/decisions/` |
 | 軽い点検 / 重い点検 | 毎セッションのセルフチェック / 週次の `/check` |
 | 厳格モード | 運用中の company で防衛設定の欠落を検出したとき、hook が保護対象への書き込みを全拒否する状態 |
-| 経営基盤 Skill / 業務 Skill | 事業非依存で business-os に含まれる 10 個 / 事業固有で company 側に育てるもの |
+| 経営基盤 Skill / 業務 Skill | 事業非依存で business-os に含まれる、会社の運営の仕組み / 事業固有で company 側に育てるもの |
+| 共通業務 Skill / サポート Skill | business-os が配布する、どの事業でも行う業務の作業 / business-os そのものを扱う Skill |
 | 2 回ルール | 同じ依頼が 2 回目になったら Skill 化を検討する運用 |

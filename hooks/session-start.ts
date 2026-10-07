@@ -5,7 +5,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { findCompanyRoot, readCompany, type Company } from "./lib/company.ts";
 import { parseFrontmatter } from "./lib/frontmatter.ts";
-import { FOUNDATION_SKILLS, pluginRoot, pluginVersion } from "./lib/plugin.ts";
+import { DISTRIBUTED_SKILLS, pluginRoot, pluginVersion } from "./lib/plugin.ts";
 import { readProposals } from "./lib/proposals.ts";
 import {
   localWarnings,
@@ -47,10 +47,10 @@ const checkNode = (): string[] => {
       ];
 };
 
-/** 2. business-os の 10 Skill とフロントマター */
+/** 2. 配布する Skill とフロントマター */
 const checkSkills = (): string[] => {
   const broken: string[] = [];
-  for (const name of FOUNDATION_SKILLS) {
+  for (const name of DISTRIBUTED_SKILLS) {
     const path = join(pluginRoot(), "skills", name, "SKILL.md");
     if (!existsSync(path)) {
       broken.push(name);
@@ -160,7 +160,7 @@ const checkSkillNames = (company: Company): string[] => {
     join(company.root, ".claude", "skills"),
     join(homedir(), ".claude", "skills"),
   ];
-  const clashes = FOUNDATION_SKILLS.filter((name) =>
+  const clashes = DISTRIBUTED_SKILLS.filter((name) =>
     dirs.some((dir) => existsSync(join(dir, name))),
   );
   return clashes.length === 0

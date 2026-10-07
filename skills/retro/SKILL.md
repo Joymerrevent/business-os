@@ -11,7 +11,8 @@ disable-model-invocation: true
 business-os と運用を、使われ方に合わせて直す提案を出す。提案は `docs/proposals/` に書き、`/approve` で反映する。
 
 1. **2 回ルール**：同じ依頼を CC に手で頼んだのが 2 回以上あれば、業務 Skill（`.claude/skills/`）にすることを提案する
-2. **剪定**：先月 1 回も使われなかった業務 Skill の削除か凍結を提案する（business-os の 10 個の Skill は対象外）
+2. **剪定**：先月 1 回も使われなかった業務 Skill の削除か凍結を提案する。
+   business-os の Skill（`/business-os:` で呼べるもの）は company では消さず、使われていなければ「business-os への改善案」として挙げる（手順 6）
 3. **CC への指示書と運用ルール**：くり返し起きた問題から、`CLAUDE.md` や判断ルールへの追記を提案する
 4. **自動起動**：2〜4 週間、決まった周期で毎回呼ばれている周期 Skill があれば、Routines（スケジュール起動）に移すことを提案する。
    設定はしない（人間が決める）
@@ -45,6 +46,8 @@ business-os と運用を、使われ方に合わせて直す提案を出す。�
    - CC への指示書・運用ルール：`target` を `CLAUDE.md` か `docs/charter/decision-rules.md` にする
 6. business-os そのもの（business-os）への改善案があれば、振り返りに「business-os への改善案」として書く。
    business-os のリポジトリへの Issue の作成は外部への行動なので、人間が頼んだときだけ、送る前に確認して行う
+   - 使われていない business-os の Skill があれば、Skill の名前と、対象期間に呼ばれた回数（0 回）を改善案に書く。
+     business-os に Skill の削除・統合を提案するときの材料になる
 7. 振り返りを雛形から書き出し、`/approve` を案内する
 
 ## 何を書くか

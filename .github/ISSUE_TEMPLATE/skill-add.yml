@@ -1,0 +1,54 @@
+name: Skill の追加の提案
+description: business-os に配布する Skill を新しく足す提案
+labels: ["enhancement", "skill-add"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **事業データ（会社名・事業名・人名・金額・顧客の情報）や認証情報は、絶対に貼らないでください。**
+        提案は、Skill を足すときの条件に照らして判定し、結果をこの Issue にコメントで返します。
+        あなたの事業だけで使う作業は、あなたの company の業務 Skill（`.claude/skills/`）として育てる方が向いています。
+        SKILL.md の案やコードを添えてもかまいませんが、そのまま取り込まず、設計の参考にして書き直します。
+  - type: textarea
+    id: work
+    attributes:
+      label: Skill にしたい作業
+      description: どんな場面で、何をする Skill か
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: 分類
+      description: 経営基盤＝会社を運営する仕組み、共通業務＝どの事業でも日々行う作業（メールの整理など）、サポート＝business-os そのもの（導入・点検・報告など）を扱う
+      options:
+        - 経営基盤 Skill
+        - 共通業務 Skill
+        - サポート Skill
+        - 分からない
+    validations:
+      required: true
+  - type: textarea
+    id: why-new-skill
+    attributes:
+      label: 今ある Skill に手順を足すのでは済まない理由
+    validations:
+      required: true
+  - type: textarea
+    id: existing-skills
+    attributes:
+      label: 既製の Skill を探したか
+      description: 探した方法（例：npx skills find、gh skill search）と、見つかった Skill がなぜ合わないか
+    validations:
+      required: true
+  - type: textarea
+    id: external-tools
+    attributes:
+      label: 外部のツールに頼るか
+      description: メール・カレンダー・GitHub などのコネクタ（MCP）を使うなら、その名前と、送信・削除などの外部への操作をするか。使わないなら「使わない」
+    validations:
+      required: true
+  - type: textarea
+    id: usage
+    attributes:
+      label: 使う人と頻度の見込み（任意）

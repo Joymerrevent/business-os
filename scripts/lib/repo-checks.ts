@@ -5,7 +5,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { parseFrontmatter } from "../../hooks/lib/frontmatter.ts";
 import {
-  FOUNDATION_SKILLS,
+  DISTRIBUTED_SKILLS,
   frontmatterSchema,
   pluginRoot,
 } from "../../hooks/lib/plugin.ts";
@@ -119,25 +119,27 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
   const dirs = readdirSync(join(root, "skills")).filter((name) =>
     statSync(join(root, "skills", name)).isDirectory(),
   );
-  const expected = new Set<string>(FOUNDATION_SKILLS);
+  const expected = new Set<string>(DISTRIBUTED_SKILLS);
   const extra = dirs.filter((name) => !expected.has(name));
-  const missing = FOUNDATION_SKILLS.filter((name) => !dirs.includes(name));
+  const missing = DISTRIBUTED_SKILLS.filter((name) => !dirs.includes(name));
   if (extra.length > 0 || missing.length > 0) {
     results.push(
       result(
         category,
-        "business-os の Skill は 10 個で固定",
+        "skills/ が配布する Skill の一覧（hooks/lib/plugin.ts）と一致する",
         "fail",
         [
           missing.length > 0 ? `無い：${missing.join(", ")}` : "",
-          extra.length > 0 ? `余分（増やすなら ADR）：${extra.join(", ")}` : "",
+          extra.length > 0
+            ? `一覧に無い（足すなら ADR で決め、一覧に足す）：${extra.join(", ")}`
+            : "",
         ]
           .filter((s) => s !== "")
           .join("、"),
       ),
     );
   }
-  for (const name of FOUNDATION_SKILLS) {
+  for (const name of DISTRIBUTED_SKILLS) {
     const path = join(root, "skills", name, "SKILL.md");
     if (!existsSync(path)) continue;
     const text = readFileSync(path, "utf8");
