@@ -122,7 +122,8 @@ describe("node scripts/report.ts", () => {
       {
         input,
         encoding: "utf8",
-        env: { ...process.env, TMPDIR: temp },
+        // 一時フォルダは macOS / Linux では TMPDIR、Windows では TEMP / TMP で決まる
+        env: { ...process.env, TMPDIR: temp, TEMP: temp, TMP: temp },
       },
     );
   const draft = (fields: Record<string, string>, kind = "improvement") =>
