@@ -45,7 +45,7 @@ business-os と運用を、使われ方に合わせて直す提案を出す。�
    - 剪定：削除か、`disable-model-invocation: true` を付けた凍結か
    - CC への指示書・運用ルール：`target` を `CLAUDE.md` か `docs/charter/decision-rules.md` にする
 6. business-os そのもの（business-os）への改善案があれば、振り返りに「business-os への改善案」として書く。
-   business-os のリポジトリへの Issue の作成は外部への行動なので、人間が頼んだときだけ、送る前に確認して行う
+   人間が改善案を business-os に送りたいと言ったら、`/report` を案内する（Issue の作成は外部への行動なので、この Skill の中では送らない）
    - 使われていない business-os の Skill があれば、Skill の名前と、対象期間に呼ばれた回数（0 回）を改善案に書く。
      business-os に Skill の削除・統合を提案するときの材料になる
 7. 振り返りを雛形から書き出し、`/approve` を案内する

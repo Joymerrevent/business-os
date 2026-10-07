@@ -49,7 +49,7 @@ business-os の点検スクリプトを company に対して実行し、結果�
 
 | 分類 | fail / warn のときの対処 |
 |---|---|
-| 防衛の発火（合成入力・実機） | 最優先。安全装置が壊れた状態で運用を続けない。business-os の不具合なら business-os のリポジトリの Issues に報告する |
+| 防衛の発火（合成入力・実機） | 最優先。安全装置が壊れた状態で運用を続けない。business-os の不具合なら、公開の Issue ではなく非公開の経路（business-os のリポジトリの Security の「Report a vulnerability」）で報告するよう案内する |
 | 設定の一致 | `.claude/settings.json` の規則を雛形どおりに戻す提案を書く（`/approve` で反映） |
 | 文書の規約 | 該当する文書のフロントマターを直す（憲章なら提案として書く） |
 | 鮮度 | 憲章は `/quarterly`、現況は `/weekly-review`、決定記録は人間が accepted / rejected を決める |
@@ -57,6 +57,8 @@ business-os の点検スクリプトを company に対して実行し、結果�
 | 漏洩 | 秘密が追跡されていたら、すぐ人間に知らせる。履歴の書き換えは CC は行わない |
 | Git | 未コミットの変更を片付ける。`git pull` などは人間が行う |
 | 指示ファイル | CLAUDE.md が長ければ、手順を Skill に、事実を `docs/` に移す提案を書く |
+
+「防衛の発火」以外の分類で、company の設定ではなく business-os そのものの不具合と見られる fail があれば、`/report` で報告できることを案内する。
 
 ## 何を書くか
 
