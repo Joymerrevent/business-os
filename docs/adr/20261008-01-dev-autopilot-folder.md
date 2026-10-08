@@ -52,7 +52,9 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
 1. **置き場所**：リポジトリ直下に開発物のフォルダ `dev-autopilot/` を 1 つ足す。中身は Plugin の形（`.claude-plugin/` `skills/` `agents/` `src/` `fixtures/` `test/` `docs/` `README.md`）で、
    business-os の `.claude-plugin/plugin.json` が指す配布物（`skills/` `agents/` `hooks/`）には入れない。business-os の中身を `dev-autopilot/` から import せず、逆もしない
 2. **配布の扱い**：business-os の marketplace は `source: "./"` でリポジトリ全体を配るので、`dev-autopilot/` も `test/` `evals/` と同じく利用者に配られる。これを受け入れる。
-   そのため `dev-autopilot/` にも業務の固有名詞・秘密を置かず、`check:leak` の対象に含める。Plugin の名札が入れ子になることは、2026-10-08 に `tmp/` に作った偽の Plugin（名札・agent 1 体・Skill 1 つ）で、`claude plugin validate` が通り `--plugin-dir` で agent と Skill が名前空間で動くことを確かめた。
+   そのため `dev-autopilot/` にも業務の固有名詞・秘密を置かず、`check:leak` の対象に含める。
+   配布物を絞るには、Plugin の導入が marketplace の `source` の指すフォルダだけを写す仕組みを使い、配布物をサブフォルダに集めて `source` をそこへ向ける再構成が要る
+   （除外の仕組みは公式の文書に無い。2026-10-09 に確認）。再構成は dev-autopilot の範囲ではなく、別の ADR（20261009-02）で決める。Plugin の名札が入れ子になることは、2026-10-08 に `tmp/` に作った偽の Plugin（名札・agent 1 体・Skill 1 つ）で、`claude plugin validate` が通り `--plugin-dir` で agent と Skill が名前空間で動くことを確かめた。
    dev-autopilot 自身の名札での確認は、名札を置く実装の PR で行う
 3. **文書と ADR の規則**：dev-autopilot の設計判断・構造仕様・使い方は `dev-autopilot/docs/` に置き、business-os の `docs/` には書かない。
    ADR の規則は、分離後も単独で成り立つよう、`dev-autopilot/docs/adr/README.md` に置く別の規則（MADR 4.0.0 の日本語版、`adr-<yyyymmdd>-<nnn>-<title>.md`、参照スタイルのリンク）に従う。
