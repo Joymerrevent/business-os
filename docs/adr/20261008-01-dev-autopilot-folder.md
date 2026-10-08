@@ -49,52 +49,48 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
 
 採用：**案 A**。分離を見越した要件（要件メモの 10 節）を満たしつつ、business-os の `pnpm check` 1 回で dev-autopilot も検査される網を外さずに済むため。
 
-1. **置き場所**：リポジトリ直下に開発物のフォルダ `dev-autopilot/` を 1 つ足す。フォルダの中の構成は dev-autopilot 側の ADR（`dev-autopilot/docs/adr/`）が決め、この ADR では触れない。
-   business-os の `.claude-plugin/plugin.json` が指す配布物（`skills/` `agents/` `hooks/`）には入れない。business-os の中身を `dev-autopilot/` から import せず、逆もしない
+この ADR が決めるのは、business-os が `dev-autopilot/` をどう扱うかだけである。`dev-autopilot/` の中の構成・文書の規則・検査の中身は dev-autopilot 側の ADR（`dev-autopilot/docs/adr/`）が決め、ここには書かない。
+
+1. **置き場所**：リポジトリ直下に開発物のフォルダ `dev-autopilot/` を 1 つ足す。business-os の `.claude-plugin/plugin.json` が指す配布物（`skills/` `agents/` `hooks/`）には入れない。
+   business-os の中身を `dev-autopilot/` から import せず、逆もしない
 2. **配布の扱い**：business-os の marketplace は `source: "./"` でリポジトリ全体を配るので、`dev-autopilot/` も `test/` `evals/` と同じく利用者に配られる。これを受け入れる。
-   そのため `dev-autopilot/` にも業務の固有名詞・秘密を置かず、`check:leak` の対象に含める。
-   配布物を絞るには、Plugin の導入が marketplace の `source` の指すフォルダだけを写す仕組みを使い、配布物をサブフォルダに集めて `source` をそこへ向ける再構成が要る
-   （除外の仕組みは公式の文書に無い。2026-10-09 に確認）。再構成は dev-autopilot の範囲ではなく、別の ADR（20261009-02）で決める。dev-autopilot が自分の Plugin の名札を持っても business-os の `claude plugin validate` が通ることは、2026-10-08 に `tmp/` に作った偽の入れ子の Plugin で確かめた（詳細は dev-autopilot 側の ADR）
-3. **文書と ADR の規則**：dev-autopilot の設計判断・構造仕様・使い方は `dev-autopilot/docs/` に置き、business-os の `docs/` には書かない。
-   ADR の規則は、分離後も単独で成り立つよう、`dev-autopilot/docs/adr/README.md` に置く別の規則（MADR 4.0.0 の日本語版、`adr-<yyyymmdd>-<nnn>-<title>.md`、参照スタイルのリンク）に従う。
-   business-os の `docs/adr/README.md` の規則（`YYYYMMDD-nn-<slug>.md`、4 日付欄、inline リンク）は `dev-autopilot/` に適用しない
-4. **CLAUDE.md の絶対ルールの例外**：`dev-autopilot/` の中に限り、絶対ルール 3 のうち「Markdown のリンクは inline 形式」を適用しない（参照スタイルにする）。
+   そのため `dev-autopilot/` にも業務の固有名詞・秘密を置かず、`check:leak` の対象に含める。配布物を絞る再構成は別の ADR（20261009-02）で決める
+3. **文書と ADR の規則を適用しない**：dev-autopilot の設計判断・構造仕様・使い方は `dev-autopilot/docs/` に置き、business-os の `docs/` には書かない。
+   business-os の `docs/adr/README.md` の規則（ファイル名、フロントマターの 4 日付欄、本文の構成）と、`docs/` を見る検査（`check:adr` `check:docs` `check:usage`）は `dev-autopilot/` に適用しない。
+   dev-autopilot の文書の規則は dev-autopilot 側が持つ
+4. **CLAUDE.md の絶対ルールの例外**：`dev-autopilot/` の中に限り、絶対ルール 3 のうち「Markdown のリンクは inline 形式」を適用しない。
    絶対ルール 2（bash を足さない、TypeScript を Node 24 で直接実行）と、シンボリックリンク禁止・相対パス・LF は `dev-autopilot/` にも適用する。
    この例外は、accepted の後に CLAUDE.md の絶対ルール 3 に 1 行で書く
-5. **検査は dev-autopilot 自身が持ち、business-os はそれを呼ぶだけ**：`dev-autopilot/` を pnpm の workspace のパッケージにし、自分の `package.json`（`check` スクリプト）・`tsconfig.json`・`vitest.config.ts`・`.markdownlint-cli2.jsonc` を持つ。
-   型検査・vitest・markdownlint は dev-autopilot の `check` が回す。business-os の `package.json` には `check:dev-autopilot`（`pnpm --filter dev-autopilot check`）を 1 つ足し、
-   `pnpm check` が正典という規則と CI は変えない。business-os の tsconfig と vitest の include には `dev-autopilot/` を足さない。分離するときは `check:dev-autopilot` の 1 行を消すだけで済む。
-   business-os の `check:md`（markdownlint）は `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定で `dev-autopilot/` の下だけ参照スタイルを許す
-   （markdownlint-cli2 は下位フォルダの設定ファイルをそのフォルダ以下に適用する。2026-10-08 に `pnpm check:md` と pre-commit の両方で確かめた）。
-   `check:adr` `check:docs` `check:usage` は `docs/` だけを見るので変えない。
-   `check:format` `check:lint` `check:leak` `check:shell` はリポジトリ全体の衛生の検査なので root のまま `dev-autopilot/` にも効かせる（bash を置かない、秘密を置かない、整形と lint は同じ）。
-   分離後は dev-autopilot 側が project-recipes で同じものを入れる。
+5. **検査は呼ぶだけ**：business-os の `package.json` に `check:dev-autopilot`（`pnpm --filter dev-autopilot check`）を 1 つ足し、`pnpm check` が正典という規則と CI は変えない。
+   dev-autopilot を pnpm の workspace のパッケージにし、型検査・vitest・Markdown の検査は dev-autopilot 自身の `check` が回す。business-os の tsconfig と vitest の include には `dev-autopilot/` を足さない。
+   リポジトリ全体の衛生の検査（`check:format` `check:lint` `check:leak` `check:shell` `check:md`）は root のまま `dev-autopilot/` にも効かせる。
+   `check:md` のリンクの形式は、`dev-autopilot/` に置く入れ子の markdownlint の設定が決め、root の設定は変えない（markdownlint-cli2 は下位フォルダの設定ファイルをそのフォルダ以下に適用する。2026-10-08 に `pnpm check:md` と pre-commit の両方で確かめた）。
    workspace のパッケージを足すと root のロックファイルが変わるが、依存は root と共有するので増えない
 6. **構造仕様と地図の更新**：accepted の後、[構造仕様の 3.1 節](../design/architecture.md#31-配布物と開発物)の開発物の列に `dev-autopilot/` を足し、「文書と ADR の規則はフォルダの中の規則に従う」と 1 行書く。
    CLAUDE.md の「何がどこにあるか」にも `dev-autopilot/` の 1 行を足し、「設計判断は `dev-autopilot/docs/adr/` が正典で、絶対ルール 1 はそのフォルダの ADR にも及ぶ」と書く（絶対ルール 1 の `docs/adr/` だけでは `dev-autopilot/docs/adr/` を覆わないため）
-7. **分離の時期**：要件メモの段階 5（進行役のマージ）まで business-os で動かし、設定ファイルの項目だけで別のリポジトリに適用できると確かめてから分離する。分離するときは、この ADR を「分離した」ADR で置き換える
+7. **分離**：別のリポジトリへ分離する時期と方法は dev-autopilot 側が決める。分離したら、business-os 側は `dev-autopilot/` と `check:dev-autopilot` の 1 行を消し、この ADR を「分離した」ADR で置き換える
 
 ## 影響
 
 - 良い影響
-  - dev-autopilot の文書・規則・テストがフォルダに閉じ、分離がフォルダの移動で済む
+  - dev-autopilot の文書・規則・検査がフォルダに閉じ、分離がフォルダの削除と `check:dev-autopilot` の 1 行の削除で済む
   - business-os の配布物と利用者向けの文書に、dev-autopilot の記述が混ざらない
-  - business-os の `pnpm check` 1 回で dev-autopilot の検査も走るので、壊れたコードが `develop` に入らない。検査の設定は dev-autopilot の中にあり、分離でそのまま移る
+  - business-os の `pnpm check` 1 回で dev-autopilot の検査も走るので、壊れたコードが `develop` に入らない。business-os は検査の中身を持たず、結果だけを見る
 - 悪い影響
-  - リポジトリの中に Markdown と ADR の規則が 2 つ並ぶ。読む人は「どちらのフォルダか」で規則を使い分ける
-  - `dev-autopilot/` も利用者に配られる。配布物の量が増える（テキストのみ）。分離後に `source` を絞る案は dev-autopilot 側で扱う
-  - 検査の設定が 1 組増える（dev-autopilot の `package.json`・tsconfig・vitest・markdownlint）。分離後にそのまま使えるので無駄にはならない。リンクの形式以外の markdownlint の規則は root の設定が `dev-autopilot/` にも効く
+  - リポジトリの中に文書と検査の規則が 2 組並ぶ。読む人は「`dev-autopilot/` の中か」で規則を使い分ける
+  - `dev-autopilot/` も利用者に配られる。配布物の量が増える（テキストのみ）。絞るのは ADR 20261009-02
+  - CLAUDE.md の絶対ルール 3 に例外が 1 つ入る
 - その他
-  - dev-autopilot の ADR の起票 PR は、入れ子の markdownlint の設定（決定 5）を同じ PR に含める。設定が無いと pre-commit と `check:md` が参照スタイルのリンクで止まり、起票そのものができないため。
+  - dev-autopilot の ADR の起票 PR は、入れ子の markdownlint の設定を同じ PR に含める。設定が無いと pre-commit と `check:md` が参照スタイルのリンクで止まり、起票そのものができないため。
     起票 PR のマージは、この ADR の accepted の後にする
-  - dev-autopilot の中身の設計判断は、`dev-autopilot/docs/adr/` の ADR（adr-20261008-001 〜 009）で決める。business-os 側が持つ dev-autopilot の ADR はこの 1 本だけ
+  - dev-autopilot の中身の設計判断は、`dev-autopilot/docs/adr/` の ADR で決める。business-os 側が持つ dev-autopilot の ADR はこの 1 本だけ
 
 ## 案ごとの長所と短所
 
 ### 案 A：開発物のフォルダ `dev-autopilot/` に閉じる
 
-- 長所：分離がフォルダの移動と `check:dev-autopilot` の 1 行の削除で済む。配布物に混ざらない。検査の網は残る
-- 短所：Markdown と ADR の規則が 2 つ並ぶ。`dev-autopilot/` も配布される
+- 長所：分離がフォルダの削除と `check:dev-autopilot` の 1 行の削除で済む。配布物に混ざらない。検査の網は残る。business-os は中身を知らなくてよい
+- 短所：文書と検査の規則が 2 組並ぶ。`dev-autopilot/` も配布される
 
 ### 案 B：既存の置き場に分散する
 
