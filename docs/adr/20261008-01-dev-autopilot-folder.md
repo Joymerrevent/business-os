@@ -57,7 +57,9 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
    絶対ルール 2（bash を足さない、TypeScript を Node 24 で直接実行）と、シンボリックリンク禁止・相対パス・LF は `dev-autopilot/` にも適用する。
    この例外は、accepted の後に CLAUDE.md の絶対ルール 3 に 1 行で書く
 5. **検査は 2 層**：business-os の `pnpm check` は、`dev-autopilot/**/*.ts` の型検査（tsconfig の include）と `dev-autopilot/**/*.test.ts` の vitest（vitest の include）を対象にする。
-   `check:md`（markdownlint）は `dev-autopilot` を `ignores` に足して対象から外し、`dev-autopilot/` に自分の markdownlint の設定を置く。`check:adr` `check:docs` `check:usage` は `docs/` だけを見るので変えない。
+   `check:md`（markdownlint）は、`dev-autopilot/.markdownlint-cli2.jsonc` に MD054（リンクの形式）の設定を置き、入れ子の設定で `dev-autopilot/` の下だけ参照スタイルを許す
+   （markdownlint-cli2 は下位フォルダの設定ファイルをそのフォルダ以下に適用する。root の `ignores` に足す方法より狭く、`dev-autopilot/` の Markdown がほかの規則で検査されなくなることも避けられる。2026-10-08 に `pnpm check:md` と pre-commit の両方で確かめた）。
+   `check:adr` `check:docs` `check:usage` は `docs/` だけを見るので変えない。
    `check:shell` `check:leak` `check:format` `check:lint` は `dev-autopilot/` も対象のまま（bash を置かない、秘密を置かない、整形と lint は同じ）
 6. **構造仕様の更新**：accepted の後、[構造仕様の 3.1 節](../design/architecture.md#31-配布物と開発物)の開発物の列に `dev-autopilot/` を足し、「文書と ADR の規則はフォルダの中の規則に従う」と 1 行書く
 7. **分離の時期**：要件メモの段階 5（進行役のマージ）まで business-os で動かし、設定ファイルの項目だけで別のリポジトリに適用できると確かめてから分離する。分離するときは、この ADR を「分離した」ADR で置き換える
@@ -71,10 +73,10 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
 - 悪い影響
   - リポジトリの中に Markdown と ADR の規則が 2 つ並ぶ。読む人は「どちらのフォルダか」で規則を使い分ける
   - `dev-autopilot/` も利用者に配られる。配布物の量が増える（テキストのみ）。分離後に `source` を絞る案は dev-autopilot 側で扱う
-  - markdownlint の設定が 2 つになり、`dev-autopilot/` の Markdown の検査は dev-autopilot 自身の検査に頼る
+  - markdownlint の設定が 2 つになる（root と `dev-autopilot/` の入れ子）。リンクの形式以外の規則は root の設定が `dev-autopilot/` にも効く
 - その他
-  - この ADR が accepted になるまで、`dev-autopilot/docs/adr/` の参照スタイルのリンクは business-os の `check:md` で落ちる。
-    dev-autopilot の ADR の起票 PR は、この ADR の accepted と決定 5 の実装（`ignores` の追加）の後にマージする
+  - dev-autopilot の ADR の起票 PR は、入れ子の markdownlint の設定（決定 5）を同じ PR に含める。設定が無いと pre-commit と `check:md` が参照スタイルのリンクで止まり、起票そのものができないため。
+    起票 PR のマージは、この ADR の accepted の後にする
   - dev-autopilot の中身の設計判断は、`dev-autopilot/docs/adr/` の ADR（adr-20261008-001 〜 009）で決める。business-os 側が持つ dev-autopilot の ADR はこの 1 本だけ
 
 ## 案ごとの長所と短所
