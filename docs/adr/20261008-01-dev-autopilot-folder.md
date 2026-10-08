@@ -3,11 +3,11 @@ id: 20261008-01
 title: 自律開発ループ dev-autopilot を開発物のフォルダ dev-autopilot/ に置き、設計判断と文書の規則をそのフォルダに閉じる
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 as_of: 2026-10-08
-verified: n/a
+verified: 2026-10-09
 supersedes: n/a
 ---
 
