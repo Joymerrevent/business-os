@@ -24,6 +24,9 @@ dev-autopilot は business-os の開発にだけ使う道具で、business-os �
 business-os のリポジトリは、配布物（`.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/`）と開発物（`.claude/` `test/` `evals/` `docs/` など）を
 [構造仕様の 3.1 節](../design/architecture.md#31-配布物と開発物)で分け、開発専用の Skill は `.claude/skills/` に置くと決めている。
 文書は `docs/adr/`（ADR）と `docs/design/`（構造仕様）が正典で、Markdown のリンクは inline 形式、bash スクリプトは足さない（CLAUDE.md の絶対ルール 2・3）。
+inline 形式の規則は 2026-09-30 の PR #2 で入り、理由は記録されていない。同じ日に決めた構造仕様 9 節「リンクは標準 Markdown、`[[wikilink]]` は使わない」と
+Obsidian アダプタの `useMarkdownLinks: true` から、company の文書を Obsidian で開いたときにリンクの追従（バックリンク・改名時の書き換え）が効く形に合わせたものと判断する。
+Obsidian の公式ヘルプが内部リンクとして挙げる書式は Wikilink と Markdown リンクの 2 つだけで、参照スタイルは挙げられていない（2026-10-09 に確認）。
 
 dev-autopilot をこのリポジトリのどこに置き、既存の規則（置き場所・文書の形式・検査）をどこまで適用するかを決める。
 dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵と隔離、レビューの判定、マージの条件など）は、この ADR では決めない。
