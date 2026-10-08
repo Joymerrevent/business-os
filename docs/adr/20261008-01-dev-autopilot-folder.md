@@ -49,7 +49,8 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
 
 採用：**案 A**。分離を見越した要件（要件メモの 10 節）を満たしつつ、business-os の検査の網（型・vitest）を外さずに済むため。
 
-1. **置き場所**：リポジトリ直下に開発物のフォルダ `dev-autopilot/` を 1 つ足す。中身は Plugin の形（`.claude-plugin/` `skills/` `agents/` `src/` `fixtures/` `test/` `docs/` `README.md`）で、
+1. **置き場所**：リポジトリ直下に開発物のフォルダ `dev-autopilot/` を 1 つ足す。中身は、配布物を `plugin/`（`.claude-plugin/` `skills/` `agents/`）に閉じ、
+   進行役の `src/`・`fixtures/`・`test/`・`docs/`・`README.md` をその外に置く形（ADR 20261009-02 と同じ考え方。dev-autopilot では最初からこの形にする）で、
    business-os の `.claude-plugin/plugin.json` が指す配布物（`skills/` `agents/` `hooks/`）には入れない。business-os の中身を `dev-autopilot/` から import せず、逆もしない
 2. **配布の扱い**：business-os の marketplace は `source: "./"` でリポジトリ全体を配るので、`dev-autopilot/` も `test/` `evals/` と同じく利用者に配られる。これを受け入れる。
    そのため `dev-autopilot/` にも業務の固有名詞・秘密を置かず、`check:leak` の対象に含める。
