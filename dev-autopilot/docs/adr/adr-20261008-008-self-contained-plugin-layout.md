@@ -31,7 +31,7 @@ dev-autopilot が動く前提（ラベル、Project の欄、ruleset、設定フ
 - リポ固有の値がコードに残らず、2 つ目の適用先に設定ファイルだけで適用できること（10 節「守ること」2、「分離の時期の目安」）
 - 配布物の名札（`.claude-plugin/plugin.json`）が指す Skill・agent・hook に dev-autopilot が混ざらないこと（12 節 判断 3）
 - 導入と点検を人の記憶に頼らず、機械で冪等に行えること（4.9 節 S1〜S4）
-- 検査の対象から外れる領域を作らないこと（10 節「守ること」4。検査は 2 層）
+- 検査の対象から外れる領域を作らないこと（10 節「守ること」4。検査は dev-autopilot が持ち、business-os はそれを呼ぶ）
 
 ## 検討した選択肢（Considered Options）
 
@@ -85,7 +85,13 @@ dev-autopilot/
 3. **起動は Plugin として。** 進行役は `claude -p --plugin-dir <dev-autopilot のパス>/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。
    配布物は `plugin/`（名札・Skill・agent）に閉じ、進行役の `src/`・テスト・前提データ・文書は配らない（business-os の ADR 20261009-02 と同じ考え方。dev-autopilot では最初からこの形にする）。
    人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行役を動かすときは、設定ファイルの `devAutopilotPath`（dev-autopilot のフォルダの場所。分離前は `./dev-autopilot`、分離後は専用マシンの clone）から `src/` の場所を知る。Plugin のパスを手順に埋め込まない。
-4. **検査は 2 層。** いまは business-os の `pnpm check` が `dev-autopilot/` の型検査と vitest を対象にする（tsconfig の include に `dev-autopilot/**/*.ts`、vitest の include に `dev-autopilot/**/*.test.ts` を足す）。markdownlint は `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定で `dev-autopilot/` の下だけ参照スタイルのリンク（MD054）を許す（markdownlint-cli2 は下位フォルダの設定をそのフォルダ以下に適用する。2026-10-08 に `check:md` と pre-commit で確認）。`check:adr`・`check:docs` は `dev-autopilot/` を対象から外す。分離したら dev-autopilot 自身の `check` にする。dev-autopilot のテストは `dev-autopilot/` の中に置き、business-os の `test/` に混ぜない。
+4. **検査は dev-autopilot 自身が持ち、business-os はそれを呼ぶだけ。** `dev-autopilot/` を pnpm の workspace のパッケージにし、自分の `package.json`（`check` スクリプト）・`tsconfig.json`・`vitest.config.ts`・`.markdownlint-cli2.jsonc` を持つ。
+   型検査・vitest・markdownlint（参照スタイルのリンク）は dev-autopilot の `check` が回す。business-os の `package.json` には `check:dev-autopilot`（`pnpm --filter dev-autopilot check`）を 1 つ足すだけで、
+   business-os の tsconfig と vitest の include には `dev-autopilot/` を足さない。分離するときは `check:dev-autopilot` の 1 行を消すだけで済む（2026-10-09 の決定。橋渡し ADR 20261008-01 の決定 5 と同じ）
+   - 単体テストは対象のコードの隣（`xxx.ts` → `xxx.test.ts`）。配布への影響は無い（配布物は `plugin/` に閉じ、`src/` は配られない）
+   - 結合テスト（偽の `gh` と使い捨てのリポで進行役を端から端まで回す）だけ `test/` に置く。前提データは `fixtures/`
+   - business-os の `check:format` `check:lint` `check:leak` `check:shell` はリポジトリ全体の衛生の検査なので、root のまま `dev-autopilot/` にも効く。分離後は dev-autopilot 側が project-recipes で同じものを入れる
+   - business-os の `check:md` は入れ子の `dev-autopilot/.markdownlint-cli2.jsonc` で `dev-autopilot/` の下だけ参照スタイルを許す（markdownlint-cli2 は下位フォルダの設定をそのフォルダ以下に適用する。2026-10-08 に `check:md` と pre-commit で確認）
 5. **文書は dev-autopilot のフォルダに閉じる。** ADR・構造仕様・使い方は `dev-autopilot/docs/` と `dev-autopilot/README.md` に置き、business-os の `docs/` には書かない。ADR の規則はメンテナの個人設定（`~/.claude`）の `adr-docs` レシピに従う：ファイル名 `adr-<yyyymmdd>-<nnn>-<title>.md`、frontmatter は `status` `created` `updated` `decision-makers` `consulted` `informed`、リンクは参照スタイル。レシピの 3 ファイル（`README.md` `index.md` `adr-template.md`）は初回だけ写して置き、以後 `~/.claude` に依存しない。business-os 側に書く ADR は橋渡しの 1 本だけで、business-os の規則で書き、中身の判断には踏み込まない。
 6. **`/verify-issue` との分担。** 汎用の部分（指示の混入の検査、作業指示の下書き、`agent-ready` の付与）は `dev-autopilot:intake` に置く。business-os の `/verify-issue` は business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初と最後で `dev-autopilot:intake` を呼ぶ。
 7. **Skill は Plugin に同封する。** 進行役・agent・Skill は印の形（4.3 節 R3-3。正本は `dev-autopilot/src/marker.ts` の 1 定数）や引数で結びついていて、版がずれると黙って壊れるため、Plugin の 1 つの版で一緒に検査し、一緒に配る。別に公開して組み合わせる形は採らない。単体で使う価値があるのは `review` だけなので、`review` は手順の本体を単体で成り立たせ、dev-autopilot 向けの部分（構造化出力、無人の入力、agent の名前）は引数で渡されたときだけ使う。`${CLAUDE_PLUGIN_ROOT}` や agent の名前を手順の本体に埋め込まない。分離後は skills CLI で `skills/review/` を単体導入できるので、別の場所へ写さない。
@@ -121,14 +127,14 @@ dev-autopilot/
 - 悪い点: business-os の利用者にも `dev-autopilot/` が配られる。固有名詞と秘密を置かない規則と `check:leak` で守る。
 - 悪い点: business-os の中に、Markdown の規約（参照スタイル）と ADR の規則（ファイル名・frontmatter）が異なる領域が 1 つできる。例外は橋渡し ADR と CLAUDE.md の 1 行で明示し、参照スタイルの許可は `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定で `dev-autopilot/` の下に限る。
 - 悪い点: `hooks/lib` `scripts/lib` の関数を dev-autopilot 側にも持つため、同じ処理が 2 か所に存在しうる。分離の前提として受け入れる。
-- 中立: tsconfig と vitest の include の変更は、本 ADR と橋渡し ADR の accepted 後に実装の PR で行う。入れ子の markdownlint の設定（`dev-autopilot/.markdownlint-cli2.jsonc`）だけは起票 PR（#83）に含める。設定が無いと pre-commit と `check:md` が参照スタイルのリンクで止まり、起票そのものができないため（橋渡し ADR の判断）。
+- 中立: dev-autopilot を workspace のパッケージにする設定（`package.json`・tsconfig・vitest）と business-os の `check:dev-autopilot` は、本 ADR と橋渡し ADR の accepted 後に実装の PR で行う。入れ子の markdownlint の設定（`dev-autopilot/.markdownlint-cli2.jsonc`）だけは起票 PR（#83）に含める。設定が無いと pre-commit と `check:md` が参照スタイルのリンクで止まり、起票そのものができないため（橋渡し ADR の判断）。
 
 ### 確認方法（Confirmation）
 
 - `claude plugin validate` が `dev-autopilot/plugin/` で通り、`claude -p --plugin-dir dev-autopilot/plugin --agent dev-autopilot:worker` が動く（0b では `tmp/` の偽の Plugin で確認済み。実装の PR で dev-autopilot 自身の名札で再確認する）。
 - `dev-autopilot/src/` と `dev-autopilot/test/` に、business-os の `hooks/` `scripts/` を指す import が無いことを grep で確かめる（`check` の項目にする）。
 - `.claude/dev-autopilot.json` に 10 節「守ること」2 の項目がすべてあり、ID が実在することを `check` が確かめる。
-- business-os の `pnpm check` で `dev-autopilot/**/*.ts` の型検査と `dev-autopilot/**/*.test.ts` が走り、`check:adr`・`check:docs` が `dev-autopilot/` を対象にせず、markdownlint が `dev-autopilot/` の下で入れ子の設定（`dev-autopilot/.markdownlint-cli2.jsonc`。参照スタイルを許す）を使うことを、設定ファイルの実物で確かめる。
+- business-os の `pnpm check` が `check:dev-autopilot` 経由で dev-autopilot の `check`（型検査・vitest・markdownlint）を回し、business-os の tsconfig と vitest の include に `dev-autopilot/` が無く、`check:adr`・`check:docs` が `dev-autopilot/` を対象にせず、markdownlint が `dev-autopilot/` の下で入れ子の設定（`dev-autopilot/.markdownlint-cli2.jsonc`。参照スタイルを許す）を使うことを、設定ファイルの実物で確かめる。
 - `setup` を 2 回続けて実行しても 2 回目が何も作らないこと、作った後の読み戻しが実物と一致することを、結合テスト（`dev-autopilot/test/`）で確かめる。
 - `check` が、sandbox の中で `~/.ssh`・PAT の置き場（ADR-20261008-004）・`gh` の設定の実体を読めないことを、読み取りを試して確かめる（書いてあることではなく、実際に読めないこと）。
 - `check` が deploy key で push できることを、使い捨てのブランチへの push と削除で確かめる。
@@ -141,11 +147,11 @@ dev-autopilot/
 ### 案 A: business-os の中の 1 つのフォルダに Plugin の形で閉じ、後で分離する
 
 - 良い点: 最初の適用先（business-os）で動かしながら、固有の値を設定ファイルに出し切れたかを確かめられる。
-- 良い点: business-os の `pnpm check` と CI をそのまま使え、検査の対象から外れる領域を作らない。
+- 良い点: business-os の `pnpm check` と CI をそのまま使え（dev-autopilot の `check` を呼ぶだけ）、検査の対象から外れる領域を作らない。
 - 良い点: 分離はフォルダを移すだけで、Plugin の名札・Skill・agent・文書が揃ったまま移る。
 - 中立: 入れ子の Plugin の扱いは Claude Code の挙動に依存する。0b で動くことを確かめた。
 - 悪い点: business-os の利用者にも配られる。固有名詞と秘密を置かない規則で守る。
-- 悪い点: business-os の検査設定（tsconfig、vitest）に dev-autopilot 向けの項目が入り、分離のときに外す作業が要る。入れ子の markdownlint の設定は `dev-autopilot/` の中にあるので、フォルダごと移る。
+- 悪い点: 検査の設定が 1 組増える（dev-autopilot の `package.json`・tsconfig・vitest・markdownlint）。分離後はそのまま使えるので無駄にはならず、business-os 側に残るのは `check:dev-autopilot` の 1 行だけ。
 
 ### 案 B: 最初から別リポジトリで作る
 
@@ -170,7 +176,7 @@ dev-autopilot/
 
 - 決定の元になった一次情報は [要件メモ][memo] の 4.9 節・6 節・10 節・12 節（判断 3・判断 5・0b の実機の結果）と、5 節の P7・P14 である。
 - 要件メモ 2 節の「エージェント定義を開発専用の `.claude/agents/` に置く」は、10 節の決定（`dev-autopilot/agents/`）で置き換わっている。本 ADR は 10 節に従う。
-- business-os 側の橋渡し ADR は、business-os の規則（`docs/adr/README.md`、`YYYYMMDD-nn-<slug>.md`、4 日付欄、inline リンク）で別に起票する。本 ADR と橋渡し ADR の両方が accepted になってから、tsconfig・vitest の設定変更と `setup` `check` の実装に入る（7 節の段階 0a → 0c）。
+- business-os 側の橋渡し ADR は、business-os の規則（`docs/adr/README.md`、`YYYYMMDD-nn-<slug>.md`、4 日付欄、inline リンク）で別に起票する。本 ADR と橋渡し ADR の両方が accepted になってから、workspace のパッケージ化と `setup` `check` の実装に入る（7 節の段階 0a → 0c）。
 - 段階 0a は、橋渡し ADR 1 本（business-os 側）と dev-autopilot の ADR 9 本の起票である。
 - 段階 0b（薄切り）のうち、2026-10-08 に `tmp/` の偽の Plugin とローカル clone で確かめたもの：未信頼の worktree で deny が効く、入れ子の Plugin と名前空間、`-p` からのサブエージェント、`--max-budget-usd`、sandbox 下で `check:types` と署名なし commit。
 - 段階 0b の残る確認：worktree での denyWrite と commit、鍵と PAT の置き場の denyRead、`--setting-sources user`、`--max-turns` の実効、PAT で Organization の Project。残る確認が済んでから 0c（`setup` と `check` の実装と、`setup` による準備。`check` が business-os で全項目 pass したら出口）に入る。

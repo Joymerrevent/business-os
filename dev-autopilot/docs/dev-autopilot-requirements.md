@@ -395,13 +395,13 @@ dev-autopilot/
    分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。
    配布物は `plugin/` に閉じ（business-os の ADR 20261009-02 と同じ考え方）、進行役の `src/`・テスト・前提データ・文書は配らない。
    人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行役を動かすときは、設定ファイルの `devAutopilotPath`（dev-autopilot のフォルダの場所。分離前は `./dev-autopilot`、分離後は専用マシンの clone）から `src/` の場所を知る。Plugin のパスを手順に埋め込まない
-4. **検査は 2 層。** いまは business-os の `pnpm check` が `dev-autopilot/` も対象にする（tsconfig の include に `dev-autopilot/**/*.ts`、vitest の include に `dev-autopilot/**/*.test.ts` を足す）。分離したら dev-autopilot 自身の `check` にする。
-   そのため dev-autopilot のテストは `dev-autopilot/` の中に置き、business-os の `test/` に混ぜない
-   - 単体テストは対象のコードの隣（`xxx.ts` → `xxx.test.ts`）。配布への影響は無い。
-     Plugin の導入は marketplace の `source` が指すフォルダを丸ごと写すので（business-os も `source: "./"` で `test/` `evals/` `docs/` ごと配られている）、
-     テストを `src/` の隣に置いても `test/` に分けても、配られる量は変わらない。何が配られるかを決めるのはファイルの置き場ではなく `source` の指す先
-   - 配布物は最初から `plugin/` に閉じる（2026-10-09 の決定）。分離後は `source` を `./plugin` に向けるだけで、開発物（`src/` `test/` `fixtures/` `docs/`）は配られない
-   - 結合テスト（偽の `gh` と使い捨てのリポで進行役を端から端まで回す）だけ `dev-autopilot/test/` に置く。前提データは `dev-autopilot/fixtures/`
+4. **検査は dev-autopilot 自身が持ち、business-os はそれを呼ぶだけ。** `dev-autopilot/` を pnpm の workspace のパッケージにし、自分の `package.json`（`check` スクリプト）・`tsconfig.json`・`vitest.config.ts`・`.markdownlint-cli2.jsonc` を持つ。
+   型検査・vitest・markdownlint（参照スタイルのリンク）は dev-autopilot の `check` が回す。business-os の `package.json` には `check:dev-autopilot`（`pnpm --filter dev-autopilot check`）を 1 つ足すだけで、
+   business-os の tsconfig と vitest の include には `dev-autopilot/` を足さない。分離するときは `check:dev-autopilot` の 1 行を消すだけで済む（2026-10-09 の決定。橋渡し ADR 20261008-01 の決定 5 と同じ）
+   - 単体テストは対象のコードの隣（`xxx.ts` → `xxx.test.ts`）。配布への影響は無い（配布物は `plugin/` に閉じ、`src/` は配られない）
+   - 結合テスト（偽の `gh` と使い捨てのリポで進行役を端から端まで回す）だけ `test/` に置く。前提データは `fixtures/`
+   - business-os の `check:format` `check:lint` `check:leak` `check:shell` はリポジトリ全体の衛生の検査なので、root のまま `dev-autopilot/` にも効く。分離後は dev-autopilot 側が project-recipes で同じものを入れる
+   - business-os の `check:md` は入れ子の `dev-autopilot/.markdownlint-cli2.jsonc` で `dev-autopilot/` の下だけ参照スタイルを許す（markdownlint-cli2 は下位フォルダの設定をそのフォルダ以下に適用する。2026-10-08 に `check:md` と pre-commit で確認）
 5. **文書は dev-autopilot のフォルダに閉じる。** dev-autopilot の設計判断（ADR）、構造仕様、使い方は `dev-autopilot/docs/` に置き、business-os の `docs/` には書かない。
    分離するときはフォルダごと移るので、写しも supersede も要らない
    - **ADR の規則は、利用者の全体設定の新しい規則（`project-recipes` の `adr-docs` レシピ）に従う。** business-os の旧規則（`YYYYMMDD-nn-<slug>.md`、4 日付欄）ではなく、
@@ -416,7 +416,7 @@ dev-autopilot/
    - **business-os の検査から `dev-autopilot/` を外し、dev-autopilot 自身の検査に持たせる。** business-os の `.markdownlint-cli2.jsonc` は `**/*.md` に MD054 の inline を強制しており、
      参照スタイルの dev-autopilot の文書と衝突する。business-os 側の `ignores` に `dev-autopilot` を足し、dev-autopilot には自分の markdownlint の設定（`md-lint-format` レシピ、MD054 は参照スタイル）を置く。
      **訂正（2026-10-08）**: 実装は root の ignores ではなく `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定（橋渡し ADR 20261008-01 の決定 5）。決定は変わらない。
-     `check:adr` `check:docs` も `docs/` しか見ないので同じ扱い。これは「検査は 2 層」（上の 4）の具体化
+     `check:adr` `check:docs` も `docs/` しか見ないので同じ扱い。これは上の 4 の具体化
    - business-os 側に書く ADR は **1 本だけ**：「dev-autopilot を開発物のフォルダ `dev-autopilot/` に置き、設計判断と文書はそのフォルダに閉じる。Markdown と ADR の規則は dev-autopilot 側の規則に従い、
      business-os の検査は `dev-autopilot/` を対象から外す。TypeScript の型検査と vitest は business-os の `pnpm check` が対象にする」。
      この 1 本は business-os の規則（`docs/adr/README.md`、`YYYYMMDD-nn-<slug>.md`、4 日付欄、inline リンク）で書く。中身の判断には踏み込まない
