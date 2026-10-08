@@ -60,7 +60,7 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 
 - 実行環境：いまは手元の cron（macOS では launchd）で進行役を起動する。将来は専用マシンで同じものを回す。クラウドの仕組み（Routine、claude-code-action）は土台にせず、8 節の検討事項に残す。
 - モデル：レビュー AI は最上位のモデル（`fable`、無ければ `opus`）。作業 AI は `opus` 以下。設定には別名で書き、版番号を書かない。作業 AI を `opus` と `sonnet` のどちらから始めるかは段階 2 で品質を見て決める（8 節）。
-- エージェント定義：作業用・レビュー用・批評者の定義（`worker.md` `reviewer.md` `critic.md`）は dev-autopilot 自身の `agents/` に置く（10 節の構成）。business-os の配布物の `agents/` には入れない。進行役は `claude -p --plugin-dir <dev-autopilot のパス> --agent dev-autopilot:<役>` のように、Plugin の名前空間で自分の agent を呼ぶ。
+- エージェント定義：作業用・レビュー用・批評者の定義（`worker.md` `reviewer.md` `critic.md`）は dev-autopilot 自身の `plugin/agents/` に置く（10 節の構成。配布物は `plugin/` に閉じる）。business-os の配布物の `agents/` には入れない。進行役は `claude -p --plugin-dir <dev-autopilot のパス>/plugin --agent dev-autopilot:<役>` のように、Plugin の名前空間で自分の agent を呼ぶ。
 - セッションの上限：費用は `--max-budget-usd`、時間は進行役が子プロセスを止めることで止める。ターンの上限 `--max-turns` は `claude --help` に無く、パーサは受け付ける。実際に効くかは段階 0b の残る確認 (d) で確かめる。効かなければ、`--max-budget-usd` と進行役の時間停止を一次手段にする。
 
 ### 運用の規則（要件メモ 12 節「運用の規則（新規）」）

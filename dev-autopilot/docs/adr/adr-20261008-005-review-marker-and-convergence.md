@@ -148,7 +148,7 @@ Copilot code review や CodeRabbit が使う形。マージ要件と連動する
 - ADR-20261008-003：進行役だけが GitHub に書き、進行役が投稿したコメントからだけ印を読む規則（印の真正性）。出力契約の形もそこで定める
 - ADR-20261008-002：レビュー AI に渡す文の境界。再レビューの入力（R3-6）は両方の ADR で同じ文にしてある
 - 要件メモ 4.3 節・4.4 節・5 節 P9・9 節：[dev-autopilot 要件メモ][memo]
-- レビューの Skill の正本は `dev-autopilot/skills/review/`（10 節）。印の形の正本は `dev-autopilot/src/marker.ts`。構造化出力のスキーマの変更は Skill と進行役を同じ PR で直す
+- レビューの Skill の正本は `dev-autopilot/plugin/skills/review/`（10 節）。印の形の正本は `dev-autopilot/src/marker.ts`。構造化出力のスキーマの変更は Skill と進行役を同じ PR で直す
 
 ### 見直しの時期
 

@@ -89,7 +89,7 @@ dev-autopilot は、進行役（cron が起動する Node のスクリプト。A
 
 ### 確認方法（Confirmation）
 
-- 段階 0b（2026-10-08 に確認済み。ADR「[進行役は決定的なスクリプトにし、AI は作業・レビュー・批評の 3 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles]」（ADR-20261008-001）の段階表）で、進行役なし・GitHub 書き込みなしで `claude -p --plugin-dir dev-autopilot --agent dev-autopilot:worker` が入れ子の Plugin で動き、`--output-format json` で結果が返ることを実機で確かめた。`--json-schema` のスキーマ検査は段階 0c の実装で vitest に入れる
+- 段階 0b（2026-10-08 に確認済み。ADR「[進行役は決定的なスクリプトにし、AI は作業・レビュー・批評の 3 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles]」（ADR-20261008-001）の段階表）で、進行役なし・GitHub 書き込みなしで `claude -p --plugin-dir <サブフォルダ> --agent dev-autopilot:worker` が入れ子の Plugin で動き（`tmp/` の偽の Plugin。実装では `dev-autopilot/plugin` を指す）、`--output-format json` で結果が返ることを実機で確かめた。`--json-schema` のスキーマ検査は段階 0c の実装で vitest に入れる
 - 進行役の判定の実装（スキーマ検査と「実行の失敗」への分類、題名の規約の検査、印の組み立て、`<!-- dev-autopilot:` の除去、コメント ID からだけ印を読むこと）を vitest で検査する。結合テストは偽の `gh` を差し替えて進行役を端から端まで回す（10 節）
 - `/dev-autopilot check` が、AI のセッションに `GH_TOKEN` が渡っていないことと `gh` が認証されていないことを確かめる。確かめ方は「設定に書いてある」ではなく「実際に使えない」ことを試す（6 節）
 - 作業 AI・レビュー AI のセッションで `gh`、`claude`（再帰起動）、`git push` を使えないことを、vitest（進行役が渡す `--allowedTools` と安全設定の点検）と `check`（sandbox の中で実際に試す）で確かめる

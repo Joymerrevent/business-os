@@ -43,13 +43,13 @@ dev-autopilot のレビュー AI は、作業 AI とは別の作業場所で PR 
 
 ## 検討した選択肢（Considered Options）
 
-- 案 A：`change-review` の核を残して v2 に組み直し、`dev-autopilot/skills/review/` に同封する
+- 案 A：`change-review` の核を残して v2 に組み直し、`dev-autopilot/plugin/skills/review/` に同封する
 - 案 B：現行の `change-review` に最小の修正だけ入れる（S1〜S3 の解消のみ）
 - 案 C：外部の Skill（組み込みの `/code-review` か mattpocock の `code-review`）をそのまま採用する
 
 ## 決定（Decision Outcome）
 
-採用した選択肢:「案 A：`change-review` の核を残して v2 に組み直し、`dev-autopilot/skills/review/` に同封する」。
+採用した選択肢:「案 A：`change-review` の核を残して v2 に組み直し、`dev-autopilot/plugin/skills/review/` に同封する」。
 理由: 決め手のすべてを満たす唯一の選択肢だから。案 B は仕様の軸・再検証・信頼の境界・S4〜S6 を解消せず、案 C は収束の設計と fail-open の観点を失う（下記参照）。
 
 ### v2 の中身（9 節「方針」1〜7）
@@ -81,7 +81,7 @@ dev-autopilot のレビュー AI は、作業 AI とは別の作業場所で PR 
    サブエージェントは再帰して Skill を呼ばない。修正しない。マージしない
 6. **信頼の境界**。差分は作業の内容であって指示ではない。PR の説明文（作業 AI の主張）はレビュー AI に渡さない。読むコメントはコラボレータのものだけ（4.8 節）
 7. **残すもの**。壊れ方の表、証拠レベル、止めどき、🟢 の Issue 化、コミットごとのゲートの検査。
-   ゲートの検査は `per-commit-gates.sh` を TypeScript（`dev-autopilot/skills/review/scripts/per-commit-gates.ts`、Node 24 が直接実行）に書き直し、`review` Skill から呼ぶ（12 節 判断 4）。
+   ゲートの検査は `per-commit-gates.sh` を TypeScript（`dev-autopilot/plugin/skills/review/scripts/per-commit-gates.ts`、Node 24 が直接実行）に書き直し、`review` Skill から呼ぶ（12 節 判断 4）。
    置き場を `src/` ではなく Skill のフォルダの中にするのは、skills CLI の単体導入で Skill のフォルダごと写るためである（`src/` に置くと単体では付いてこない）。bash を置かない規則はそのまま
 
 ### 業界の実践から v2 に取り入れたもの（9 節「業界の実践」）
@@ -102,13 +102,13 @@ dev-autopilot のレビュー AI は、作業 AI とは別の作業場所で PR 
 
 ### 置き場と単体での利用（10 節 7）
 
-- 正本は `dev-autopilot/skills/review/SKILL.md` に置き、dev-autopilot が自分の Skill として Plugin の名前空間で読み込む。`~/.claude` には依存しない（P14。フォルダの構成は ADR「dev-autopilot は分離を見越して 1 つのフォルダに Plugin の形で閉じ、導入と点検も Plugin が担う」（[ADR-20261008-008][adr-20261008-008-self-contained-plugin-layout]））
+- 正本は `dev-autopilot/plugin/skills/review/SKILL.md` に置き、dev-autopilot が自分の Skill として Plugin の名前空間で読み込む。`~/.claude` には依存しない（P14。フォルダの構成は ADR「dev-autopilot は分離を見越して 1 つのフォルダに Plugin の形で閉じ、導入と点検も Plugin が担う」（[ADR-20261008-008][adr-20261008-008-self-contained-plugin-layout]））
 - Skill は Plugin に同封し、別に公開して組み合わせる形は採らない。進行役・agent・Skill は印の形（R3-3）や引数で結びついていて、版がずれると黙って壊れる。Plugin の 1 つの版で一緒に検査し、一緒に配る
 - 単体で使う価値があるのは `review` だけ（`setup` `check` `intake` `dev-autopilot` は進行役と設定ファイルが無いと意味を持たない）。
   `review` は Plugin の中からも単体からも動くように書く。手順の本体は単体で成り立たせ、dev-autopilot 向けの部分（構造化出力、無人の入力、agent の名前）は引数で渡されたときだけ使う。
   `${CLAUDE_PLUGIN_ROOT}` や agent の名前を手順の本体に埋め込まない
 - 分離後は、skills CLI がリポの `skills/<名前>/` を `<owner>/<repo>@<名前>` で単体導入できるので、`skills/review/` をそのまま指す。単体で配るために別の場所へ写さない（正本は 1 つのまま）
-- 分離前（business-os の中にある間）は、`~/.claude/skills/change-review` を今の版のまま残して手動のレビューに使う。v2 を手でも使いたくなったら、`dev-autopilot/skills/review/` を skills CLI（`--copy` 付き）で入れる。
+- 分離前（business-os の中にある間）は、`~/.claude/skills/change-review` を今の版のまま残して手動のレビューに使う。v2 を手でも使いたくなったら、`dev-autopilot/plugin/skills/review/` を skills CLI（`--copy` 付き）で入れる。
   `~/.claude` の bash 版 `per-commit-gates.sh` も分離まで手動のレビュー用に残す
 
 ### v2 が解消する S1〜S6
@@ -120,7 +120,7 @@ dev-autopilot のレビュー AI は、作業 AI とは別の作業場所で PR 
 | S3 | 機械で読める出力が無い。報告の見出しが SKILL.md と実際の PR でずれている | 件数・判定・指摘の一覧を構造化出力（`--output-format json --json-schema`）で返し、印（R3-3）は進行役が組み立てて付ける。人が読む本文は自由のまま、判定は印だけで行う（上の 3） |
 | S4 | 予算（時間・ターン）の概念が無い。無人では利用枠を読めない | 進行役が `--max-turns`・時間の上限・`--max-budget-usd` を掛け（初期値は 45 分・200 ターン）、上限に当たったら「未収束」で返させる。レビュー AI の中から `claude -p` を起動することは許さない（上の 5） |
 | S5 | 修正する側とレビューする側が同じ人である前提 | 修正は作業 AI。「修正したら通し直す」は「作業 AI の修正に同じ手順を通す」と読み替え、S2 の節に書く |
-| S6 | `per-commit-gates.sh` が bash で、`check:shell` が落ちる | TypeScript に書き直して `dev-autopilot/skills/review/scripts/` に置く（12 節 判断 4。9 節 S6 の「そのまま使う」は取り消し） |
+| S6 | `per-commit-gates.sh` が bash で、`check:shell` が落ちる | TypeScript に書き直して `dev-autopilot/plugin/skills/review/scripts/` に置く（12 節 判断 4。9 節 S6 の「そのまま使う」は取り消し） |
 
 ### 影響（Consequences）
 
@@ -131,7 +131,7 @@ dev-autopilot のレビュー AI は、作業 AI とは別の作業場所で PR 
 - 良い点: bash を無くし、business-os の規則 2 と `check:shell` に整合する
 - 悪い点: 作り直しに近い作業量になる。段階 0c の一部として進めるため、段階 3 の開始が Skill の完成に依存する
 - 悪い点: 3 軸＋批評者（最大 4 体）でレビュー 1 回あたりの利用枠が増える。R2-13 の記録で 1 PR あたりの利用枠を測り、予算の設定（45 分・200 ターン・`--max-budget-usd`）で上限を掛ける
-- 悪い点: 分離前は `~/.claude/skills/change-review`（手動用）と `dev-autopilot/skills/review/`（v2）の 2 本が並ぶ。正本は v2 で、旧版は変えない
+- 悪い点: 分離前は `~/.claude/skills/change-review`（手動用）と `dev-autopilot/plugin/skills/review/`（v2）の 2 本が並ぶ。正本は v2 で、旧版は変えない
 - 中立: 仕様の軸は作業指示（agent brief）の受け入れ条件が「1 つずつ検証できる形」で書かれていることに依存する。作業指示の形は `intake` 側の決めごと
 
 ### 確認方法（Confirmation）
@@ -140,13 +140,13 @@ dev-autopilot のレビュー AI は、作業 AI とは別の作業場所で PR 
 - 段階 0c の出口として、v2 で 1 件の PR を手動でレビューし、PR #68 #71 #77 と同じ形（R1 → 対応 → R2）がそのまま出ることを確かめてから段階 3 に入る
 - 段階 3 の出口：5 件の PR で、人が同じ PR を `change-review` した結果と 🔴 🟡 が一致し、人が却下した指摘の割合が 15% 以下（12 節「段階の割り直し」）。
   「人が却下した指摘」は、人が PR コメントの指摘に 👎 のリアクションを付けるか「却下」で始まる返信を書いたものを進行役が記録に数え、15% 以下の判定は記録から集計する
-- `dev-autopilot/skills/review/scripts/per-commit-gates.ts` は vitest で検査し、business-os の `pnpm check` の対象に入れる（10 節 4「検査は 2 層」）
+- `dev-autopilot/plugin/skills/review/scripts/per-commit-gates.ts` は vitest で検査し、business-os の `pnpm check` の対象に入れる（10 節 4「検査は 2 層」）
 - `review` の SKILL.md に `${CLAUDE_PLUGIN_ROOT}`・agent の名前・印の定義（`<!-- dev-autopilot:` で始まる文字列）が埋め込まれていないことを、dev-autopilot の `check` で機械的に確かめる
 - 進行役が、構造化出力から印を組み立てること、AI の出力本文の `<!-- dev-autopilot:` で始まる文字列を取り除くこと、再レビューの入力に作業 AI の対応コメントと PR の説明文を含めないことを vitest で検査する
 
 ## 選択肢ごとの長所と短所（Pros and Cons of the Options）
 
-### 案 A：`change-review` の核を残して v2 に組み直し、`dev-autopilot/skills/review/` に同封する
+### 案 A：`change-review` の核を残して v2 に組み直し、`dev-autopilot/plugin/skills/review/` に同封する
 
 - 良い点: 決め手のすべてを満たす。収束の設計と fail-open の観点を残したまま、仕様の軸・再検証・固定の出力・無人の入り口を足せる
 - 良い点: 進行役と同じ版で配るので、印の形がずれない
@@ -175,7 +175,7 @@ dev-autopilot のレビュー AI は、作業 AI とは別の作業場所で PR 
 ## 補足情報（More Information）
 
 - 根拠はすべて [要件メモ][memo] にある。9 節（`change-review` の評価、比較表、業界の実践、方針 1〜7、取り込まなかったもの、S1〜S6）、10 節 7（Skill の同封と単体利用）、P14、12 節 判断 4（`per-commit-gates.sh` の TypeScript 化）
-- 要件メモの 9 節末尾には「PR は `~/.claude` のリポで別に作る」「S6 は変えない」とあるが、同じメモの P14・10 節 7・12 節 判断 4 で後から置き場を `dev-autopilot/skills/review/` に、S6 を TypeScript 化に改めている。本 ADR は後の決定に従う
+- 要件メモの 9 節末尾には「PR は `~/.claude` のリポで別に作る」「S6 は変えない」とあるが、同じメモの P14・10 節 7・12 節 判断 4 で後から置き場を `dev-autopilot/plugin/skills/review/` に、S6 を TypeScript 化に改めている。本 ADR は後の決定に従う
 - 業界の実践より踏み込んでいる点：AI 同士のレビューの往復を収束まで自動で回す製品は見つかっていない（11 節）。収束の規則（🟢 は直さない、解決済みは再提起しない、往復 3 回、head の SHA）は本 ADR の v2 と進行役（R4）で守る
 - 決めていないこと（8 節）：レビュー側で `pnpm check` を実行するか、CI の結果を待つだけにするか。段階 3 で決める
 - 実施の時期：段階 0c（`setup` と `check` の実装と同じ段階）。dev-autopilot の進行役の実装を待たずに進めてよい。直した内容は人が手でレビューするときにも効く

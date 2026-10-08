@@ -51,26 +51,30 @@ dev-autopilot が動く前提（ラベル、Project の欄、ruleset、設定フ
 
 ```text
 dev-autopilot/
-  .claude-plugin/plugin.json   Plugin の名札（分離したらそのまま公開できる形）
-  skills/
-    dev-autopilot/SKILL.md     人が呼ぶ入口（状態の表示、手動の 1 回実行）
-    setup/SKILL.md             導入（4.9 節 S1）
-    check/SKILL.md             点検（4.9 節 S2）
-    review/SKILL.md            レビュー AI の手順（change-review v2 の正本）
-    review/scripts/per-commit-gates.ts  コミットごとのゲートの検査（skills CLI の単体導入で Skill ごと写る）
-    intake/SKILL.md            Issue の受け入れ（指示の混入の検査、作業指示の下書き、agent-ready の付与）
-  agents/
-    worker.md                  作業 AI
-    reviewer.md                レビュー AI
-    critic.md                  批評者（レビューの再検証）
-  src/                         進行役（TypeScript、Node 24 が直接実行。bash を置かない）
-    marker.ts                  印の形の正本（1 定数。Skill 側は定義を持たない）
-    check.ts                   点検の正本（進行役が毎回の最初に Node で回す。Skill check はこれを呼ぶ包み）
-    <name>.ts / <name>.test.ts 単体テストは対象のコードの隣に置く
+  plugin/                      配布物。Plugin として読み込む範囲（`--plugin-dir` はここを指す。分離後は marketplace の `source` をここへ向ける）
+    .claude-plugin/plugin.json 名札
+    skills/
+      dev-autopilot/SKILL.md   人が呼ぶ入口（/dev-autopilot：状態の表示、手動の 1 回実行）
+      setup/SKILL.md           導入（4.9 節。足りない基盤を作る。冪等）
+      check/SKILL.md           点検の入口（`src/check.ts` を呼ぶ包み。判定のロジックは持たない）
+      review/SKILL.md          レビュー AI の手順（change-review v2 の正本。9 節）
+      review/scripts/per-commit-gates.ts  コミットごとのゲートの検査（TypeScript。単体導入でも Skill と一緒に写る）
+      intake/SKILL.md          Issue の受け入れ（指示の混入の検査、作業指示の下書き、agent-ready の付与）
+    agents/
+      worker.md                作業 AI（モデルは設定で）
+      reviewer.md              レビュー AI
+      critic.md                批評者（レビューの再検証）
+  src/                         進行役（TypeScript、Node 24 が直接実行。bash を置かない）。Plugin としては配らず、cron が直接動かす
+    main.ts                    入口
+    select.ts                  例：Issue の選定
+    select.test.ts             その単体テスト。テストは対象のコードの隣に置く（xxx.ts → xxx.test.ts）
+    marker.ts                  印の形の正本（1 定数）
+    check.ts                   点検の正本（進行役が毎回の最初に回す）
   fixtures/                    結合テストの前提データ（偽の gh の応答、使い捨てリポの雛形、Issue と PR の本文の例）
   test/                        結合テストだけ（偽の gh を差し替えて進行役を端から端まで回す）。単体テストは置かない
   docs/                        設計判断（adr/）と構造仕様（design/）
   README.md                    使い方。業務の固有名詞を書かない
+  .markdownlint-cli2.jsonc     参照スタイルのリンクを許す入れ子の設定
 ```
 
 ### 守ること（10 節「守ること」1〜7）
@@ -78,7 +82,9 @@ dev-autopilot/
 1. **import しない。** dev-autopilot は business-os の `hooks/lib` や `scripts/lib` を import しない。要る関数は dev-autopilot 側に持つ。逆に business-os が dev-autopilot を import することもしない。
 2. **リポ固有の値は設定ファイル 1 つに出す。** 置き場は business-os 側の `.claude/dev-autopilot.json`。項目は owner / repo、Project の番号と Status の選択肢の ID、ラベル名（`agent-ready` `needs-human` `from-review`）、base ブランチ、品質ゲートのコマンド（`pnpm check`）、コミットと PR の規約（言語、Conventional Commits、changeset の要否）、自動マージの許可一覧（4.7 節 R7-3。ADR「開発の PR は進行役が許可一覧の条件でマージし、方針に係る PR は人がマージする」（[ADR-20261008-006][adr-20261008-006-orchestrator-merge-allowlist]））、モデル、予算と上限（件数・ラウンド・ターン・時間）、worktree の置き場。dev-autopilot のコードには書かない。
    設定ファイルは worktree にも入るので、進行役は自分の clone の base ブランチ（`develop`）の版だけを読み、worktree 側の版は読まない。作業 AI が worktree の中で設定ファイルを書き換えても、進行役の判定には効かない。
-3. **起動は Plugin として。** 進行役は `claude -p --plugin-dir <dev-autopilot のパス> --agent dev-autopilot:worker` のように、自分の Skill と agent を Plugin の名前空間で呼ぶ。分離したら `--plugin-dir` が Marketplace からの導入に変わるだけで、呼び方は変わらない。
+3. **起動は Plugin として。** 進行役は `claude -p --plugin-dir <dev-autopilot のパス>/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。
+   配布物は `plugin/`（名札・Skill・agent）に閉じ、進行役の `src/`・テスト・前提データ・文書は配らない（business-os の ADR 20261009-02 と同じ考え方。dev-autopilot では最初からこの形にする）。
+   人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行役を動かすときは、設定ファイルの `devAutopilotPath`（dev-autopilot のフォルダの場所。分離前は `./dev-autopilot`、分離後は専用マシンの clone）から `src/` の場所を知る。Plugin のパスを手順に埋め込まない。
 4. **検査は 2 層。** いまは business-os の `pnpm check` が `dev-autopilot/` の型検査と vitest を対象にする（tsconfig の include に `dev-autopilot/**/*.ts`、vitest の include に `dev-autopilot/**/*.test.ts` を足す）。markdownlint は `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定で `dev-autopilot/` の下だけ参照スタイルのリンク（MD054）を許す（markdownlint-cli2 は下位フォルダの設定をそのフォルダ以下に適用する。2026-10-08 に `check:md` と pre-commit で確認）。`check:adr`・`check:docs` は `dev-autopilot/` を対象から外す。分離したら dev-autopilot 自身の `check` にする。dev-autopilot のテストは `dev-autopilot/` の中に置き、business-os の `test/` に混ぜない。
 5. **文書は dev-autopilot のフォルダに閉じる。** ADR・構造仕様・使い方は `dev-autopilot/docs/` と `dev-autopilot/README.md` に置き、business-os の `docs/` には書かない。ADR の規則はメンテナの個人設定（`~/.claude`）の `adr-docs` レシピに従う：ファイル名 `adr-<yyyymmdd>-<nnn>-<title>.md`、frontmatter は `status` `created` `updated` `decision-makers` `consulted` `informed`、リンクは参照スタイル。レシピの 3 ファイル（`README.md` `index.md` `adr-template.md`）は初回だけ写して置き、以後 `~/.claude` に依存しない。business-os 側に書く ADR は橋渡しの 1 本だけで、business-os の規則で書き、中身の判断には踏み込まない。
 6. **`/verify-issue` との分担。** 汎用の部分（指示の混入の検査、作業指示の下書き、`agent-ready` の付与）は `dev-autopilot:intake` に置く。business-os の `/verify-issue` は business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初と最後で `dev-autopilot:intake` を呼ぶ。
@@ -119,14 +125,14 @@ dev-autopilot/
 
 ### 確認方法（Confirmation）
 
-- `claude plugin validate` が `dev-autopilot/` で通り、`claude -p --plugin-dir dev-autopilot --agent dev-autopilot:worker` が動く（0b で確認済み。実装の PR でも再確認する）。
+- `claude plugin validate` が `dev-autopilot/plugin/` で通り、`claude -p --plugin-dir dev-autopilot/plugin --agent dev-autopilot:worker` が動く（0b では `tmp/` の偽の Plugin で確認済み。実装の PR で dev-autopilot 自身の名札で再確認する）。
 - `dev-autopilot/src/` と `dev-autopilot/test/` に、business-os の `hooks/` `scripts/` を指す import が無いことを grep で確かめる（`check` の項目にする）。
 - `.claude/dev-autopilot.json` に 10 節「守ること」2 の項目がすべてあり、ID が実在することを `check` が確かめる。
 - business-os の `pnpm check` で `dev-autopilot/**/*.ts` の型検査と `dev-autopilot/**/*.test.ts` が走り、`check:adr`・`check:docs` が `dev-autopilot/` を対象にせず、markdownlint が `dev-autopilot/` の下で入れ子の設定（`dev-autopilot/.markdownlint-cli2.jsonc`。参照スタイルを許す）を使うことを、設定ファイルの実物で確かめる。
 - `setup` を 2 回続けて実行しても 2 回目が何も作らないこと、作った後の読み戻しが実物と一致することを、結合テスト（`dev-autopilot/test/`）で確かめる。
 - `check` が、sandbox の中で `~/.ssh`・PAT の置き場（ADR-20261008-004）・`gh` の設定の実体を読めないことを、読み取りを試して確かめる（書いてあることではなく、実際に読めないこと）。
 - `check` が deploy key で push できることを、使い捨てのブランチへの push と削除で確かめる。
-- Skill `check` が `dev-autopilot/src/check.ts` を呼ぶだけで、判定のロジックを持たないことを、SKILL.md の中身で確かめる。
+- Skill `check` が設定ファイルの `devAutopilotPath` から `src/check.ts` を呼ぶだけで、判定のロジックも Plugin のパスも持たないことを、SKILL.md の中身で確かめる。
 - 進行役が設定ファイルを自分の clone の `develop` から読み、worktree 側の版を読まないことを、worktree 側の設定ファイルを書き換えた結合テストで確かめる。
 - business-os への導入が `setup` で行われたことを、手で作った項目が無いことで確かめる（S4）。
 
@@ -169,7 +175,7 @@ dev-autopilot/
 - 段階 0b（薄切り）のうち、2026-10-08 に `tmp/` の偽の Plugin とローカル clone で確かめたもの：未信頼の worktree で deny が効く、入れ子の Plugin と名前空間、`-p` からのサブエージェント、`--max-budget-usd`、sandbox 下で `check:types` と署名なし commit。
 - 段階 0b の残る確認：worktree での denyWrite と commit、鍵と PAT の置き場の denyRead、`--setting-sources user`、`--max-turns` の実効、PAT で Organization の Project。残る確認が済んでから 0c（`setup` と `check` の実装と、`setup` による準備。`check` が business-os で全項目 pass したら出口）に入る。
 - 見直しの時期：段階 5 の出口（10 件で人の判断と進行役の判定が全件一致）に達し、設定ファイルの項目だけで別のリポに適用できると確かめられたとき。分離を実行するときは、`source` を絞るかの未決（8 節）も合わせて決める。
-- `review` Skill の v2 への組み直しは ADR「レビューの Skill は change-review の核を残して v2 に組み直し、dev-autopilot に同封する」（[ADR-20261008-007][adr-20261008-007-review-skill-v2]）で別に進める。本 ADR が決めるのは正本を `dev-autopilot/skills/review/` に置くことまでで、手順の中身は本 ADR の範囲外とする。
+- `review` Skill の v2 への組み直しは ADR「レビューの Skill は change-review の核を残して v2 に組み直し、dev-autopilot に同封する」（[ADR-20261008-007][adr-20261008-007-review-skill-v2]）で別に進める。本 ADR が決めるのは正本を `dev-autopilot/plugin/skills/review/` に置くことまでで、手順の中身は本 ADR の範囲外とする。
 
 [memo]: ../dev-autopilot-requirements.md
 [adr-20261008-004-session-sandbox-and-keys]: ./adr-20261008-004-session-sandbox-and-keys.md
