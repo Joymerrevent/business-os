@@ -1,17 +1,17 @@
 ---
 id: 20261009-01
-title: business-os 自身の文書は参照スタイルのリンクを標準にし、company に展開される雛形と Skill が company に書く文書だけ inline を保つ
+title: business-os の Markdown のリンクは inline のままにし、参照スタイルの例外は dev-autopilot/ に限る
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-09
 updated: 2026-10-09
 as_of: 2026-10-09
-verified: n/a
+verified: 2026-10-09
 supersedes: n/a
 ---
 
-# 20261009-01: business-os 自身の文書は参照スタイルのリンクを標準にし、company に展開される雛形と Skill が company に書く文書だけ inline を保つ
+# 20261009-01: business-os の Markdown のリンクは inline のままにし、参照スタイルの例外は dev-autopilot/ に限る
 
 ## 背景と問い
 
@@ -47,39 +47,29 @@ inline が要るのは Obsidian が開く文書だけである。business-os 自
 
 ## 決定
 
-採用：**案 A**。inline が要る範囲は Obsidian が開く company の文書だけで、その範囲は `templates/` と Skill の書き方の規約で閉じているため。
+採用：**案 B**。inline が要る範囲（company に入る文書）と要らない範囲を分けることはできるが、分けると規則が 2 つ並び、
+とくに Skill が company に書く文書の書式を規約の文だけで守ることになる（company 側の点検は inline のリンクだけを見るので、参照スタイルで書かれても静かに通る）。
+置き換え 42 か所と `check:docs` の拡張という 1 回の手間と、以後ずっと続く書き分けの注意を、参照スタイルの利点（差分の小ささ、リンク先の一元管理）が上回らないと判断した。
 
-1. **規則**：Markdown のリンクは参照スタイルを標準にする。本文は `[表示テキスト][ラベル]`、定義はファイル末尾に `[ラベル]: パス` をまとめる。裸の URL は autolink `<https://…>` でよい。
-   inline を保つのは次の 2 つだけ
-   - `templates/` の下（`/onboard` が company に展開する雛形）
-   - Skill が company に書く文書。規約は `templates/skill-conventions.md` に「company の文書のリンクは inline（Obsidian が内部リンクとして追従する形）」と明記する
-2. **CLAUDE.md の絶対ルール 3**を次に改める：「シンボリックリンクを使わない。パスは相対、改行は LF。
-   Markdown のリンクは参照スタイル（`[text][label]` と末尾の `[label]: path`）。`templates/` と、Skill が company に書く文書だけ inline（Obsidian がリンクとして追従するため）」。
-   「利用者個人の全体ルールよりこのリポの規約を優先する」の一文は外す（規約が一致するため）
-3. **markdownlint**：root の `.markdownlint-cli2.jsonc` の MD054 を参照スタイル（`full` と `collapsed` を許し `inline` を禁じる）にし、
-   `templates/.markdownlint-cli2.jsonc` に inline を強制する入れ子の設定を置く（入れ子の設定が効くことは ADR 20261008-01 の決定 5 で確認済み）。
-   `dev-autopilot/.markdownlint-cli2.jsonc` は root と同じ内容になるので消す
-4. **リンク検査**：`check:docs`（`scripts/lib/repo-checks.ts`）のリンク検査は inline（`[text](path)`）だけを読んでいる。参照スタイルの定義行（`[label]: path`）も読み、リンク先の存在を確かめるようにする。
-   company の点検（`scripts/lib/company-checks.ts`）は company の文書が対象で inline のままなので変えない
-5. **既存の文書の置き換え**：inline のリンクは `templates/` を除いてリポジトリ全体で 42 か所（2026-10-09 時点。`docs/` 配下は 14 か所）。実装の PR で機械的に参照スタイルへ置き換える。
-   置き換えは accepted の後、ADR と構造仕様の本文を含めて行う（accepted の ADR の本文を書き換えるのではなく、リンクの書式だけを変える。決定の内容は変えない）
-6. **構造仕様**：[9 節](../design/architecture.md#9-フロントマター規約)の「リンクは標準 Markdown」は company の文書の規約として残し、「business-os 自身の文書は参照スタイル」と 1 行足す
-7. **ADR 20261008-01 との関係**：同 ADR の決定 4（`dev-autopilot/` に限り inline を適用しない）は、この ADR が accepted になれば不要になる。
-   同 ADR が accepted なら決定 4 を改めた旨の注記を足し、proposed のままなら本文を直す
+1. **規則は変えない**：business-os の Markdown のリンクは inline 形式のまま（CLAUDE.md の絶対ルール 3、`.markdownlint-cli2.jsonc` の MD054）。
+   理由を規則に添える：company の文書を Obsidian で開いたときにリンクの追従（バックリンク、改名時の書き換え）が効く形で、business-os 自身の文書もそれに揃える
+2. **例外は `dev-autopilot/` だけ**：[ADR 20261008-01](20261008-01-dev-autopilot-folder.md) の決定 4 のとおり、`dev-autopilot/` の中に限り参照スタイルにする。
+   dev-autopilot は Obsidian で開かず、分離を前提にした別の規則で書かれるため。例外を増やすときは、同じ基準（Obsidian で開かない、分離を前提にする）で ADR を起票する
+3. **CLAUDE.md の文言**：accepted の後、絶対ルール 3 の「利用者個人の全体ルールよりこのリポの規約を優先する」に理由を 1 文足す：「company の文書を Obsidian で開いたときにリンクが追従する形に揃えるため」。
+   同じ PR で ADR 20261008-01 の例外（`dev-autopilot/` は参照スタイル）の 1 行も足す
+4. **Skill の規約**：`templates/skill-conventions.md` に「company の文書のリンクは inline（Obsidian が内部リンクとして追従する形）」と明記する。規則は変えないが、理由が文書に無い状態を直す
 
 ## 影響
 
 - 良い影響
-  - business-os 自身の文書の書き方が、メンテナの個人設定と一致する。フォルダごとの例外（`dev-autopilot/`）が消える
-  - リンク先がファイル末尾に集まり、差分が小さくなる。リンク先の変更が 1 行で済む
-  - inline を保つ範囲が「company に入る文書」という 1 つの基準で説明できる
+  - 規則が 1 つのまま（例外は `dev-autopilot/` だけ）。Skill が company に書く文書の書式を、SKILL.md 自身の書き方と同じに保てる
+  - 置き換えも検査の拡張も要らない。CLAUDE.md と規約への理由の追記だけで済む
 - 悪い影響
-  - 既存の文書 42 か所の置き換えと、`check:docs` のリンク検査の拡張が要る（1 回の実装 PR）
-  - 2 つの書式がリポジトリに並ぶ状態は続く（`templates/` は inline）。読む人は「company に入る文書か」で見分ける
-  - `templates/` の中の文書を business-os 側で編集するときだけ inline で書く
+  - business-os 自身の文書は、メンテナの個人設定（参照スタイル）と違う書き方のまま。business-os を編集するときだけ inline で書く
+  - リンク先の変更は本文の各所を直す（参照スタイルの一元管理の利点は得られない）
 - その他
-  - 利用者向けの `docs/usage/` も参照スタイルになる。GitHub の表示は変わらない
-  - Skill の SKILL.md は Claude Code が読む文書で、どちらの書式でも読める。参照スタイルに揃える
+  - inline の規則の理由（Obsidian のリンク追従）が、この ADR と CLAUDE.md に残る。2026-09-30 の PR #2 には理由が無かった
+  - 案 A に戻すときは、この ADR を置き換える新しい ADR を起票する
 
 ## 案ごとの長所と短所
 
@@ -91,7 +81,7 @@ inline が要るのは Obsidian が開く文書だけである。business-os 自
 ### 案 B：現状のまま（全体を inline、`dev-autopilot/` だけ例外）
 
 - 長所：変更が無い。検査もそのまま
-- 短所：Obsidian が開かない文書まで inline に縛る理由を説明できない。`dev-autopilot/` の例外が規則の外に残り、同じ例外が今後も増える
+- 短所：Obsidian が開かない文書まで inline に縛る（理由は「company の文書と揃える」）。メンテナの個人設定とは違う書き方になる。例外を増やすときは ADR で基準を示す
 
 ### 案 C：全体を参照スタイル
 
