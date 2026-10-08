@@ -408,6 +408,7 @@ dev-autopilot/
    - `dev-autopilot/README.md`：使い方
    - **business-os の検査から `dev-autopilot/` を外し、dev-autopilot 自身の検査に持たせる。** business-os の `.markdownlint-cli2.jsonc` は `**/*.md` に MD054 の inline を強制しており、
      参照スタイルの dev-autopilot の文書と衝突する。business-os 側の `ignores` に `dev-autopilot` を足し、dev-autopilot には自分の markdownlint の設定（`md-lint-format` レシピ、MD054 は参照スタイル）を置く。
+     **訂正（2026-10-08）**: 実装は root の ignores ではなく `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定（橋渡し ADR 20261008-01 の決定 5）。決定は変わらない。
      `check:adr` `check:docs` も `docs/` しか見ないので同じ扱い。これは「検査は 2 層」（上の 4）の具体化
    - business-os 側に書く ADR は **1 本だけ**：「dev-autopilot を開発物のフォルダ `dev-autopilot/` に置き、設計判断と文書はそのフォルダに閉じる。Markdown と ADR の規則は dev-autopilot 側の規則に従い、
      business-os の検査は `dev-autopilot/` を対象から外す。TypeScript の型検査と vitest は business-os の `pnpm check` が対象にする」。
@@ -496,11 +497,11 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したら自�
 
 | 指摘 | 反映先 |
 |---|---|
-| 印の偽造を防ぐ規定が無い（作業 AI の出力に印を混ぜれば pass になる） | R3-4：進行役が投稿したコメント ID からだけ読む。AI の出力から印を除く |
+| 印の偽造を防ぐ規定が無い（作業 AI の出力に印を混ぜれば pass になる） | R3-4：進行役が投稿したコメント ID からだけ読む。AI の出力から印を除く **訂正（2026-10-08）**: 4.3 節の番号では R3-5・R3-6（印の真正性は R3-5）。 |
 | 「CI が緑」が未定義（検査なし・pending・skipped が通る） | R4-3：必須チェック名を設定に列挙し、head SHA に対して全件 success |
 | `needs-human` の Issue が翌日また選ばれる。残骸 worktree 1 件で全体が止まる | R1-1：`needs-human` と Agent 欄 `human` を除外。R4-2：Todo でなく Blocked。残骸はその Issue だけ飛ばす |
 | 作業 AI が GitHub に書く前提（R2-5/7/9/10）と P13 の矛盾 | R2-5：出力契約（JSON）を定義し、GitHub への書き込みは進行役に寄せた。主語を書き換え |
-| レビュー AI に作業 AI の「確認済み」の主張が届く | R3-5：再レビューの入力から対応コメントを外した |
+| レビュー AI に作業 AI の「確認済み」の主張が届く | R3-5：再レビューの入力から対応コメントを外した **訂正（2026-10-08）**: 4.3 節の番号では R3-5・R3-6（再レビューの入力は R3-6）。 |
 | 並列マージで古い base の pass が通る。rebase は force push と矛盾 | R7-3b：ruleset で base の最新を要求、1 実行 1 件、`--match-head-commit`、載せ直しは merge |
 | 方針パスの拒否一覧に `dev-autopilot/**` が無く自己改変がマージされる。削除・改名が判定外 | R7-3：許可一覧に反転し、diff の状態（D/R/T）も判定 |
 | 費用の上限が不足（Issue 累計・サブエージェント数・再試行） | R2-13 と 8 節：Issue 累計、サブエージェント数、再試行の回数と間隔を設定に。429 と時間切れは「実行の失敗」として持ち越し |
@@ -562,7 +563,7 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したら自�
    `source` を絞る案は、分離のときに dev-autopilot 側で扱う（10 節の `plugin/` と `src/` の分け方）。入れ子の `.claude-plugin/plugin.json` を `claude plugin validate` と `--plugin-dir` がどう扱うかは 0b で確かめ、問題があれば名札を分離まで置かない
 4. **`per-commit-gates.sh` の扱い。** **決定（2026-10-08）：TypeScript に書き直す**（`dev-autopilot/src/per-commit-gates.ts`。Node 24 が直接実行。CLAUDE.md の規則 2 と整合）。9 節 S6 の「そのまま使う」は取り消す。
    書き直したものを `review` Skill から呼ぶ。`~/.claude` の bash 版は分離まで手動のレビュー用に残す
-5. **参照スタイルのリンクの例外。** **決定（2026-10-08）：橋渡し ADR で「`dev-autopilot/` では CLAUDE.md の規則 3（inline リンク）と規則 2 の bash の扱い以外の文書規約を適用せず、dev-autopilot 側の規則に従う」と決め、ADR の accepted 後に CLAUDE.md の規則 3 にその旨を 1 行足す。** business-os の markdownlint の `ignores` に `dev-autopilot` を足し、dev-autopilot に自分の markdownlint の設定を置く（10 節 5）
+5. **参照スタイルのリンクの例外。** **決定（2026-10-08）：橋渡し ADR で「`dev-autopilot/` では CLAUDE.md の規則 3（inline リンク）と規則 2 の bash の扱い以外の文書規約を適用せず、dev-autopilot 側の規則に従う」と決め、ADR の accepted 後に CLAUDE.md の規則 3 にその旨を 1 行足す。** business-os の markdownlint の `ignores` に `dev-autopilot` を足し、dev-autopilot に自分の markdownlint の設定を置く（10 節 5）。**訂正（2026-10-08）**: 実装は root の ignores ではなく `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定（橋渡し ADR 20261008-01 の決定 5）。決定は変わらない。
 
 ### 0b で確かめる未確認（レビュアーが挙げた「未確認」）と、2026-10-08 の実機の結果
 

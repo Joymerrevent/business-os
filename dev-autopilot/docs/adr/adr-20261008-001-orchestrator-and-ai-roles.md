@@ -21,26 +21,26 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 - AI の役を何体に分け、互いの文脈をどう扱うか。
 - 進行役が途中で死ぬ・多重に起動する・人が止めたいときに、状態をどこで持ち、どう復旧するか。
 
-本 ADR は要件メモの 2 節・3 節・11 節・12 節のうち、進行役と AI の役の分け方に関わる決定を記録する。レビュー AI の判定の形（印）や自動マージの条件は別の ADR で扱う。
+本 ADR は要件メモの 2 節・3 節・11 節・12 節のうち、進行役と AI の役の分け方に関わる決定を記録する。レビュー AI の判定の形（印）は ADR「[レビューの判定は PR コメントの印で行い head の SHA に結びつけ、🔴 🟡 だけを直して収束させる][adr-20261008-005-review-marker-and-convergence]」（ADR-20261008-005）、自動マージの条件は ADR「[開発の PR は進行役が許可一覧の条件でマージし、方針に係る PR は人がマージする][adr-20261008-006-orchestrator-merge-allowlist]」（ADR-20261008-006）で扱う。
 
 ## 判断の決め手（Decision Drivers）
 
 - 再現性：同じ GitHub の状態からは同じ判定が出ること。判定を vitest で検査できること（要件メモ 3 節、R7-5）
 - 安全側に倒す：判定できない状態では作業を増やさずに止まること（fail-closed、要件メモ 6 節）。GitHub への書き込みを持つ層と、コードを実行する層を分けること（P13、11 節の gh-aw の safe outputs）
 - 文脈のバイアスを避ける：作業した AI の主張がレビューの検出率を下げるため、レビューは作業と文脈を共有しないこと（要件メモ 9 節）
-- 利用枠：AI の体を増やすほど `claude -p` の利用枠を消費する。多数決（8 パス）は採らず、体は 3 つまでにする（要件メモ 9 節）
+- 利用枠：AI の体を増やすほど `claude -p` の利用枠を消費する。多数決（8 パス）は採らない。役は 3 つ（作業・レビュー・批評）とし、レビューの中で並列に起こすサブエージェントは 3 軸＋批評者で最大 4 体にして、予算で上限を掛ける（要件メモ 9 節、ADR「[レビューの Skill は change-review の核を残して v2 に組み直し、dev-autopilot に同封する][adr-20261008-007-review-skill-v2]」（ADR-20261008-007））
 - 運用の継続：手元の cron で始め、専用マシンに移しても同じものが動くこと（要件メモ 2 節）
 - 分離を見越す：business-os の中に閉じて作り、将来は別リポジトリに移せること（要件メモ 10 節）
 
 ## 検討した選択肢（Considered Options）
 
-- A. 決定的な進行役（TypeScript のスクリプト）＋ 作業・レビュー・批評の 3 つの AI の役
-- B. AI の「COO」セッション 1 つが、選定から実装・レビュー・マージまでを取り仕切る
-- C. AI のセッション 1 つが実装と自己レビューを行う
+- 案 A: 決定的な進行役（TypeScript のスクリプト）＋ 作業・レビュー・批評の 3 つの AI の役
+- 案 B: AI の「COO」セッション 1 つが、選定から実装・レビュー・マージまでを取り仕切る
+- 案 C: AI のセッション 1 つが実装と自己レビューを行う
 
 ## 決定（Decision Outcome）
 
-採用した選択肢:「A. 決定的な進行役＋ 3 つの AI の役」。理由: 判定の再現性と fail-closed を満たすのは、判定を決定的な処理に置く A だけだから。B と C は判定が AI の出力に依存し、同じ状態から同じ結論が出ることを保証できない。C はさらに文脈のバイアスを避けられない。
+採用した選択肢:「案 A: 決定的な進行役＋ 3 つの AI の役」。理由: 判定の再現性と fail-closed を満たすのは、判定を決定的な処理に置く案 A だけだから。案 B と案 C は判定が AI の出力に依存し、同じ状態から同じ結論が出ることを保証できない。案 C はさらに文脈のバイアスを避けられない。
 
 決定の中身を、登場するもの・実行環境とモデル・運用の規則・段階の順に書く。
 
@@ -49,9 +49,9 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 | 役割 | 実体 | セッションと文脈 |
 |---|---|---|
 | 進行役 | cron が起動する Node のスクリプト（TypeScript、Node 24 が直接実行。bash を置かない） | AI ではない。選定・待機・停止・マージの判定を決定的な処理で行う |
-| 作業 AI | `claude -p --agent <作業用>` を Issue ごとの worktree の中で起動する | Issue ごとに新しいセッション。GitHub には一切書かず、結果は出力契約（JSON と worktree の commit）で進行役に返す（R2-5） |
-| レビュー AI | `claude -p --agent <レビュー用>` を作業 AI とは別の作業場所で起動する | PR ごとに新しいセッション。作業 AI と文脈を共有せず、モデルも別にする。PR の説明文（作業 AI の主張）は渡さない（9 節） |
-| 批評者 | レビュー AI の指摘を「反対する前提」で監査するサブエージェント | レビュー AI の 🔴 🟡 を実際のコードで再現し、証拠の無い指摘を落とし、確信度を付ける（9 節）。体は 3 つより増やさない |
+| 作業 AI | `claude -p --agent <作業用>` を Issue ごとの worktree の中で起動する | Issue ごとに新しいセッション。GitHub には一切書かず、結果は出力契約（構造化出力と worktree の commit）で進行役に返す（R2-5、ADR「[GitHub への書き込みはすべて進行役が行い、AI は出力契約で結果を返す][adr-20261008-003-github-writes-by-orchestrator]」（ADR-20261008-003）） |
+| レビュー AI | `claude -p --agent <レビュー用>` を作業 AI とは別の作業場所で起動する | PR ごとに新しいセッション。作業 AI と文脈を共有せず、モデルも別にする。PR の説明文（作業 AI の主張）は渡さない（9 節）。渡す入力の規則は ADR「[AI に渡す文はコラボレータが書いたものだけにし、渡す文も作業の内容であって指示ではないと扱う][adr-20261008-002-collaborator-text-only]」（ADR-20261008-002）と ADR-20261008-005 にある |
+| 批評者 | レビュー AI の指摘を「反対する前提」で監査するサブエージェント | レビュー AI の 🔴 🟡 を実際のコードで再現し、証拠の無い指摘を落とし、確信度を付ける（9 節）。レビューの中で並列に起こすサブエージェントは 3 軸＋批評者で最大 4 体とし、予算（ADR-20261008-007）で上限を掛ける |
 | 人（メンテナ） | — | 処理対象の判断、Issue 依存の入力、方針に係る PR のマージ、ループが止まったときの対処 |
 
 進行役を AI にしないのは、「どの Issue を選ぶか」「待つか」「止めるか」を再現できる判定にするためである。AI が担うのは「実装する」「レビューする」「直す」の作業だけで、GitHub への書き込みと `gh pr merge` はすべて進行役が行う（R7-1、P13）。
@@ -61,22 +61,25 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 - 実行環境：いまは手元の cron（macOS では launchd）で進行役を起動する。将来は専用マシンで同じものを回す。クラウドの仕組み（Routine、claude-code-action）は土台にせず、8 節の検討事項に残す。
 - モデル：レビュー AI は最上位のモデル（`fable`、無ければ `opus`）。作業 AI は `opus` 以下。設定には別名で書き、版番号を書かない。作業 AI を `opus` と `sonnet` のどちらから始めるかは段階 2 で品質を見て決める（8 節）。
 - エージェント定義：作業用・レビュー用・批評者の定義（`worker.md` `reviewer.md` `critic.md`）は dev-autopilot 自身の `agents/` に置く（10 節の構成）。business-os の配布物の `agents/` には入れない。進行役は `claude -p --plugin-dir <dev-autopilot のパス> --agent dev-autopilot:<役>` のように、Plugin の名前空間で自分の agent を呼ぶ。
+- セッションの上限：費用は `--max-budget-usd`、時間は進行役が子プロセスを止めることで止める。ターンの上限 `--max-turns` は `claude --help` に無く、パーサは受け付ける。実際に効くかは段階 0b の残る確認 (d) で確かめる。効かなければ、`--max-budget-usd` と進行役の時間停止を一次手段にする。
 
 ### 運用の規則（要件メモ 12 節「運用の規則（新規）」）
 
 - 状態の正は GitHub に置く（PR の有無と draft、印、Project の Status、Agent 欄、ラベル）。進行役は毎回の実行で GitHub から状態を組み立て、手元の記録は補助にする。
 - 各手順は冪等にする。すでに済んでいれば何もしない（PR があれば作らない、コメントがあれば足さない）。
-- 多重起動は lockfile で防ぐ。launchd の自動実行と、人が `/dev-autopilot` で行う手動実行は同じ lock を取る。
-- 止める合図は 2 つ。設定ファイルの `enabled: false` で全体を止め、Project の Agent 欄 `paused` でその Issue を止める。進行役は毎回の最初に両方を読む。
+- 多重起動は lockfile で防ぐ。launchd の自動実行と、人が `/dev-autopilot` で行う手動実行は同じ lock を取る。lock には取得したプロセスの PID と時刻を持ち、期限（初期値 3 時間、設定で変える）を過ぎた lock は無効として上書きする。
+- 手動の `/dev-autopilot` は CC の中で進行役を動かすので、手動実行ではマージを行わない。対話中の CC は今までどおり `gh pr merge` を実行しない（ADR-20261008-006 と同じ規則）。
+- 止める合図は 2 つ。設定ファイルの `enabled: false` で全体を止め、Project の Agent 欄 `paused` で対象の Issue を止める。進行役は毎回の最初に両方を読む。
 - 人が引き取るときは Agent 欄を `human` にする。`human` の Issue と PR には進行役は触らない。返すときは人が `worker` に戻す。
-- 進行役が途中で死んだら、次回の実行が GitHub の状態から復旧する。復旧できない組み合わせ（PR はあるが worktree が無い、など）は、その Issue だけ `needs-human` にして止め、ほかの Issue の処理は続ける。
+- 進行役が途中で死んだら、次回の実行が GitHub の状態から復旧する。復旧できない組み合わせ（PR はあるが worktree が無い、など）は、該当の Issue だけ `needs-human` にして止め、ほかの Issue の処理は続ける。
+- fail-closed で止まったことを人が知る経路：進行役が連続 3 回（初期値、設定で変える）「作業を 1 つも進めなかった」か「点検の fail で止まった」ら、設定した通知先の Issue（dev-autopilot 用の運用 Issue）にコメントで知らせる。
 
 ### 段階（要件メモ 12 節「7 節の段階の割り直し」）
 
 | 段階 | 内容 | 出口 |
 |---|---|---|
-| 0a | ADR 2 本（business-os 側の橋渡し、dev-autopilot の設計判断）を proposed で起票 | 両方 accepted |
-| 0b | 最初の薄切り：進行役なし・GitHub 書き込みなしで、sandbox の安全設定を掛けた `claude -p --plugin-dir dev-autopilot --agent dev-autopilot:worker --max-turns N` を 1 回動かす | deny と sandbox・入れ子の Plugin・JSON の出力・署名なしの commit・`pnpm check` の 5 点を実機で確認 |
+| 0a | 橋渡し ADR 1 本（business-os 側）と dev-autopilot の ADR 9 本を proposed で起票 | すべて accepted |
+| 0b | 実機の確認。2026-10-08 に確認済みのものと、残る確認（表の下）に分ける | 残る確認 (a)〜(e) を実機で確かめる |
 | 0c | `setup` と `check` の実装と準備、deploy key と PAT の用意、`change-review` v2、`/verify-issue` の拡張 | `check` が business-os で全項目 pass |
 | 1 | 棚卸しだけ（選ぶ・待たせる・記録する） | 7 回の実行で、人が選定・待機に異議を出した回数 0 |
 | 2 | 実装 → draft PR を 1 件ずつ。計画は人が見る | 5 件のうち 4 件以上を人がそのまま受け入れ |
@@ -84,6 +87,22 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 | 4 | 対応ループ。マージはまだ人 | 5 件のうち 4 件以上が往復 3 回以内で Ready to Merge |
 | 5 | 進行役のマージ | 10 件で、人のマージの判断と進行役の判定が全件一致。revert 0 件 |
 | 6 | 並列と間隔の短縮 | R6-2 の条件 |
+
+段階 0b のうち、2026-10-08 に確認済みのもの（偽の Plugin を `tmp/` に作り、ローカル clone で確かめた）：
+
+- 未信頼の worktree で deny が効く
+- 入れ子の Plugin と名前空間（`claude -p --plugin-dir <サブフォルダ> --agent dev-autopilot:<役>`）
+- `-p` からのサブエージェント
+- `--max-budget-usd`
+- sandbox 下で `check:types` と署名なし commit
+
+段階 0b の残る確認：
+
+- (a) worktree で sandbox の denyWrite を worktree に絞ったとき commit が通るか（`.git/objects` `.git/worktrees/<名>` への書き込み）
+- (b) 鍵と PAT の置き場が sandbox で実際に読めないこと
+- (c) `--setting-sources user` でプロジェクト設定と hook が読まれないこと
+- (d) `--max-turns` が実際に効くか（help に無く、パーサは受け付ける。効かなければ `--max-budget-usd` と進行役の時間停止だけで止める）
+- (e) fine-grained PAT で Organization の Project を書けるか
 
 段階 5 の「開発の PR を進行役の判定でマージする」は、要件メモ 11 節が調べた製品のどれもやっていない。業界の実践より踏み込んでいるため、段階 4 の一致の確認と revert 率の監視を揃えてから進める。
 
@@ -93,22 +112,22 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 - 良い点: 書き込みの権限を進行役に集めるので、作業 AI とレビュー AI には GitHub のトークンも鍵も渡さずに済む（P13）。Issue のコメント 1 つで鍵が流出する攻撃の経路を閉じる。
 - 良い点: 役ごとに新しいセッションで動かすため、作業 AI の主張がレビューに混ざらず、文脈を使い切る失敗も避けられる（11 節の失敗の教訓）。
 - 良い点: 手元の cron でも専用マシンでも同じスクリプトが動く。クラウドの仕組みに縛られない。
-- 悪い点: 進行役が扱う状態（Status、Agent 欄、印、ラベル）の組み合わせを、すべてスクリプトに書き下す必要がある。想定外の組み合わせは fail-closed で止まるので、初期は `needs-human` が多く出る。
+- 悪い点: 進行役が扱う状態（Status、Agent 欄、印、ラベル）の組み合わせを、すべてスクリプトに書き下す必要がある。想定外の組み合わせは fail-closed で止まるので、初期は `needs-human` が多く出る。止まったことは運用 Issue へのコメントで人に届く。
 - 悪い点: 役が 3 つになる分、1 Issue あたりの利用枠が 1 セッションの構成より増える。上限（R2-12、R2-13）と記録で監視する。
 - 悪い点: 進行役が cron の 1 回の実行の中で CI を待つため、間隔と待ち時間の設定が運用の負担になる（R4-3、R6-1）。
-- 中立: 専用マシンの保守と鍵の置き方は本 ADR の範囲外で、別の ADR で扱う。
+- 中立: 専用マシンの保守と鍵の置き方は本 ADR の範囲外で、ADR「[AI のセッションに sandbox を掛け、鍵は人用と自動化用に分け、作業 AI の commit は署名しない][adr-20261008-004-session-sandbox-and-keys]」（ADR-20261008-004）で扱う。
 
 ### 確認方法（Confirmation）
 
 - 進行役の実装が `dev-autopilot/src/` の TypeScript だけで構成され、bash スクリプトが無いことを、business-os の `pnpm check`（`check:shell`、tsc）で確かめる。
-- 判定（選定の条件、停止の合図、マージの条件）の単体テストを対象のコードの隣（`xxx.test.ts`）に置き、vitest で検査する。結合テストは偽の `gh` を差し替えて `dev-autopilot/test/` で端から端まで回す（10 節）。
+- 判定（選定の条件、停止の合図、マージの条件、lock の期限、連続 3 回の通知）の単体テストを対象のコードの隣（`xxx.test.ts`）に置き、vitest で検査する。結合テストは偽の `gh` を差し替えて `dev-autopilot/test/` で端から端まで回す（10 節）。
 - 作業 AI とレビュー AI が GitHub に書かないことは、AI のセッションに `GH_TOKEN` を渡さず `gh` を認証しないことと、sandbox の読み取り禁止を `check` が実際に試して確かめる（6 節）。
-- 段階 0b の薄切りで、agent 定義を Plugin の名前空間で呼べること・JSON で結果が返ることを実機で確かめる。
+- 段階 0b で 2026-10-08 に、agent 定義を Plugin の名前空間で呼べること・`--output-format json` で結果が返ることを実機で確かめた。残る確認 (a)〜(e) は段階 0c の実装に入る前に実機で確かめる。
 - 段階ごとの出口の数（上の表）を満たしてから次の段階へ進む。
 
 ## 選択肢ごとの長所と短所（Pros and Cons of the Options）
 
-### A. 決定的な進行役＋ 作業・レビュー・批評の 3 つの AI の役
+### 案 A: 決定的な進行役＋ 作業・レビュー・批評の 3 つの AI の役
 
 進行役は TypeScript のスクリプトで、cron が起動する。AI は Issue ごと・PR ごとに新しいセッションで起動し、結果は出力契約で返す。
 
@@ -119,7 +138,7 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 - 悪い点: 状態遷移と判定の表を人が設計し、実装し続ける必要がある。
 - 悪い点: 3 つの役のぶん利用枠が増える。
 
-### B. AI の「COO」セッション 1 つが、選定から実装・レビュー・マージまでを取り仕切る
+### 案 B: AI の「COO」セッション 1 つが、選定から実装・レビュー・マージまでを取り仕切る
 
 1 つの長いセッションの AI が Issue を読み、サブエージェントに実装とレビューを委ね、マージの可否も自分で判断する。
 
@@ -129,7 +148,7 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 - 悪い点: 取り仕切る AI が GitHub の書き込み権限と `gh pr merge` を持つことになり、P13 と R7-1 に反する。Issue の文に混ざった指示が判定に届く経路が残る。
 - 悪い点: 長いセッションは文脈を使い切り、後半で質が落ちる（11 節の失敗の教訓）。途中で死んだときの復旧も AI の記憶に頼る。
 
-### C. AI のセッション 1 つが実装と自己レビューを行う
+### 案 C: AI のセッション 1 つが実装と自己レビューを行う
 
 作業 AI が実装し、同じセッションで自分の差分をレビューして直す。進行役は PR を作るだけの薄い処理にする。
 
@@ -141,10 +160,16 @@ dev-autopilot は、Project に登録された Issue のうち人が処理対象
 ## 補足情報（More Information）
 
 - 正本は [要件メモ][memo]（2026-10-07 起稿、2026-10-08 更新）。本 ADR は要件メモの 2 節・3 節・11 節・12 節の決定を記録したもので、要件メモに無い決定を足していない。
-- 要件メモ 12 節の「人の判断が要るもの」のうち、AI のセッションの隔離と鍵の分け方（案 A）、自動マージの許可一覧、レビュー AI の印の形は、本 ADR と同じ日に起票する別の ADR で扱う。
+- 要件メモ 12 節の「人の判断が要るもの」のうち、AI のセッションの隔離と鍵の分け方は ADR-20261008-004、自動マージの許可一覧は ADR-20261008-006、レビュー AI の印の形は ADR-20261008-005 で扱う。
 - 本 ADR の決定は、段階 5 の出口（10 件の一致、revert 0 件）を通過したとき、または専用マシンへの移行やクラウドの仕組みの採用を決めるときに見直す。
 - ADR の起票の規則は [README][readme] にある。
 - 参考にした既存の仕組み（要件メモ 11 節）：作業ごとに新しい文脈（Ralph Wiggum ループ、Anthropic の長時間動くエージェントの harness、Codex、Jules）、書き込みを判断する層ではなく実行する層が持つ（GitHub Agentic Workflows の safe outputs）、人が Assignee のまま AI を欄で示す（Linear Agents）。
 
 [memo]: ../dev-autopilot-requirements.md
 [readme]: ./README.md
+[adr-20261008-002-collaborator-text-only]: ./adr-20261008-002-collaborator-text-only.md
+[adr-20261008-003-github-writes-by-orchestrator]: ./adr-20261008-003-github-writes-by-orchestrator.md
+[adr-20261008-004-session-sandbox-and-keys]: ./adr-20261008-004-session-sandbox-and-keys.md
+[adr-20261008-005-review-marker-and-convergence]: ./adr-20261008-005-review-marker-and-convergence.md
+[adr-20261008-006-orchestrator-merge-allowlist]: ./adr-20261008-006-orchestrator-merge-allowlist.md
+[adr-20261008-007-review-skill-v2]: ./adr-20261008-007-review-skill-v2.md
