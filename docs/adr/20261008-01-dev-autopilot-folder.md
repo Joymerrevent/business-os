@@ -16,7 +16,7 @@ supersedes: n/a
 ## 背景と問い
 
 business-os の開発を、Issue を受けた AI が worktree で実装し、別の AI がレビューし、収束したら進行役が `develop` へマージする仕組み（dev-autopilot）で回したい。
-要件は dev-autopilot の要件メモ（`dev-autopilot/docs/dev-autopilot-requirements.md`）（2026-10-07〜08 の設計の議論と、別の文脈のレビュー AI 2 体の指摘を反映したもの）にまとめた。
+要件は dev-autopilot の要件メモ `dev-autopilot/docs/dev-autopilot-requirements.md` にまとめた。2026-10-07〜08 の設計の議論と、別の文脈のレビュー AI 2 体の指摘を反映したものである。
 
 dev-autopilot は business-os の開発にだけ使う道具で、business-os の利用者（company 側）の機能ではない。
 また、将来は別のリポジトリ（独立した Plugin）に分離して、ほかの実装リポにも適用する前提で作る。
@@ -49,7 +49,8 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
 1. **置き場所**：リポジトリ直下に開発物のフォルダ `dev-autopilot/` を 1 つ足す。中身は Plugin の形（`.claude-plugin/` `skills/` `agents/` `src/` `fixtures/` `test/` `docs/` `README.md`）で、
    business-os の `.claude-plugin/plugin.json` が指す配布物（`skills/` `agents/` `hooks/`）には入れない。business-os の中身を `dev-autopilot/` から import せず、逆もしない
 2. **配布の扱い**：business-os の marketplace は `source: "./"` でリポジトリ全体を配るので、`dev-autopilot/` も `test/` `evals/` と同じく利用者に配られる。これを受け入れる。
-   そのため `dev-autopilot/` にも業務の固有名詞・秘密を置かず、`check:leak` の対象に含める。`dev-autopilot/.claude-plugin/plugin.json` が入れ子になることは、`claude plugin validate` と `--plugin-dir` で動くことを 2026-10-08 に実機で確かめた
+   そのため `dev-autopilot/` にも業務の固有名詞・秘密を置かず、`check:leak` の対象に含める。Plugin の名札が入れ子になることは、2026-10-08 に `tmp/` に作った偽の Plugin（名札・agent 1 体・Skill 1 つ）で、`claude plugin validate` が通り `--plugin-dir` で agent と Skill が名前空間で動くことを確かめた。
+   dev-autopilot 自身の名札での確認は、名札を置く実装の PR で行う
 3. **文書と ADR の規則**：dev-autopilot の設計判断・構造仕様・使い方は `dev-autopilot/docs/` に置き、business-os の `docs/` には書かない。
    ADR の規則は、分離後も単独で成り立つよう、`dev-autopilot/docs/adr/README.md` に置く別の規則（MADR 4.0.0 の日本語版、`adr-<yyyymmdd>-<nnn>-<title>.md`、参照スタイルのリンク）に従う。
    business-os の `docs/adr/README.md` の規則（`YYYYMMDD-nn-<slug>.md`、4 日付欄、inline リンク）は `dev-autopilot/` に適用しない
@@ -61,7 +62,8 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
    （markdownlint-cli2 は下位フォルダの設定ファイルをそのフォルダ以下に適用する。root の `ignores` に足す方法より狭く、`dev-autopilot/` の Markdown がほかの規則で検査されなくなることも避けられる。2026-10-08 に `pnpm check:md` と pre-commit の両方で確かめた）。
    `check:adr` `check:docs` `check:usage` は `docs/` だけを見るので変えない。
    `check:shell` `check:leak` `check:format` `check:lint` は `dev-autopilot/` も対象のまま（bash を置かない、秘密を置かない、整形と lint は同じ）
-6. **構造仕様の更新**：accepted の後、[構造仕様の 3.1 節](../design/architecture.md#31-配布物と開発物)の開発物の列に `dev-autopilot/` を足し、「文書と ADR の規則はフォルダの中の規則に従う」と 1 行書く
+6. **構造仕様と地図の更新**：accepted の後、[構造仕様の 3.1 節](../design/architecture.md#31-配布物と開発物)の開発物の列に `dev-autopilot/` を足し、「文書と ADR の規則はフォルダの中の規則に従う」と 1 行書く。
+   CLAUDE.md の「何がどこにあるか」にも `dev-autopilot/` の 1 行を足し、「設計判断は `dev-autopilot/docs/adr/` が正典で、絶対ルール 1 はそのフォルダの ADR にも及ぶ」と書く（絶対ルール 1 の `docs/adr/` だけでは `dev-autopilot/docs/adr/` を覆わないため）
 7. **分離の時期**：要件メモの段階 5（進行役のマージ）まで business-os で動かし、設定ファイルの項目だけで別のリポジトリに適用できると確かめてから分離する。分離するときは、この ADR を「分離した」ADR で置き換える
 
 ## 影響
@@ -98,7 +100,8 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
 
 ## 参考
 
-- dev-autopilot の要件メモ（`dev-autopilot/docs/dev-autopilot-requirements.md`）（10 節「分離を見越した構成」、12 節の判断 3・5）
+- dev-autopilot の要件メモ `dev-autopilot/docs/dev-autopilot-requirements.md` の 10 節「分離を見越した構成」と 12 節の判断 3・5。
+  要件メモと dev-autopilot の ADR 008 は markdownlint の例外を root の `ignores` で実現すると書いていたが、決定 5 の入れ子の設定で置き換えた（両方に訂正の注記を足す）
 - [構造仕様 3.1 節](../design/architecture.md#31-配布物と開発物)
 - 関連 ADR：20260929-01（シェル非依存）、20261002-01（役割エージェントは同梱しない。dev-autopilot の agent は `dev-autopilot/agents/` に置き、配布物の `agents/` には入れない）、20261003-06（ADR の形式）、20261003-07（実装リポの開発に要るものは実装リポに置く）
 - 2026-10-08 の実機の確認（要件メモの 12 節）：入れ子の Plugin の名札と `--plugin-dir`、sandbox の `denyRead` がシンボリックリンクを解決しない不具合（Issue #80）
