@@ -1,4 +1,4 @@
-// business-os 自身の検査。package.json の check:* から scripts/check-repo.ts 経由で呼ぶ。
+// business-os 自身の検査。package.json の check:* から plugin/scripts/check-repo.ts 経由で呼ぶ。
 // 検査の一覧の正典は package.json。この文書やほかの文書に一覧を書き写さない。
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -7,13 +7,18 @@ import { parseFrontmatter } from "../../hooks/lib/frontmatter.ts";
 import {
   DISTRIBUTED_SKILLS,
   frontmatterSchema,
-  pluginRoot,
 } from "../../hooks/lib/plugin.ts";
 import { validate } from "../../hooks/lib/schema.ts";
 import { dictionaryTerms, LEAK_PATTERNS } from "./leak-patterns.ts";
+import { repoRoot } from "./repo.ts";
 import { REPORT_FORMS, REPORT_KINDS } from "./report-forms.ts";
 import type { CheckResult, Level } from "./company-checks.ts";
-import { compareVersions, manifestVersion, packageVersion } from "./version.ts";
+import {
+  compareVersions,
+  manifestVersion,
+  packageVersion,
+  PLUGIN_DIR,
+} from "./version.ts";
 
 const result = (
   category: string,
@@ -24,6 +29,9 @@ const result = (
 
 const rel = (root: string, path: string): string =>
   relative(root, path).split(sep).join("/");
+
+/** 配布物のフォルダ。検査の root はリポジトリのルートで、配布物はその下の plugin/ にある（ADR 20261009-02） */
+const plugin = (root: string): string => join(root, PLUGIN_DIR);
 
 const walk = (dir: string, predicate: (path: string) => boolean): string[] => {
   if (!existsSync(dir)) return [];
@@ -115,11 +123,11 @@ export const questionTableProblems = (text: string): string[] => {
   return problems;
 };
 
-export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
+export const checkSkills = (root: string = repoRoot()): CheckResult[] => {
   const category = "Skill";
   const results: CheckResult[] = [];
-  const dirs = readdirSync(join(root, "skills")).filter((name) =>
-    statSync(join(root, "skills", name)).isDirectory(),
+  const dirs = readdirSync(join(plugin(root), "skills")).filter((name) =>
+    statSync(join(plugin(root), "skills", name)).isDirectory(),
   );
   const expected = new Set<string>(DISTRIBUTED_SKILLS);
   const extra = dirs.filter((name) => !expected.has(name));
@@ -128,7 +136,7 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
     results.push(
       result(
         category,
-        "skills/ が配布する Skill の一覧（hooks/lib/plugin.ts）と一致する",
+        "plugin/skills/ が配布する Skill の一覧（plugin/hooks/lib/plugin.ts）と一致する",
         "fail",
         [
           missing.length > 0 ? `無い：${missing.join(", ")}` : "",
@@ -142,7 +150,7 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
     );
   }
   for (const name of DISTRIBUTED_SKILLS) {
-    const path = join(root, "skills", name, "SKILL.md");
+    const path = join(plugin(root), "skills", name, "SKILL.md");
     if (!existsSync(path)) continue;
     const text = readFileSync(path, "utf8");
     const problems: string[] = [];
@@ -166,8 +174,13 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
     problems.push(...questionTableProblems(text));
     results.push(
       problems.length === 0
-        ? result(category, `skills/${name}`, "pass")
-        : result(category, `skills/${name}`, "fail", problems.join("、")),
+        ? result(category, `plugin/skills/${name}`, "pass")
+        : result(
+            category,
+            `plugin/skills/${name}`,
+            "fail",
+            problems.join("、"),
+          ),
     );
   }
   return results;
@@ -175,9 +188,9 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
 
 // ---- hook ----
 
-export const checkHooks = (root: string = pluginRoot()): CheckResult[] => {
+export const checkHooks = (root: string = repoRoot()): CheckResult[] => {
   const category = "hook";
-  const text = readFileSync(join(root, "hooks", "hooks.json"), "utf8");
+  const text = readFileSync(join(plugin(root), "hooks", "hooks.json"), "utf8");
   const config = JSON.parse(text) as {
     hooks?: Record<
       string,
@@ -205,7 +218,7 @@ export const checkHooks = (root: string = pluginRoot()): CheckResult[] => {
     }
     const script = match[1] ?? "";
     results.push(
-      existsSync(join(root, script))
+      existsSync(join(plugin(root), script))
         ? result(category, script, "pass")
         : result(
             category,
@@ -251,44 +264,41 @@ export const checkHooks = (root: string = pluginRoot()): CheckResult[] => {
 
 // ---- Plugin ----
 
-export const checkPlugin = (root: string = pluginRoot()): CheckResult[] => {
+export const checkPlugin = (root: string = repoRoot()): CheckResult[] => {
   const category = "Plugin";
-  return [".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"].map(
-    (file) => {
-      const run = spawnSync(
-        "claude",
-        ["plugin", "validate", join(root, file)],
-        {
-          encoding: "utf8",
-          shell: process.platform === "win32",
-        },
-      );
-      if (run.error !== undefined) {
-        return result(
-          category,
-          file,
-          "warn",
-          "claude コマンドがありません（CI は @anthropic-ai/claude-code を入れて実行します）",
-        );
-      }
-      const output = `${run.stdout}${run.stderr}`.trim();
-      if (run.status === 0) return result(category, file, "pass");
-      if (/log ?in|auth|credential|api key/i.test(output)) {
-        return result(
-          category,
-          file,
-          "warn",
-          `認証が必要で実行できませんでした：${output.split("\n").slice(-1)[0] ?? ""}`,
-        );
-      }
+  return [
+    "plugin/.claude-plugin/plugin.json",
+    ".claude-plugin/marketplace.json",
+  ].map((file) => {
+    const run = spawnSync("claude", ["plugin", "validate", join(root, file)], {
+      encoding: "utf8",
+      shell: process.platform === "win32",
+    });
+    if (run.error !== undefined) {
       return result(
         category,
         file,
-        "fail",
-        output.split("\n").slice(-3).join(" "),
+        "warn",
+        "claude コマンドがありません（CI は @anthropic-ai/claude-code を入れて実行します）",
       );
-    },
-  );
+    }
+    const output = `${run.stdout}${run.stderr}`.trim();
+    if (run.status === 0) return result(category, file, "pass");
+    if (/log ?in|auth|credential|api key/i.test(output)) {
+      return result(
+        category,
+        file,
+        "warn",
+        `認証が必要で実行できませんでした：${output.split("\n").slice(-1)[0] ?? ""}`,
+      );
+    }
+    return result(
+      category,
+      file,
+      "fail",
+      output.split("\n").slice(-3).join(" "),
+    );
+  });
 };
 
 // ---- 雛形 ----
@@ -310,10 +320,10 @@ const sampleValue = (name: string): string => {
   return "見本";
 };
 
-export const checkTemplates = (root: string = pluginRoot()): CheckResult[] => {
+export const checkTemplates = (root: string = repoRoot()): CheckResult[] => {
   const category = "雛形";
   const results: CheckResult[] = [];
-  const dir = join(root, "templates");
+  const dir = join(plugin(root), "templates");
   const readme = readFileSync(join(dir, "README.md"), "utf8");
   const documented = new Set(
     [...readme.matchAll(/`([a-z_]+)`/g)].map((m) => m[1] ?? ""),
@@ -336,7 +346,7 @@ export const checkTemplates = (root: string = pluginRoot()): CheckResult[] => {
     ];
     if (undocumented.length > 0)
       problems.push(
-        `templates/README.md に無い変数：${undocumented.join(", ")}`,
+        `plugin/templates/README.md に無い変数：${undocumented.join(", ")}`,
       );
     const filled = text.replace(VARIABLE, (_, name: string) =>
       sampleValue(name),
@@ -379,14 +389,14 @@ const LEAK_SKIP = [
   /^pnpm-lock\.yaml$/,
   /^CHANGELOG\.md$/,
   /^\.changeset\//,
-  /^scripts\/lib\/repo-checks\.ts$/,
-  /^scripts\/lib\/leak-patterns\.ts$/,
+  /^plugin\/scripts\/lib\/repo-checks\.ts$/,
+  /^plugin\/scripts\/lib\/leak-patterns\.ts$/,
   /^test\//,
   /^fixtures\//,
   /^evals\/skills\/.+\/overlay\//,
 ];
 
-export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
+export const checkLeak = (root: string = repoRoot()): CheckResult[] => {
   const category = "漏洩";
   const results: CheckResult[] = [];
   const files = trackedFiles(root).filter(
@@ -496,7 +506,7 @@ export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
 
 // ---- 文書（フロントマターとリンク） ----
 
-export const checkDocs = (root: string = pluginRoot()): CheckResult[] => {
+export const checkDocs = (root: string = repoRoot()): CheckResult[] => {
   const results: CheckResult[] = [];
   const schema = frontmatterSchema();
   // フロントマターを持つのは ADR と構造仕様だけ（利用者向けの docs/usage/ と入口の docs/README.md は持たない）
@@ -579,7 +589,7 @@ const adrFiles = (root: string): AdrEntry[] =>
     };
   });
 
-export const checkAdrIndex = (root: string = pluginRoot()): CheckResult[] => {
+export const checkAdrIndex = (root: string = repoRoot()): CheckResult[] => {
   const category = "ADR";
   const readme = readFileSync(join(root, "docs", "adr", "README.md"), "utf8");
   const section = readme.split(/\n## 一覧\n/)[1] ?? "";
@@ -633,7 +643,7 @@ export const checkAdrIndex = (root: string = pluginRoot()): CheckResult[] => {
 
 // ---- 利用者向け文書 ----
 
-export const checkUsage = (root: string = pluginRoot()): CheckResult[] => {
+export const checkUsage = (root: string = repoRoot()): CheckResult[] => {
   const ids = adrFiles(root)
     .map((entry) => entry.id)
     .filter((id) => id !== "");
@@ -684,9 +694,9 @@ const BASE_PROPERTIES = new Set([
   "target",
 ]);
 
-export const checkAdapters = (root: string = pluginRoot()): CheckResult[] => {
+export const checkAdapters = (root: string = repoRoot()): CheckResult[] => {
   const category = "Obsidian アダプタ";
-  const dir = join(root, "adapters", "obsidian");
+  const dir = join(plugin(root), "adapters", "obsidian");
   const results: CheckResult[] = [];
   for (const file of walk(join(dir, "vault"), (path) =>
     path.endsWith(".json"),
@@ -764,7 +774,7 @@ export const checkAdapters = (root: string = pluginRoot()): CheckResult[] => {
     results.push(
       result(
         category,
-        "adapters/obsidian",
+        "plugin/adapters/obsidian",
         "fail",
         "アダプタのファイルがありません",
       ),
@@ -865,7 +875,7 @@ const releasePrResults = (root: string, version: string): CheckResult[] => {
  * main 向けかどうかは、GitHub Actions の pull_request で入る GITHUB_BASE_REF で見分ける
  */
 export const checkRelease = (
-  root: string = pluginRoot(),
+  root: string = repoRoot(),
   env: NodeJS.ProcessEnv = process.env,
 ): CheckResult[] => {
   const category = "版";
@@ -890,7 +900,7 @@ export const checkRelease = (
         category,
         "package.json と plugin.json の version",
         "fail",
-        `package.json ${pkg}、plugin.json ${manifest}。node scripts/sync-plugin-version.ts で写してください`,
+        `package.json ${pkg}、plugin.json ${manifest}。node plugin/scripts/sync-plugin-version.ts で写してください`,
       ),
     ];
   }
@@ -920,12 +930,17 @@ const FORBIDDEN_WORKER_TOOLS = [
   "AskUserQuestion",
 ];
 
-export const checkAgents = (root: string = pluginRoot()): CheckResult[] => {
+export const checkAgents = (root: string = repoRoot()): CheckResult[] => {
   const category = "作業者エージェント";
-  const dir = join(root, "agents");
+  const dir = join(plugin(root), "agents");
   if (!existsSync(dir))
     return [
-      result(category, "agents/", "fail", "agents/worker.md がありません"),
+      result(
+        category,
+        "plugin/agents/",
+        "fail",
+        "plugin/agents/worker.md がありません",
+      ),
     ];
   const files = readdirSync(dir).filter((name) => name.endsWith(".md"));
   const results: CheckResult[] = [];
@@ -934,7 +949,7 @@ export const checkAgents = (root: string = pluginRoot()): CheckResult[] => {
     results.push(
       result(
         category,
-        "agents/",
+        "plugin/agents/",
         "fail",
         `同梱するのは作業者だけです（役割エージェントは company で育てる）：${extra.join(", ")}`,
       ),
@@ -943,7 +958,9 @@ export const checkAgents = (root: string = pluginRoot()): CheckResult[] => {
   for (const name of BUNDLED_AGENTS) {
     const path = join(dir, name);
     if (!existsSync(path)) {
-      results.push(result(category, `agents/${name}`, "fail", "ありません"));
+      results.push(
+        result(category, `plugin/agents/${name}`, "fail", "ありません"),
+      );
       continue;
     }
     const fm = parseFrontmatter(readFileSync(path, "utf8"));
@@ -976,8 +993,13 @@ export const checkAgents = (root: string = pluginRoot()): CheckResult[] => {
     }
     results.push(
       problems.length === 0
-        ? result(category, `agents/${name}`, "pass")
-        : result(category, `agents/${name}`, "fail", problems.join("、")),
+        ? result(category, `plugin/agents/${name}`, "pass")
+        : result(
+            category,
+            `plugin/agents/${name}`,
+            "fail",
+            problems.join("、"),
+          ),
     );
   }
   return results;
@@ -992,7 +1014,7 @@ const SCAFFOLD_SH = /^evals\/.+\/scaffold\.sh$/;
 const SHELL_EXTENSION = /\.(sh|bash|zsh|ksh)$/;
 const SHELL_SHEBANG = /^#!.*\b(sh|bash|zsh|ksh|dash)\b/;
 
-export const checkShell = (root: string = pluginRoot()): CheckResult[] => {
+export const checkShell = (root: string = repoRoot()): CheckResult[] => {
   const category = "シェルスクリプト";
   const results: CheckResult[] = [];
   for (const file of trackedFiles(root)) {
@@ -1051,13 +1073,13 @@ const EVAL_EXCLUDED: Record<string, string> = {
 const hasEvalCase = (dir: string): boolean =>
   walk(dir, (path) => /[/\\](case\.yaml|prompt\.md)$/.test(path)).length > 0;
 
-export const checkEvals = (root: string = pluginRoot()): CheckResult[] => {
+export const checkEvals = (root: string = repoRoot()): CheckResult[] => {
   const category = "Skill の検証";
   const results: CheckResult[] = [];
   const evalsDir = join(root, "evals", "skills");
   const skills = new Set(
-    readdirSync(join(root, "skills")).filter((name) =>
-      statSync(join(root, "skills", name)).isDirectory(),
+    readdirSync(join(plugin(root), "skills")).filter((name) =>
+      statSync(join(plugin(root), "skills", name)).isDirectory(),
     ),
   );
   const tested = existsSync(evalsDir)
@@ -1073,7 +1095,7 @@ export const checkEvals = (root: string = pluginRoot()): CheckResult[] => {
           category,
           path,
           "fail",
-          `skills/${name} がありません。Skill の名前を変えた・消したなら、検証のフォルダも合わせます`,
+          `plugin/skills/${name} がありません。Skill の名前を変えた・消したなら、検証のフォルダも合わせます`,
         ),
       );
     } else if (EVAL_EXCLUDED[name] !== undefined) {
@@ -1096,7 +1118,7 @@ export const checkEvals = (root: string = pluginRoot()): CheckResult[] => {
     results.push(
       result(
         category,
-        `skills/${name}`,
+        `plugin/skills/${name}`,
         "warn",
         `evals/skills/${name}/ に検証のケースがありません`,
       ),
@@ -1139,7 +1161,7 @@ export const parseIssueForm = (text: string): ParsedForm => {
   return form;
 };
 
-export const checkForms = (root: string = pluginRoot()): CheckResult[] => {
+export const checkForms = (root: string = repoRoot()): CheckResult[] => {
   const category = "Issue のフォーム";
   return REPORT_KINDS.map((kind) => {
     const name = `.github/ISSUE_TEMPLATE/${kind}.yml`;
@@ -1158,7 +1180,7 @@ export const checkForms = (root: string = pluginRoot()): CheckResult[] => {
     const want = expected.fields.map((f) => `${f.id}:${f.label}`).join("、");
     if (have !== want)
       problems.push(
-        `項目の id と label が scripts/lib/report-forms.ts と違う（フォーム：${have}）`,
+        `項目の id と label が plugin/scripts/lib/report-forms.ts と違う（フォーム：${have}）`,
       );
     for (const f of expected.fields) {
       const type = actual.fields.find((a) => a.id === f.id)?.type;

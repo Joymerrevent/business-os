@@ -20,8 +20,8 @@ import {
   parseDraft,
   replaceHome,
   sha256,
-} from "../../scripts/lib/report.ts";
-import { kindFromLine } from "../../scripts/lib/report-forms.ts";
+} from "../../plugin/scripts/lib/report.ts";
+import { kindFromLine } from "../../plugin/scripts/lib/report-forms.ts";
 import { makeCompany, repoRoot } from "../helpers.ts";
 
 describe("下書きの部品", () => {
@@ -110,7 +110,7 @@ describe("下書きの部品", () => {
   });
 });
 
-describe("node scripts/report.ts", () => {
+describe("node plugin/scripts/report.ts", () => {
   let company = "";
   let cleanup = (): void => {};
   let temp = "";
@@ -118,7 +118,7 @@ describe("node scripts/report.ts", () => {
   const run = (args: string[], input = "") =>
     spawnSync(
       process.execPath,
-      [join(repoRoot, "scripts", "report.ts"), ...args],
+      [join(repoRoot, "plugin", "scripts", "report.ts"), ...args],
       {
         input,
         encoding: "utf8",

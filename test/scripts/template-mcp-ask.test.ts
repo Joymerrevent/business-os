@@ -8,7 +8,7 @@ import { repoRoot } from "../helpers.ts";
 
 const askRules = (): string[] => {
   const text = readFileSync(
-    join(repoRoot, "templates", "settings.json.tmpl"),
+    join(repoRoot, "plugin", "templates", "settings.json.tmpl"),
     "utf8",
   );
   const settings = JSON.parse(text) as { permissions: { ask: string[] } };

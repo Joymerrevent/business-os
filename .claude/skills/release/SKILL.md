@@ -38,7 +38,7 @@ Release の公開は本番の公開にあたるので、実行の直前に必ず
 2. **リリースのブランチを作る**：`git switch -c release/<版> develop`
 3. **版を上げる**：`pnpm release:version`
    - `package.json` の版が上がり、`plugin.json` に同期され、`CHANGELOG.md` に節が足され、使った changeset が消える
-4. **検査**：`pnpm check` が終了コード 0。`claude plugin tag --dry-run` で、作られるタグの名前（`business-os--v<版>`）と、
+4. **検査**：`pnpm check` が終了コード 0。`claude plugin tag ./plugin --dry-run` で、作られるタグの名前（`business-os--v<版>`）と、
    `plugin.json` とマーケットプレイスの記述の一致を確かめる
 5. **コミットと PR**
    - コミット：`chore(release): <版> の版上げ`（subject は大文字の英単語で始めない）

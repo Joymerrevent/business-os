@@ -3,7 +3,7 @@ import {
   applyEdits,
   parseFrontmatter,
   touchesFrontmatter,
-} from "../../hooks/lib/frontmatter.ts";
+} from "../../plugin/hooks/lib/frontmatter.ts";
 
 describe("parseFrontmatter", () => {
   it("キーと値を文字列として読む（日付も文字列のまま）", () => {

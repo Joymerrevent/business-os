@@ -23,7 +23,7 @@ jobs:
           node-version-file: .node-version
 
       - name: 報告の種類のラベルを付ける
-        run: node scripts/issue-label.ts
+        run: node plugin/scripts/issue-label.ts
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}

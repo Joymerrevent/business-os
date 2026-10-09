@@ -4,9 +4,9 @@ import { join } from "node:path";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { parseFrontmatter } from "../../hooks/lib/frontmatter.ts";
-import { frontmatterSchema } from "../../hooks/lib/plugin.ts";
-import { validate } from "../../hooks/lib/schema.ts";
+import { parseFrontmatter } from "../../plugin/hooks/lib/frontmatter.ts";
+import { frontmatterSchema } from "../../plugin/hooks/lib/plugin.ts";
+import { validate } from "../../plugin/hooks/lib/schema.ts";
 import { fixtureCompany, repoRoot } from "../helpers.ts";
 
 const schema = frontmatterSchema();

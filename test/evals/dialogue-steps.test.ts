@@ -178,7 +178,7 @@ describe("nextStep（事業ごとにくり返す質問）", () => {
 /** SKILL.md の質問の表の番号と見出し */
 const questionHeaders = (skill: string): Map<number, string> => {
   const text = readFileSync(
-    join(repoRoot, "skills", skill, "SKILL.md"),
+    join(repoRoot, "plugin", "skills", skill, "SKILL.md"),
     "utf8",
   );
   const section = text.slice(text.indexOf("\n## 人に何を聞くか\n"));
