@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-07
+updated: 2026-10-09
 as_of: n/a
 verified: n/a
 ---
@@ -54,8 +54,48 @@ company/       事業データ。非公開。利用者ごとに 1 つ。/onboard
 ```text
 business-os/
 ├── .claude-plugin/
-│   ├── plugin.json              # Plugin メタデータ。name / version / description(alpha)
-│   └── marketplace.json         # business-os 自身をマーケットプレイスとして公開する定義（/plugin marketplace add 用）
+│   └── marketplace.json         # business-os 自身をマーケットプレイスとして公開する定義（/plugin marketplace add 用）。source は ./plugin
+├── plugin/                      # 配布物。利用者の環境に写るのはこのフォルダだけ（§3.1、ADR 20261009-02）
+│   ├── .claude-plugin/
+│   │   └── plugin.json          # Plugin メタデータ。name / version / description(alpha)
+│   ├── agents/
+│   │   └── worker.md            # 作業者エージェント（sonnet、ファイルの読み書きと検索のみ）。COO から委譲される
+│   ├── skills/                  # 配布する Skill（一覧と分類の正本は plugin/hooks/lib/plugin.ts）
+│   │   ├── onboard/SKILL.md
+│   │   ├── approve/SKILL.md
+│   │   ├── check/SKILL.md
+│   │   ├── adr/SKILL.md
+│   │   ├── morning/SKILL.md
+│   │   ├── weekly-review/SKILL.md
+│   │   ├── close/SKILL.md
+│   │   ├── quarterly/SKILL.md
+│   │   ├── retro/SKILL.md
+│   │   ├── validate/SKILL.md
+│   │   └── report/SKILL.md      # サポート Skill。business-os への報告
+│   ├── hooks/
+│   │   ├── hooks.json           # hook の登録定義
+│   │   ├── session-start.ts     # 軽い点検
+│   │   ├── pre-tool-use.ts      # 書き込みガード、Bash 意味解析
+│   │   └── lib/                 # フロントマター検証、日付検証、シェル引数解析
+│   ├── scripts/
+│   │   ├── check.ts             # 重い点検（company 向け）と check:*（business-os 向け）の共有実装
+│   │   ├── check-repo.ts        # 開発用。check:* の入口（package.json の check:* が呼ぶ）
+│   │   ├── report.ts            # /report の下書きの作成・検査・送る前の照合
+│   │   ├── issue-label.ts       # 開発用。作られた Issue に報告の種類のラベルを付ける（.github/workflows/issue-label.yml）
+│   │   ├── lib/                 # 点検の中身（company-checks.ts など）
+│   │   ├── sync-plugin-version.ts # changesets の version を plugin.json へ同期
+│   │   └── pre-commit.ts        # 開発用。git の pre-commit（lint-staged と gitleaks）
+│   ├── templates/               # company の雛形。/onboard が展開する
+│   │   ├── CLAUDE.md.tmpl
+│   │   ├── settings.json.tmpl
+│   │   ├── frontmatter.schema.json
+│   │   ├── charter/             # company.md / decision-rules.md / repositories/README.md・_template.md / businesses/_template.md
+│   │   ├── operations/          # obligations.md / risks.md / state/_template.md / daily/_template.md / reviews/*.md
+│   │   ├── decisions/_template.md # company の意思決定記録
+│   │   ├── proposals/_template.md
+│   │   └── skill-conventions.md # business-os の Skill の共通規約（書き出さない）
+│   └── adapters/
+│       └── obsidian/            # 第 10 節
 ├── .claude/                     # business-os を CC で開発するときの設定（配布しない）
 │   ├── settings.json            # 秘密の読み取りと force push などを拒否する permissions（sandbox は使わない。§3.1）
 │   ├── settings.local.json      # 個人設定（gitignore）
@@ -65,47 +105,10 @@ business-os/
 ├── .github/
 │   ├── workflows/               # check + gitleaks + audit を Linux / Windows で
 │   └── ISSUE_TEMPLATE/          # 不具合 / 改善 / Skill の追加 / Skill の削除・統合
-├── agents/
-│   └── worker.md                # 作業者エージェント（sonnet、ファイルの読み書きと検索のみ）。COO から委譲される
-├── skills/                      # 配布する Skill（一覧と分類の正本は hooks/lib/plugin.ts）
-│   ├── onboard/SKILL.md
-│   ├── approve/SKILL.md
-│   ├── check/SKILL.md
-│   ├── adr/SKILL.md
-│   ├── morning/SKILL.md
-│   ├── weekly-review/SKILL.md
-│   ├── close/SKILL.md
-│   ├── quarterly/SKILL.md
-│   ├── retro/SKILL.md
-│   ├── validate/SKILL.md
-│   └── report/SKILL.md          # サポート Skill。business-os への報告
-
-├── hooks/
-│   ├── hooks.json               # hook の登録定義
-│   ├── session-start.ts         # 軽い点検
-│   ├── pre-tool-use.ts          # 書き込みガード、Bash 意味解析
-│   └── lib/                     # フロントマター検証、日付検証、シェル引数解析
-├── scripts/
-│   ├── check.ts                 # 重い点検（company 向け）と check:*（business-os 向け）の共有実装
-│   ├── report.ts                # /report の下書きの作成・検査・送る前の照合
-│   ├── issue-label.ts           # 開発用。作られた Issue に報告の種類のラベルを付ける（.github/workflows/issue-label.yml）
-│   ├── lib/                     # 点検の中身（company-checks.ts など）
-│   ├── sync-plugin-version.ts   # changesets の version を plugin.json へ同期
-│   └── pre-commit.ts            # 開発用。git の pre-commit（lint-staged と gitleaks）
-├── templates/                   # company の雛形。/onboard が展開する
-│   ├── CLAUDE.md.tmpl
-│   ├── settings.json.tmpl
-│   ├── frontmatter.schema.json
-│   ├── charter/                 # company.md / decision-rules.md / repositories/README.md・_template.md / businesses/_template.md
-│   ├── operations/              # obligations.md / risks.md / state/_template.md / daily/_template.md / reviews/*.md
-│   ├── decisions/_template.md   # company の意思決定記録
-│   ├── proposals/_template.md
-│   └── skill-conventions.md     # business-os の Skill の共通規約（書き出さない）
-├── adapters/
-│   └── obsidian/                # 第 10 節
 ├── fixtures/                    # vitest と eval が共有する前提データ（company/ が土台の検証用 company）
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）
 ├── evals/                       # Skill の動作の検証。lib/ が共通の道具、skills/<Skill 名>/<ケース名>/ がケース
+├── dev-autopilot/               # 自律開発ループの開発物（ADR 20261008-01）。文書と ADR の規則はフォルダの中の規則に従う
 ├── docs/
 │   ├── README.md                # 開発者向け入口
 │   ├── adr/                     # 設計判断記録
@@ -123,12 +126,16 @@ business-os/
 
 ### 3.1 配布物と開発物
 
-| 配布物（Plugin に含まれる） | 開発物（business-os の開発にだけ使う） |
+| 配布物（`plugin/` の下。Plugin に含まれる） | 開発物（それ以外。business-os の開発にだけ使う） |
 |---|---|
-| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` 設定ファイル群 |
+| `plugin/.claude-plugin/plugin.json` `plugin/skills/` `plugin/agents/` `plugin/hooks/` `plugin/scripts/` `plugin/templates/` `plugin/adapters/` | `.claude-plugin/marketplace.json` `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` `dev-autopilot/` 設定ファイル群 |
 
-配布専用 Skill は `skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
-`agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
+マーケットプレイスの `source` は `./plugin` で、導入と更新で利用者の環境に写るのは `plugin/` の下だけ（ADR 20261009-02）。
+利用者の環境では `${CLAUDE_PLUGIN_ROOT}` が `plugin/` の中を指すので、Skill と hook の中のパスは `plugin/` を付けずに書く。
+2026-10 以前の ADR の本文に書かれた `skills/` `hooks/` などのパスは、`plugin/` を省いた当時の形（accepted の ADR は書き換えない）。
+`dev-autopilot/` の文書と ADR の規則は、そのフォルダの中の規則に従う（ADR 20261008-01）。
+配布専用 Skill は `plugin/skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
+`plugin/agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
 business-os の開発リポジトリでは sandbox を使わない。sandbox で守るのは、business-os を入れて運用する company の側。
 開発では `gh` の認証、`.claude/` を含むブランチの切り替え、`claude -p` での実機の試験、コミットへの署名を sandbox が妨げるため。
 
@@ -332,7 +339,7 @@ COO（主セッション）が `/retro` で「同じ視点のレビューを 2 �
 |---|---|---|
 | 1. sandbox | OS | `company/.claude/settings.json` |
 | 2. permissions | CC プロセス内 | 同上 |
-| 3. PreToolUse hook | CC プロセス内（business-os） | `business-os/hooks/pre-tool-use.ts` |
+| 3. PreToolUse hook | CC プロセス内（business-os） | `business-os/plugin/hooks/pre-tool-use.ts` |
 | 4. 承認パイプライン | 運用 | `company/docs/proposals/` と `/approve` |
 
 native Windows では sandbox が動かない（Claude Code の sandbox は macOS / Linux / WSL2 のみ対応）。

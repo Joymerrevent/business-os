@@ -3,12 +3,12 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** business-os のルート（hooks/lib/ の 2 つ上） */
+/** 配布物（Plugin）のルート（hooks/lib/ の 2 つ上）。利用者の環境では ${CLAUDE_PLUGIN_ROOT} と同じ場所 */
 export const pluginRoot = (): string =>
   join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 // 配布する Skill の一覧（分類ごと）。数は固定しない。足す・外すは Skill ごとに ADR で決め、ここに書く（ADR 20261004-02）。
-// 一覧は点検の正本で、skills/ のフォルダと一致しなければ check:skills が fail にする。
+// 一覧は点検の正本で、plugin/skills/ のフォルダと一致しなければ check:skills が fail にする。
 
 /** 経営基盤 Skill：事業非依存で、会社を運営する以上必要な仕組み */
 export const FOUNDATION_SKILLS = [

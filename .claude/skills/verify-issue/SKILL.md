@@ -22,7 +22,7 @@ description: business-os の利用者が立てた Issue（不具合の報告・�
 ## 何を読むか
 
 - `gh issue view <番号> --json title,body,labels,comments,author,createdAt`（本文とコメント）
-- Issue が触れる箇所のコード（`hooks/` `scripts/` `templates/` `skills/`）
+- Issue が触れる箇所のコード（配布物 `plugin/` の下の `hooks/` `scripts/` `templates/` `skills/`）
 - 関係する ADR（`docs/adr/`）と構造仕様（`docs/design/architecture.md`）。設定のキーや Skill 名で grep する
 - Issue が触れる第三者のツールのソース（`npm pack <名前>@<版>` を作業用のフォルダで展開する）
 
@@ -36,7 +36,7 @@ description: business-os の利用者が立てた Issue（不具合の報告・�
    - business-os のコードと ADR を読み、Issue の記述と食い違う箇所を探す。「部分一致」「必ず」のような言い方は、コードの実際の判定と照らす
    - 第三者のツールは、作業用のフォルダに取得してソースを読む。エラーを握りつぶす `catch`、終了コード、環境変数による切り替えを探す
 3. **実機で再現する**
-   - 作業用のフォルダ（scratchpad）に company 相当の作業場所を作る。設定は `templates/settings.json.tmpl` を写す（`{{ … }}` の行は除く）か、`fixtures/company/` を写す
+   - 作業用のフォルダ（scratchpad）に company 相当の作業場所を作る。設定は `plugin/templates/settings.json.tmpl` を写す（`{{ … }}` の行は除く）か、`fixtures/company/` を写す
    - 確認用のスクリプトを Node で書き、まず sandbox の外で動かして基準を取る
    - sandbox の中は `claude -p` で動かす。Bash で 1 回だけ実行させ、出力をそのまま返させる
 

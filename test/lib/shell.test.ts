@@ -3,7 +3,7 @@ import {
   parsePowerShell,
   parseShell,
   REDIRECT,
-} from "../../hooks/lib/shell.ts";
+} from "../../plugin/hooks/lib/shell.ts";
 
 describe("parseShell", () => {
   it("区切り（; && || | 改行）でコマンドを分ける", () => {

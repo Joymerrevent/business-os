@@ -19,8 +19,8 @@
   },
   "include": [
     "evals/**/*.ts",
-    "hooks/**/*.ts",
-    "scripts/**/*.ts",
+    "plugin/hooks/**/*.ts",
+    "plugin/scripts/**/*.ts",
     "test/**/*.ts",
     "vitest.config.ts"
   ]

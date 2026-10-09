@@ -221,7 +221,7 @@ const send = (
     "-p",
     message,
     "--plugin-dir",
-    repoRoot,
+    join(repoRoot, "plugin"),
     "--setting-sources",
     sandbox ? "project,local" : "",
     "--strict-mcp-config",

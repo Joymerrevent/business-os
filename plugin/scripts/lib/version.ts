@@ -1,6 +1,10 @@
 // business-os の版。正典は package.json（changesets が更新する）。plugin.json の version は利用者に更新を届ける合図になる。
+// package.json はリポジトリのルート、plugin.json は配布物のフォルダ plugin/ の中にある（ADR 20261009-02）。
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+
+/** 配布物のフォルダ（リポジトリのルートからの相対パス） */
+export const PLUGIN_DIR = "plugin";
 
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/;
 
@@ -14,16 +18,18 @@ const readVersion = (path: string): string => {
   return data.version;
 };
 
+/** リポジトリのルートの package.json の version */
 export const packageVersion = (root: string): string =>
   readVersion(join(root, "package.json"));
 
+/** リポジトリのルートの下の plugin/.claude-plugin/plugin.json の version */
 export const manifestVersion = (root: string): string =>
-  readVersion(join(root, ".claude-plugin", "plugin.json"));
+  readVersion(join(root, PLUGIN_DIR, ".claude-plugin", "plugin.json"));
 
-/** package.json の version を .claude-plugin/plugin.json に写し、写した版を返す */
+/** package.json の version を plugin/.claude-plugin/plugin.json に写し、写した版を返す */
 export const syncPluginVersion = (root: string): string => {
   const version = packageVersion(root);
-  const path = join(root, ".claude-plugin", "plugin.json");
+  const path = join(root, PLUGIN_DIR, ".claude-plugin", "plugin.json");
   const manifest = JSON.parse(readFileSync(path, "utf8")) as Record<
     string,
     unknown

@@ -1,7 +1,10 @@
 // 実機の発火試験（scripts/lib/live-check.ts）の判定部分のテスト。
 // claude -p そのものは CI では動かせないため、hook の記録とファイルの状態からの判定だけを確かめる。
 import { describe, expect, it } from "vitest";
-import { evaluateLive, LIVE_PROMPT } from "../../scripts/lib/live-check.ts";
+import {
+  evaluateLive,
+  LIVE_PROMPT,
+} from "../../plugin/scripts/lib/live-check.ts";
 
 const ok = { probeFileExists: false, probeDirExists: true };
 const write = {

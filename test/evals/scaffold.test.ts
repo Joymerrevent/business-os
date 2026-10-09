@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { manifestVersion } from "../../scripts/lib/version.ts";
+import { manifestVersion } from "../../plugin/scripts/lib/version.ts";
 import { repoRoot } from "../helpers.ts";
 
 const scaffold = (cwd: string, ...args: string[]) =>
