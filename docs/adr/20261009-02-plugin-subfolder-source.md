@@ -3,11 +3,11 @@ id: 20261009-02
 title: 配布物を plugin/ に集め、マーケットプレイスの source をそのフォルダに向けて、開発物を利用者に配らない
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-09
 updated: 2026-10-09
 as_of: 2026-10-09
-verified: n/a
+verified: 2026-10-09
 supersedes: n/a
 ---
 
