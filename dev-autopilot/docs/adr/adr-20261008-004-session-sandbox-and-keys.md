@@ -1,7 +1,7 @@
 ---
 status: proposed
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 decision-makers: メンテナ
 consulted: 別の文脈のレビュー AI 2 体（安全側・実現性）
 informed: n/a
@@ -29,7 +29,7 @@ AI のセッションをどう隔離し、鍵と署名をどう分けるかは�
 - 作業ブランチの push が通ること。作業ブランチの commit に署名を求めると、署名鍵を AI のセッションに置くことになり、1 つ目の決め手と矛盾する
 - 専用マシンの前に手元の Mac で試す間も、同じ設定で動くこと。試験の段階で普段の鍵が読まれないこと
 - 設定に「書いてある」ではなく「実際に読めない・書けない」ことを機械で確かめられること（要件メモ 6 節、fail-closed）
-- business-os の利用者向けの防衛（`templates/settings.json.tmpl` の sandbox の節）と同じ考え方で揃えること
+- business-os の利用者向けの防衛（`plugin/templates/settings.json.tmpl` の sandbox の節）と同じ考え方で揃えること
 
 ## 検討した選択肢（Considered Options）
 
@@ -44,7 +44,7 @@ AI のセッションをどう隔離し、鍵と署名をどう分けるかは�
 1. **安全設定を `--settings` で渡し、プロジェクトの設定と hook は読まない。** AI のセッション（作業 AI・レビュー AI・批評者）は、`--setting-sources user` で起動し、dev-autopilot が `--settings` で渡す安全設定で動かす。
    プロジェクトの `.claude/settings.json` と hook は読まない。hook は Bash の外で動き sandbox が掛からないため、作業 AI が書き換えた hook がレビュー AI のセッションで動く経路を断つ。
    sandbox を有効にし、`denyRead` に `~/.ssh`・`~/.config/gh`・鍵と PAT の置き場（3）・進行役の設定と記録を入れ、書き込みは担当する Issue の worktree と一時フォルダと、commit に要る `.git/objects` `.git/worktrees/<名>` だけに絞り、`allowUnsandboxedCommands: false` とし、外への通信は許可した先（npm のレジストリなど）だけにする。
-   雛形は business-os の `templates/settings.json.tmpl` の sandbox の節を元にする。npm のキャッシュとプロキシの設定は business-os の sandbox の既存の設定（ADR 20261006-01）を写す。
+   雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする。npm のキャッシュとプロキシの設定は business-os の sandbox の既存の設定（ADR 20261006-01）を写す。
    `--setting-sources user` でプロジェクト設定と hook が読まれないことは、段階 0b の残る確認 (c)（ADR「[進行役は決定的なスクリプトにし、AI は作業・レビュー・批評の 3 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles]」（ADR-20261008-001）の段階表）で実機で確かめる。
 2. **作業 AI の commit は署名しない。** セッションの git 設定で `commit.gpgsign=false` にする。`develop` への squash マージの commit は GitHub が作って署名するので Verified になる。
    作業ブランチの commit はマージ後に消えるため、進行役が署名し直す仕組みは持たない。`develop` の ruleset に「署名必須」は入れない（入れると作業ブランチの push が通らない）。
@@ -127,11 +127,11 @@ AI のセッションをどう隔離し、鍵と署名をどう分けるかは�
 **見つかった不具合（🔴）：sandbox の `denyRead` はシンボリックリンクを解決しない。**
 確かめた Mac では `~/.config` が同期フォルダ上の dotfiles へのシンボリックリンクで、`denyRead` に `~/.config/gh/**` と書いても `~/.config/gh/hosts.yml` が読めた（glob なしでも同じ）。実体のパスを書くと止まった。
 `~/.ssh` も同じ dotfiles へのリンクだが、`~/.ssh/**` で止まった（リンクがパターンの先頭にあるときは解決され、途中にあると解決されないように見える）。
-利用者向けの雛形 `templates/settings.json.tmpl` の `denyRead` にも同じ影響があるため、business-os の [Issue #80][issue-80] に起票した。決定の 7 は `denyRead` の不具合の結果から導いた。
+利用者向けの雛形 `plugin/templates/settings.json.tmpl` の `denyRead` にも同じ影響があるため、business-os の [Issue #80][issue-80] に起票した。決定の 7 は `denyRead` の不具合の結果から導いた。
 
 ### 据え置くもの・関連する決定
 
-- business-os の利用者向けの署名の雛形（`templates/` の git 設定）は変えない。人の署名の方式の変更（P6）は dev-autopilot のマシンと人の手元に限る
+- business-os の利用者向けの署名の雛形（`plugin/templates/` の git 設定）は変えない。人の署名の方式の変更（P6）は dev-autopilot のマシンと人の手元に限る
 - 自動化用の GitHub アカウントを分けるか（machine user か GitHub App か）は要件メモ 8 節の未決のまま。段階 3 で 1 つのアカウントで印の判定が動くことを確かめてから決める
 - 段階 0b の残る確認は ADR-20261008-001 の段階表に (a)〜(e) として列挙してある。本 ADR に関わるのは (a) (b) (c) (e)
 - 決定の反映先：`setup`（安全設定の生成、鍵と PAT の置き場の作成、ruleset の作成）、`check`（読み取りの点検、起動の引数の点検）、進行役（`--setting-sources user` と `--settings` での起動、別の clone への取り込みと push、PAT の読み込み、漏えいの検査）。実装は accepted の後に別の PR で行う

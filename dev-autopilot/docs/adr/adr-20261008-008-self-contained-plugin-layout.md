@@ -1,7 +1,7 @@
 ---
 status: proposed
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 decision-makers: メンテナ
 consulted: 別の文脈のレビュー AI 2 体（安全側・実現性）
 informed: n/a
@@ -14,7 +14,7 @@ informed: n/a
 dev-autopilot は、business-os の Issue を AI が worktree で実装し、別の AI がレビューし、条件を満たしたら進行役がマージする自律開発ループである（[要件メモ][memo] 1 節）。
 dev-autopilot は business-os の開発専用の道具であり、business-os の利用者が使う Skill・agent・hook ではない。一方で、要件メモ 10 節は「将来は別リポジトリ（独立した Plugin）で管理する」と決めている。
 
-business-os には開発専用の TypeScript の置き場が無く、tsconfig の include は `evals/` `hooks/` `scripts/` `test/` だけである（5 節 P7）。
+business-os には開発専用の TypeScript の置き場が無く、tsconfig の include は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけである（5 節 P7）。
 レビューの手順である `change-review` Skill はメンテナの個人設定（`~/.claude`）の `skills/` にあり、dev-autopilot の専用マシンには無いかもしれない（5 節 P14）。
 dev-autopilot が動く前提（ラベル、Project の欄、ruleset、設定ファイル、cron）を人が手で揃える前提にすると、別のリポに入れるたびに手順書が要り、揃っているかも人の記憶に頼ることになる（4.9 節）。
 
@@ -29,7 +29,7 @@ dev-autopilot が動く前提（ラベル、Project の欄、ruleset、設定フ
 - 分離のときに、写しも supersede も要らず、フォルダごと移せること（10 節「守ること」5）
 - business-os と dev-autopilot が互いの中身を import せず、版がずれても黙って壊れないこと（10 節「守ること」1・7）
 - リポ固有の値がコードに残らず、2 つ目の適用先に設定ファイルだけで適用できること（10 節「守ること」2、「分離の時期の目安」）
-- 配布物の名札（`.claude-plugin/plugin.json`）が指す Skill・agent・hook に dev-autopilot が混ざらないこと（12 節 判断 3）
+- 配布物の名札（`plugin/.claude-plugin/plugin.json`）が指す Skill・agent・hook に dev-autopilot が混ざらないこと（12 節 判断 3）
 - 導入と点検を人の記憶に頼らず、機械で冪等に行えること（4.9 節 S1〜S4）
 - 検査の対象から外れる領域を作らないこと（10 節「守ること」4。検査は dev-autopilot が持ち、business-os はそれを呼ぶ）
 
@@ -37,7 +37,7 @@ dev-autopilot が動く前提（ラベル、Project の欄、ruleset、設定フ
 
 - 案 A: business-os の中の 1 つのフォルダ `dev-autopilot/` に Plugin の形で閉じて作り、分離の条件が揃ったら別リポに移す
 - 案 B: 最初から別リポジトリで作る
-- 案 C: business-os の既存のフォルダ（`.claude/skills/` `.claude/agents/` `scripts/` `test/`）に分けて置く
+- 案 C: business-os の既存のフォルダ（`.claude/skills/` `.claude/agents/` `plugin/scripts/` `test/`）に分けて置く
 
 ## 決定（Decision Outcome）
 
@@ -79,7 +79,7 @@ dev-autopilot/
 
 ### 守ること（10 節「守ること」1〜7）
 
-1. **import しない。** dev-autopilot は business-os の `hooks/lib` や `scripts/lib` を import しない。要る関数は dev-autopilot 側に持つ。逆に business-os が dev-autopilot を import することもしない。
+1. **import しない。** dev-autopilot は business-os の `plugin/hooks/lib` や `plugin/scripts/lib` を import しない。要る関数は dev-autopilot 側に持つ。逆に business-os が dev-autopilot を import することもしない。
 2. **リポ固有の値は設定ファイル 1 つに出す。** 置き場は business-os 側の `.claude/dev-autopilot.json`。項目は owner / repo、Project の番号と Status の選択肢の ID、ラベル名（`agent-ready` `needs-human` `from-review`）、base ブランチ、品質ゲートのコマンド（`pnpm check`）、コミットと PR の規約（言語、Conventional Commits、changeset の要否）、自動マージの許可一覧（4.7 節 R7-3。ADR「開発の PR は進行役が許可一覧の条件でマージし、方針に係る PR は人がマージする」（[ADR-20261008-006][adr-20261008-006-orchestrator-merge-allowlist]））、モデル、予算と上限（件数・ラウンド・ターン・時間）、worktree の置き場。dev-autopilot のコードには書かない。
    設定ファイルは worktree にも入るので、進行役は自分の clone の base ブランチ（`develop`）の版だけを読み、worktree 側の版は読まない。作業 AI が worktree の中で設定ファイルを書き換えても、進行役の判定には効かない。
 3. **起動は Plugin として。** 進行役は `claude -p --plugin-dir <dev-autopilot のパス>/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。
@@ -126,13 +126,13 @@ dev-autopilot/
 - 良い点: Skill・agent・進行役を 1 つの版で配るので、印の形や引数のずれが黙って壊れることを防げる。
 - 悪い点: business-os の利用者にも `dev-autopilot/` が配られる。固有名詞と秘密を置かない規則と `check:leak` で守る。
 - 悪い点: business-os の中に、Markdown の規約（参照スタイル）と ADR の規則（ファイル名・frontmatter）が異なる領域が 1 つできる。例外は橋渡し ADR と CLAUDE.md の 1 行で明示し、参照スタイルの許可は `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定で `dev-autopilot/` の下に限る。
-- 悪い点: `hooks/lib` `scripts/lib` の関数を dev-autopilot 側にも持つため、同じ処理が 2 か所に存在しうる。分離の前提として受け入れる。
+- 悪い点: `plugin/hooks/lib` `plugin/scripts/lib` の関数を dev-autopilot 側にも持つため、同じ処理が 2 か所に存在しうる。分離の前提として受け入れる。
 - 中立: dev-autopilot を workspace のパッケージにする設定（`package.json`・tsconfig・vitest）と business-os の `check:dev-autopilot` は、本 ADR と橋渡し ADR の accepted 後に実装の PR で行う。入れ子の markdownlint の設定（`dev-autopilot/.markdownlint-cli2.jsonc`）だけは起票 PR（#83）に含める。設定が無いと pre-commit と `check:md` が参照スタイルのリンクで止まり、起票そのものができないため（橋渡し ADR の判断）。
 
 ### 確認方法（Confirmation）
 
 - `claude plugin validate` が `dev-autopilot/plugin/` で通り、`claude -p --plugin-dir dev-autopilot/plugin --agent dev-autopilot:worker` が動く（0b では `tmp/` の偽の Plugin で確認済み。実装の PR で dev-autopilot 自身の名札で再確認する）。
-- `dev-autopilot/src/` と `dev-autopilot/test/` に、business-os の `hooks/` `scripts/` を指す import が無いことを grep で確かめる（`check` の項目にする）。
+- `dev-autopilot/src/` と `dev-autopilot/test/` に、business-os の `plugin/hooks/` `plugin/scripts/` を指す import が無いことを grep で確かめる（`check` の項目にする）。
 - `.claude/dev-autopilot.json` に 10 節「守ること」2 の項目がすべてあり、ID が実在することを `check` が確かめる。
 - business-os の `pnpm check` が `check:dev-autopilot` 経由で dev-autopilot の `check`（型検査・vitest・markdownlint）を回し、business-os の tsconfig と vitest の include に `dev-autopilot/` が無く、`check:adr`・`check:docs` が `dev-autopilot/` を対象にせず、markdownlint が `dev-autopilot/` の下で入れ子の設定（`dev-autopilot/.markdownlint-cli2.jsonc`。参照スタイルを許す）を使うことを、設定ファイルの実物で確かめる。
 - `setup` を 2 回続けて実行しても 2 回目が何も作らないこと、作った後の読み戻しが実物と一致することを、結合テスト（`dev-autopilot/test/`）で確かめる。
@@ -163,14 +163,14 @@ dev-autopilot/
 
 ### 案 C: business-os の既存のフォルダに分けて置く
 
-`.claude/skills/` に Skill、`.claude/agents/` に agent、`scripts/` に進行役、`test/` にテストを置く形。要件メモ 2 節の初期の決定（エージェント定義を開発専用の `.claude/agents/` に置く）に近い。
+`.claude/skills/` に Skill、`.claude/agents/` に agent、`plugin/scripts/` に進行役、`test/` にテストを置く形。要件メモ 2 節の初期の決定（エージェント定義を開発専用の `.claude/agents/` に置く）に近い。
 
 - 良い点: 既存の検査設定を変えずに済む。
 - 良い点: business-os の開発専用 Skill（`.claude/skills/`）と同じ置き場で、開発者に馴染みがある。
 - 悪い点: 分離のときに各所から拾い集める必要があり、漏れが出る。文書も business-os の `docs/` に混ざり、supersede が要る。
-- 悪い点: `scripts/lib` の関数を使いたくなり、import の禁止を守りにくい。
+- 悪い点: `plugin/scripts/lib` の関数を使いたくなり、import の禁止を守りにくい。
 - 悪い点: Plugin の名前空間（`dev-autopilot:worker`）で呼べず、分離後に呼び方が変わる。
-- 悪い点: `scripts/` と `test/` は business-os の配布物と検査の対象であり、dev-autopilot の変更が business-os の `check:*` の実装と同じ扱いを受ける。
+- 悪い点: `plugin/scripts/` と `test/` は business-os の配布物と検査の対象であり、dev-autopilot の変更が business-os の `check:*` の実装と同じ扱いを受ける。
 
 ## 補足情報（More Information）
 

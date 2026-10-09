@@ -13,7 +13,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 
 | 項目 | 決定 |
 |---|---|
-| 置き場所 | いまは business-os の中に開発専用として作る。配布物（`.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/`）には入れない。将来は別リポジトリに分離する前提で、1 つのフォルダに閉じて作る（10 節） |
+| 置き場所 | いまは business-os の中に開発専用として作る。配布物（`plugin/` の下。`plugin/.claude-plugin/` `plugin/skills/` `plugin/agents/` `plugin/hooks/` `plugin/scripts/`）には入れない。将来は別リポジトリに分離する前提で、1 つのフォルダに閉じて作る（10 節） |
 | 実行環境 | いまは手元の cron（macOS では launchd）。将来は専用マシンで同じものを回す。クラウドの仕組みは土台にせず、検討事項に残す（8 節） |
 | 人の関所 | Issue が起票されたら人が判断して処理対象にする。開発の PR のマージは dev-autopilot がしてよい。方針に係る PR（4.7 節の一覧）は人だけがマージする |
 | マイルストーン | リリースごとにマイルストーンを組む。ループはマイルストーンの中の Issue を対象にする |
@@ -22,7 +22,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 | コミットの署名と鍵 | 人の鍵と自動化の鍵を分ける（2026-10-08、案 A）。人は手元の新しい SSH 鍵で署名し、1Password の agent はやめる。dev-autopilot のマシンには人の鍵も gh のログインも置かず、business-os に絞った deploy key（push 用）と fine-grained PAT（進行役用）だけを置く |
 | AI のセッションの隔離 | 案 A（2026-10-08）。作業 AI とレビュー AI の `claude -p` に、dev-autopilot が `--settings` で渡す安全設定で Claude Code の sandbox を掛ける。詳細は 12 節の判断 1 |
 | モデル | レビュー AI は最上位（`fable`、無ければ `opus`）。作業 AI は `opus` 以下。別名で書き、版番号を書かない |
-| エージェント | 作業用とレビュー用のエージェント定義を開発専用の `.claude/agents/` に置く。配布物の `agents/` には入れない |
+| エージェント | 作業用とレビュー用のエージェント定義を開発専用の `.claude/agents/` に置く。配布物の `plugin/agents/` には入れない |
 
 ## 3. 登場するもの
 
@@ -127,10 +127,10 @@ AI は「実装する」「レビューする」「直す」の 3 つの作業�
   - 変更したファイルに、方針に係るパス（下の一覧）が 1 つも無い
 - R7-3 **自動マージしてよいパスの許可一覧**（拒否一覧ではなく許可一覧。一覧に無いパスを 1 つでも触れば人がマージ）。設定ファイルに持つ。business-os の初期値（2026-10-08 決定、狭く始める）：
   - `docs/usage/**`（利用者向け文書）、`test/**` `evals/**` `fixtures/**`（検査と前提データ）、`.changeset/*.md`（設定ファイル `config.json` は除く）
-  - `skills/**` と `scripts/**` は利用者の CC で動く配布物なので初期値に入れない。段階 5 で 10 件の一致を確かめた後、別の判断で広げる
+  - `plugin/skills/**` と `plugin/scripts/**` は利用者の CC で動く配布物なので初期値に入れない。段階 5 で 10 件の一致を確かめた後、別の判断で広げる
   - 判定は diff の状態も見る：削除（D）・改名（R）・種類の変更（T。シンボリックリンク化など）・実行属性の変更は、パスが許可一覧にあっても人がマージ
   - 許可一覧に **含めない**（人がマージ）の例：`docs/adr/**` `docs/design/**` `ROADMAP.md`、`CLAUDE.md` `.claude/**`、**`dev-autopilot/**`（自己改変）**、`.claude-plugin/**` `.github/**`、
-    `hooks/**` `agents/**` `templates/**`（利用者の CC で動く防衛と雛形）、`scripts/check-repo.ts` など `check:*` の実装、`package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*`、`release/*` ブランチと `main` 向けの PR
+    `plugin/hooks/**` `plugin/agents/**` `plugin/templates/**`（利用者の CC で動く防衛と雛形）、`plugin/scripts/check-repo.ts` など `check:*` の実装、`package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*`、`release/*` ブランチと `main` 向けの PR
 - R7-3b マージは `gh pr merge --squash --match-head-commit <印の head SHA>` で行い、印の SHA と実際の head の一致をサーバ側でも強制する。1 回の実行でマージするのは 1 件まで。
   ruleset（S1 が作る）に「base と最新であること」を入れ、古い base で pass した PR はマージされない。載せ直しは `git merge develop`（force push を使わない）
 - R7-4 マージ後：Issue を閉じる（`develop` 向けのため自動では閉じない）、worktree を消す（ブランチはリポ設定 `delete_branch_on_merge` が消す）、依存していた worktree に `develop` を merge する
@@ -196,7 +196,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 | P4 | 処理対象を示すラベルが無い | `agent-ready` と `needs-human` を足す（名前は仮） |
 | P5 | `develop` にブランチ保護が無い | ruleset で PR 必須にする（自律セッションの直 push を仕組みで止める） |
 | P6 | コミットの署名が 1Password のソケット頼み | 人の署名は手元の SSH 鍵に移す（`gpg.format ssh`、`user.signingkey` を鍵ファイルに）。dev-autopilot は人の鍵を使わない。作業 AI の commit は署名なし、`develop` への squash マージの commit は GitHub が署名する（判断 1）。business-os の雛形（ADR 20261003-11）は利用者向けなので変えない |
-| P7 | 開発専用の TypeScript の置き場が無い（tsconfig は `evals/` `hooks/` `scripts/` `test/` だけ） | 開発物のフォルダ `dev-autopilot/` を 1 つ足し、構造仕様 3.1 節の表に加える。中身は 10 節の構成 |
+| P7 | 開発専用の TypeScript の置き場が無い（tsconfig は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけ） | 開発物のフォルダ `dev-autopilot/` を 1 つ足し、構造仕様 3.1 節の表に加える。中身は 10 節の構成 |
 | P8 | `claude -p` の実行は利用枠を消費する | 1 回の実行・1 日あたりの上限を設定に持つ |
 | P9 | 作業 AI とレビュー AI が同じ GitHub アカウント（メンテナ）で投稿することになる | GitHub は PR の作者自身の approve と request changes を受け付けない。いまの運用も GitHub のレビュー状態を使わず、PR のコメントで判定している。dev-autopilot も同じで、判定は PR のコメントの固定の印（R3-3）で行う。アカウントは最初はメンテナの 1 つで始め、無人のマシンにはこのリポだけに絞った fine-grained PAT を置く。人と AI の投稿は印で見分ける。監査のために分けたくなったら、自動化用のアカウントをコラボレータに足す（判定の仕組みは変えずに済む） |
 | P10 | Issue のフォームに受け入れ条件の欄が無い | 外から入る Issue は報告・提案の形で、作業の定義ではない。コラボレータの作業指示コメント（I1）で補う。フォームには足さない（外の人が書く欄にしない） |
@@ -387,7 +387,7 @@ dev-autopilot/
 
 ### 守ること
 
-1. **business-os の中身を import しない。** `hooks/lib` や `scripts/lib` の関数が要るなら、dev-autopilot 側に持つ。逆に business-os が dev-autopilot を import することもしない
+1. **business-os の中身を import しない。** `plugin/hooks/lib` や `plugin/scripts/lib` の関数が要るなら、dev-autopilot 側に持つ。逆に business-os が dev-autopilot を import することもしない
 2. **リポ固有の値はすべて設定ファイル 1 つに出す。** 置き場は business-os 側（例：`.claude/dev-autopilot.json`）で、dev-autopilot のコードには書かない。
    項目：owner / repo、Project の番号と Status の選択肢の ID、ラベル名（`agent-ready` `needs-human` `from-review`）、base ブランチ、品質ゲートのコマンド（`pnpm check`）、
    コミットと PR の規約（言語、Conventional Commits、changeset の要否）、方針に係るパスの一覧（4.7 節）、モデル、予算と上限（件数・ラウンド・ターン・時間）、worktree の置き場
@@ -556,7 +556,7 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したら自�
    **決定（2026-10-08）：案 A。** 中身は次のとおり
    - AI のセッション（作業 AI・レビュー AI・批評者）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、`~/.ssh` `~/.config/gh` と進行役の設定・記録の読み取り禁止、
      書き込みはその Issue の worktree と一時フォルダだけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
-     雛形は business-os の `templates/settings.json.tmpl` の sandbox の節を元にする（利用者向けの四重防衛と同じ考え方）
+     雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする（利用者向けの四重防衛と同じ考え方）
    - 作業 AI の commit は署名なし（セッションの git 設定で `commit.gpgsign=false`）。`develop` への squash マージの commit は GitHub が作って署名するので Verified になる。
      作業ブランチの commit はマージ後に消えるため、再署名の仕組みは持たない。`develop` の ruleset に「署名必須」は入れない（入れると作業 AI の push が通らない）
    - 鍵は 2 系統：人の署名鍵（手元の SSH 鍵。dev-autopilot は触らない）と、dev-autopilot のマシン専用の deploy key（business-os だけに書き込み可。進行役だけが使う）。
@@ -565,9 +565,9 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したら自�
    - `develop` にも ruleset（PR 必須、force push 禁止、base と最新であること）を掛け、deploy key で直接 push できるのは作業ブランチだけにする
    - 手元の Mac で試す間（専用マシンの前）も同じ設定で動かす。sandbox が人の鍵と gh の設定を AI から隠すので、試験の段階で普段の鍵が読まれることも防げる
    - 0b で確かめること：sandbox を掛けた `claude -p` で `pnpm check` と `git commit` が通るか（npm のキャッシュとプロキシは ADR 20261006-01 の設定を写す）
-2. **自動マージの許可一覧の初期値。** **決定（2026-10-08）：狭く始める。** `docs/usage/**` `test/**` `evals/**` `fixtures/**` `.changeset/*.md` だけ。`skills/**` `scripts/**` は配布物なので含めず、段階 5 の後に別の判断で広げる（R7-3 に反映）
+2. **自動マージの許可一覧の初期値。** **決定（2026-10-08）：狭く始める。** `docs/usage/**` `test/**` `evals/**` `fixtures/**` `.changeset/*.md` だけ。`plugin/skills/**` `plugin/scripts/**` は配布物なので含めず、段階 5 の後に別の判断で広げる（R7-3 に反映）
 3. **配布範囲。** **決定（2026-10-08）：受け入れる。** `dev-autopilot/` は `test/` `evals/` と同じく business-os の利用者にも配られる。橋渡し ADR に「配布物に含まれるが、Plugin の名札が指す Skill・agent・hook には入れない。業務の固有名詞と秘密を置かない（`check:leak` の対象）」と書く。
-   `source` を絞る案は、dev-autopilot では最初から `plugin/` に閉じる形で採る（10 節。2026-10-09 の決定）。business-os 側は ADR 20261009-02 で決める。入れ子の `.claude-plugin/plugin.json` を `claude plugin validate` と `--plugin-dir` がどう扱うかは 0b で確かめ、問題があれば名札を分離まで置かない
+   `source` を絞る案は、dev-autopilot では最初から `plugin/` に閉じる形で採る（10 節。2026-10-09 の決定）。business-os 側は ADR 20261009-02 で決めた（2026-10-09 に accepted、PR #89 で実装済み。配布物は `plugin/` の下）。入れ子の `.claude-plugin/plugin.json` を `claude plugin validate` と `--plugin-dir` がどう扱うかは 0b で確かめ、問題があれば名札を分離まで置かない
 4. **`per-commit-gates.sh` の扱い。** **決定（2026-10-08）：TypeScript に書き直す**（`dev-autopilot/src/per-commit-gates.ts`。Node 24 が直接実行。CLAUDE.md の規則 2 と整合）。9 節 S6 の「そのまま使う」は取り消す。
    書き直したものを `review` Skill から呼ぶ。`~/.claude` の bash 版は分離まで手動のレビュー用に残す
 5. **参照スタイルのリンクの例外。** **決定（2026-10-08）：橋渡し ADR で「`dev-autopilot/` では CLAUDE.md の規則 3（inline リンク）と規則 2 の bash の扱い以外の文書規約を適用せず、dev-autopilot 側の規則に従う」と決め、ADR の accepted 後に CLAUDE.md の規則 3 にその旨を 1 行足す。** business-os の markdownlint の `ignores` に `dev-autopilot` を足し、dev-autopilot に自分の markdownlint の設定を置く（10 節 5）。**訂正（2026-10-08）**: 実装は root の ignores ではなく `dev-autopilot/.markdownlint-cli2.jsonc` の入れ子の設定（橋渡し ADR 20261008-01 の決定 5）。決定は変わらない。
@@ -592,7 +592,7 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
 
 - dev-autopilot への反映：`setup` が安全設定を書くとき、`denyRead` と `denyWrite` の各パスを実体に解決してから書く（リンクの場合は両方のパスを書く）。
   `check` は「設定に書いてある」ではなく「sandbox の中で実際に読めないこと」を、読み取りを試して確かめる（fail-open を機械で検出する）。本文 6 節に足す
-- business-os への反映：`templates/settings.json.tmpl` の `denyRead` の `~/.config/gh/**` `~/.aws/**` が、`~/.config` をリンクにしている利用者では効かない。
+- business-os への反映：`plugin/templates/settings.json.tmpl` の `denyRead` の `~/.config/gh/**` `~/.aws/**` が、`~/.config` をリンクにしている利用者では効かない。
   利用者向けの不具合なので Issue #80 に起票した（2026-10-08）
 - 人への注意：`~/.ssh` の実体がクラウドの同期フォルダにある。dev-autopilot 用の鍵も人の新しい署名鍵も、同期されないパスに置く
 

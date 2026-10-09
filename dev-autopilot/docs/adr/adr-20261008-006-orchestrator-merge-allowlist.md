@@ -1,7 +1,7 @@
 ---
 status: proposed
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 decision-makers: メンテナ
 consulted: 別の文脈のレビュー AI 2 体（安全側・実現性）
 informed: n/a
@@ -75,10 +75,10 @@ business-os の初期値は次の 3 つ（2026-10-08 決定、要件メモ 12 �
 | `fixtures/**` | 検査の前提データ |
 | `.changeset/*.md` | changeset。設定ファイル `config.json` は含まない |
 
-`skills/**` と `scripts/**` は利用者の CC で動く配布物なので初期値に入れない。
+`plugin/skills/**` と `plugin/scripts/**` は利用者の CC で動く配布物なので初期値に入れない。
 `test/**` と `evals/**` も初期値に入れない。`evals/` には唯一の bash である `evals/scaffold.sh` と `evals/lib/**` の実行されるコードが、`test/**` には hook の fail-closed テストが含まれ、
 テストの弱体化（消す・skip する・期待値を緩める）を許可一覧では止められず、レビュー頼みになるためである。
-`test/**` `evals/**` `skills/**` `scripts/**` は、段階 5 で 10 件の一致を確かめた後、別の判断で広げる。
+`test/**` `evals/**` `plugin/skills/**` `plugin/scripts/**` は、段階 5 で 10 件の一致を確かめた後、別の判断で広げる。
 
 許可一覧に含めない（人がマージする）例:
 
@@ -88,8 +88,8 @@ business-os の初期値は次の 3 つ（2026-10-08 決定、要件メモ 12 �
 | CC の設定 | `CLAUDE.md` `.claude/**` |
 | 自己改変 | `dev-autopilot/**` |
 | Plugin の名札と CI | `.claude-plugin/**` `.github/**` |
-| 利用者の CC で動く防衛と雛形 | `hooks/**` `agents/**` `templates/**` |
-| 検査とその実装 | `test/**` `evals/**`、`scripts/check-repo.ts` など `check:*` の実装 |
+| 利用者の CC で動く防衛と雛形 | `plugin/hooks/**` `plugin/agents/**` `plugin/templates/**` |
+| 検査とその実装 | `test/**` `evals/**`、`plugin/scripts/check-repo.ts` など `check:*` の実装 |
 | パッケージ・ロック・道具の設定 | `package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*` |
 | ブランチ | `release/*` ブランチと `main` 向けの PR |
 
@@ -134,7 +134,7 @@ revert は、`develop` の `revert:` で始まる commit（Conventional Commits 
 - 良い点: 方針に係る変更と自己改変は、許可一覧に無いという理由で仕組みが人へ渡す。人の記憶に頼らない
 - 良い点: `--match-head-commit` と ruleset の「base と最新」で、印と head のずれ・古い base の pass を GitHub 側でも止める
 - 悪い点: 業界の実践の外にある。revert が出たときの被害は `develop` に限られるが、ゼロではない
-- 悪い点: 許可一覧が狭いので、`skills/**` `scripts/**` `test/**` `evals/**` を触る PR は当面すべて人がマージする。無人で回る範囲は利用者向け文書・前提データ・changeset に限られる
+- 悪い点: 許可一覧が狭いので、`plugin/skills/**` `plugin/scripts/**` `test/**` `evals/**` を触る PR は当面すべて人がマージする。無人で回る範囲は利用者向け文書・前提データ・changeset に限られる
 - 悪い点: メンテナの個人設定（`~/.claude`）の規則に例外ができる。例外の範囲を cron が起動する進行役に限ると明記しても、読む人が混同しうる
 - 悪い点: 手動の `/dev-autopilot` ではマージされないので、手動で回した PR のマージは人の操作が要る
 - 中立: 許可一覧を広げるときは別の判断（新しい ADR か、ADR の改め）が要る
@@ -191,7 +191,7 @@ Copilot・Codex・Jules・Devin・OpenHands と同じ形。進行役は PR を R
 - 正本は [要件メモ][memo] の 4.7 節（R7-1〜R7-5）、4.6 節 R6-3、7 節と 12 節「7 節の段階の割り直し」、11 節「dev-autopilot が業界より先に出ている点」、12 節の判断 2
 - 終了条件（CI 緑と `verdict=pass` の定義、印の形）は ADR-20261008-005 に書く。本 ADR は終了条件を満たした後のマージの判定だけを決める
 - `develop` の ruleset・ラベル・設定ファイルを作る `setup` と、揃っているかを確かめる `check` は要件メモ 4.9 節
-- 許可一覧に `test/**` `evals/**` `skills/**` `scripts/**` を足すかは、段階 5 の出口を越えた後に別の判断で決める。本 ADR の一覧を直接書き換えず、新しい ADR か改めの注記で扱う
+- 許可一覧に `test/**` `evals/**` `plugin/skills/**` `plugin/scripts/**` を足すかは、段階 5 の出口を越えた後に別の判断で決める。本 ADR の一覧を直接書き換えず、新しい ADR か改めの注記で扱う
 - 指標（revert 率、shadow 判定と人のマージの一致の件数）は、進行役の記録フォルダの実行ごとの JSON から集計する。記録フォルダの置き場は ADR-20261008-009 に書く
 - 分離（別リポジトリ化）の目安は段階 5 まで（要件メモ 10 節）。許可一覧の初期値は business-os 向けで、別のリポに適用するときは設定ファイルの値を差し替える
 - 見直しの時期: 段階 5 の出口に達したとき、または revert が 1 件でも出たとき

@@ -1,7 +1,7 @@
 ---
 status: proposed
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 decision-makers: メンテナ
 consulted: 別の文脈のレビュー AI 2 体（安全側・実現性）
 informed: n/a
@@ -85,7 +85,7 @@ dev-autopilot では、作業 AI とレビュー AI に GitHub への書き込�
 
 ### 規約と防衛の変更は自動的に 🔴 にし、規約の正典は base ブランチから渡す
 
-- 作業 AI が書いた `.claude/**` `CLAUDE.md` `hooks/**` の差分は、レビューで自動的に 🔴（規約と防衛の変更）とする。レビュー AI の判断を待たずに、進行役が差分のパスから付ける。
+- 作業 AI が書いた `.claude/**` `CLAUDE.md` `plugin/hooks/**` の差分は、レビューで自動的に 🔴（規約と防衛の変更）とする。レビュー AI の判断を待たずに、進行役が差分のパスから付ける。
 - レビュー AI に渡す規約の正典（CLAUDE.md・ADR）は、PR のブランチからではなく base ブランチ（`develop`）から渡す。作業 AI が規約を書き換えても、レビューの基準は変わらない。
 
 ### 影響（Consequences）
@@ -104,7 +104,7 @@ dev-autopilot では、作業 AI とレビュー AI に GitHub への書き込�
 - 進行役の「渡す文を組み立てる」処理と「コラボレータを判定する」処理を vitest で検査する。偽の API の応答で、外の人の本文・コメント・Issue の題名が出力に含まれないこと、作業指示コメントが無い外の人の Issue を候補から外すこと、検証結果の印が無い Issue を候補から外すことを確かめる。
 - ハッシュの比較を vitest で検査する。計画コメントの印の `brief=<sha256>` と、着手時・対応ループの各ラウンドで再計算した値が違うときに `needs-human` に倒れること、印が無いときにも着手しないことを確かめる。
 - `/verify-issue` の指示の混入の検査（見えない文字、HTML コメント、base64、URL、指示の形の語）を TypeScript にし、vitest で検査する。
-- `.claude/**` `CLAUDE.md` `hooks/**` を含む差分が自動的に 🔴 になること、レビュー AI に渡す規約の正典が base ブランチの内容であることを vitest で検査する。
+- `.claude/**` `CLAUDE.md` `plugin/hooks/**` を含む差分が自動的に 🔴 になること、レビュー AI に渡す規約の正典が base ブランチの内容であることを vitest で検査する。
 - AI のセッションに渡す安全設定で WebFetch・WebSearch・外への curl が使えないことを、`check` が実際に試して確かめる（書いてあることではなく、実際に使えないことを見る）。
 - 作業指示コメントの形は、`/verify-issue` が下書きを出す様式で揃える。
 
