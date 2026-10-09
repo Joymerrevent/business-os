@@ -1,5 +1,72 @@
 # business-os
 
+## 0.4.0
+
+### Minor Changes
+
+- 395a3d8: 外部のツール（MCP）の操作のうち、読むだけの操作（取得・一覧・検索）以外は、CC が実行する前に必ず確認が出るようにしました。
+  
+  - これまでは、名前が「送信・投稿・作成・支払い」の型に合う操作だけが確認の対象でした。GitHub の Issue の作成・PR のマージ・リポジトリの削除や、メールの返信・転送は、確認なしで実行できました
+  - 読むだけと分からない操作は、安全のために確認が出ます
+  - 新しく作る company の `.claude/settings.json` には、確認の対象にする操作の型（予備の規則）が増えます
+  
+  **導入済みの company の方へ**：確認は business-os の更新だけで効きます。あわせて、確認の仕組みが動かなかったときの予備として、
+  `.claude/settings.json` に規則を足してください。足していない間は、起動時の点検と `/check` が「予備の規則が無い」と知らせます（作業は止まりません）。
+  
+  足し方は 2 つあります。どちらか一方で足りるので、足した後に `/check` で確かめてください。
+  
+  - `/onboard --migrate` を実行すると、CC が足す規則を提案に書きます。`/approve` で承認すると反映されます（反映の直前に権限確認が 1 回出ます）
+  - 手で足す場合は、エディタで `.claude/settings.json` を開き、`permissions.ask` の `"mcp__*__pay_*"` の行末にカンマ（`,`）を足し、その次の行に次の内容を足します
+  
+  ```json
+  "mcp__*__*write*", "mcp__*__issue_write", "mcp__*__delete*", "mcp__*__update*", "mcp__*__merge*",
+  "mcp__*__push*", "mcp__*__reply*", "mcp__*__forward*", "mcp__*__trash*", "mcp__*__untrash*",
+  "mcp__*__add_*", "mcp__*__assign*", "mcp__*__dismiss*", "mcp__*__fork*", "mcp__*__manage*",
+  "mcp__*__mark*", "mcp__*__unmark*", "mcp__*__request*", "mcp__*__star*", "mcp__*__unstar*",
+  "mcp__*__*trigger*", "mcp__*__label_*", "mcp__*__unlabel_*", "mcp__*__apply_*", "mcp__*__move*",
+  "mcp__*__copy*", "mcp__*__share*", "mcp__*__upload*", "mcp__*__respond*"
+  ```
+- be694c7: business-os の不具合や要望を開発者に伝える `/report` を足しました。
+  
+  - CC が、伝えたいことを聞き取って Issue の下書きを作ります。不具合の報告には、business-os・Claude Code・Node の版、OS、設定が雛形と違うところ（名前だけ）を自動で足します
+  - 下書きに、会社名や人名など事業データらしいものが見つかると、下書きを作らずに止めます。置き換えてから作り直します
+  - 下書きはファイルに書き出すので、あなたが開いて中身を確かめ、承認してから送ります。承認した後に中身が変わっていれば送りません
+  - GitHub のコネクタがあれば CC が送ります。無ければ、項目を入力済みの Issue 作成のページを示すので、ブラウザで送ってください
+  - 安全装置が働かない不具合は、公開の Issue ではなく、非公開の報告の経路を案内します
+  - `/check` と `/retro` は、business-os への報告や改善案があるときに `/report` を案内します
+- 4da5bf9: CC が sandbox の中で Node 製の道具（`npx skills find` など）を使ったときに、通信の失敗が「見つからない」と黙って表示されないようにしました。
+  
+  - 新しく作る company の `.claude/settings.json` に、`env` の設定を 3 つ足します。許していない送り先に接続しようとすると、Claude Code の確認が出るようになります
+  - `npx` が、安全装置（sandbox）の書き込みの制限の中で動くようになります
+  - 「root 所有のファイル」と表示されて `sudo chown` を勧められても、CC は実行せず、あなたに伝えます
+  - `/retro` は、Skill を作る提案の前に、既製の Skill を探します。入れるかどうかはあなたが決め、入れるときはあなたが版を固定して入れます
+  
+  **導入済みの company の方へ**：`.claude/settings.json` に `env` の 3 つが無い間は、起動時の点検と `/check` が知らせます（作業は止まりません）。
+  足し方は 2 つあります。どちらか一方で足りるので、足した後に `/check` で確かめてください。
+  
+  - `/onboard --migrate` を実行すると、CC が足す設定を提案に書きます。`/approve` で承認すると反映されます（反映の直前に権限確認が 1 回出ます）
+  - 手で足す場合は、エディタで `.claude/settings.json` を開き、`"model"` の行の次の行に次の内容を足します（`${TMPDIR}` はそのまま書きます）
+  
+  ```json
+  "env": {
+    "NODE_USE_ENV_PROXY": "1",
+    "npm_config_cache": "${TMPDIR}/npm-cache",
+    "DO_NOT_TRACK": "1"
+  },
+  ```
+- b162bba: business-os が配布する Skill の数を固定しないようにしました。今後、どの事業でも使える業務の Skill（共通業務 Skill）や、business-os そのものを扱う Skill（サポート Skill）を足せるようになります。
+  
+  - `/retro` は、使われていない business-os の Skill があれば、名前と呼ばれた回数を「business-os への改善案」に書きます
+  - business-os のリポジトリの Issues に、Skill の追加と、Skill の削除・統合を提案する専用のフォームができました
+
+### Patch Changes
+
+- e5c091b: `CLAUDE.md` を「地図」と呼ばず、「CC への指示書（`CLAUDE.md`）」と書くようにしました。
+  
+  - `/onboard` の書き出し前の一覧、`/retro` の提案、`/approve` の説明、新しく作る `CLAUDE.md` の見出しと判断ルールが対象です
+  - `/onboard` の書き出し前の一覧は、1 行に 1 ファイルの表で示します
+- e463769: 配布物を `plugin/` フォルダに集め、マーケットプレイスの `source` をそのフォルダに向けました。導入と更新の手順は変わりません。更新すると、利用者の環境に写るのは Skill・エージェント・hook・雛形などの配布物だけになり、business-os の開発にだけ使うテスト・検証・設計文書は写らなくなります。
+
 ## 0.3.0
 
 ### Minor Changes
