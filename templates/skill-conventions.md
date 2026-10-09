@@ -9,6 +9,10 @@ business-os の Skill（`/onboard` など、business-os が配布する全ての
 - business-os のファイルは `${CLAUDE_SKILL_DIR}/../..` を business-os のルートとして参照する（例：雛形は `${CLAUDE_SKILL_DIR}/../../templates/`）
 - 雛形の変数と書き出し先は `templates/README.md` にある
 
+## リンク
+
+- company の文書の Markdown のリンクは inline 形式（`[表示テキスト](相対パス)`）で書く。Obsidian が内部リンクとして追従する（バックリンク、改名時の書き換え）形で、参照スタイル（`[表示テキスト][ラベル]`）は使わない
+
 ## 日付
 
 - 日付は常に `YYYY-MM-DD` の絶対日付で書く。「今日」「昨日」「先週」などの相対日付を文書に残さない
