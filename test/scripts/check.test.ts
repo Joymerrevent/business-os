@@ -7,7 +7,7 @@ import {
   runCompanyChecks,
   skillUsage,
   type CheckOptions,
-} from "../../scripts/lib/company-checks.ts";
+} from "../../plugin/scripts/lib/company-checks.ts";
 import { makeCompany, repoRoot, setState } from "../helpers.ts";
 
 const options: CheckOptions = {
@@ -28,7 +28,7 @@ const runCli = (...args: string[]) =>
   spawnSync(
     process.execPath,
     [
-      join(repoRoot, "scripts", "check.ts"),
+      join(repoRoot, "plugin", "scripts", "check.ts"),
       "--company",
       root,
       "--today",
@@ -164,6 +164,45 @@ describe("壊れた company", () => {
       (r) => r.name === "sandbox の中から接続できる Unix ソケット",
     );
     expect(sockets?.detail).toBe("~/agent.sock");
+  });
+
+  it("MCP の確認の予備の規則の欠落を warn にする（fail にしない）", () => {
+    const path = join(root, ".claude/settings.json");
+    const settings = JSON.parse(readFileSync(path, "utf8")) as {
+      permissions: { ask: string[] };
+    };
+    settings.permissions.ask = settings.permissions.ask.filter(
+      (rule) => rule !== "mcp__*__forward*",
+    );
+    writeFileSync(path, JSON.stringify(settings));
+    const results = runCompanyChecks(root, options);
+    expect(failsOf(results)).toEqual([]);
+    const warned = results.find(
+      (r) =>
+        r.name ===
+        "settings.json が外部のツール（MCP）の確認の予備の規則を含む",
+    );
+    expect(warned?.level).toBe("warn");
+    expect(warned?.detail).toContain("mcp__*__forward*");
+  });
+
+  it("雛形の env の欠落と値の違いを warn にする（fail にしない）", () => {
+    const path = join(root, ".claude/settings.json");
+    const settings = JSON.parse(readFileSync(path, "utf8")) as {
+      env: Record<string, string>;
+    };
+    delete settings.env["DO_NOT_TRACK"];
+    settings.env["npm_config_cache"] = "/somewhere/else";
+    writeFileSync(path, JSON.stringify(settings));
+    const results = runCompanyChecks(root, options);
+    expect(failsOf(results)).toEqual([]);
+    const warned = results.find(
+      (r) => r.name === "settings.json が雛形の env を含む",
+    );
+    expect(warned?.level).toBe("warn");
+    expect(warned?.detail).toContain("DO_NOT_TRACK=1");
+    expect(warned?.detail).toContain("npm_config_cache=${TMPDIR}/npm-cache");
+    expect(warned?.detail).not.toContain("NODE_USE_ENV_PROXY");
   });
 
   it("リンク切れを fail にする", () => {

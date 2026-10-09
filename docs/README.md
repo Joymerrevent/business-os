@@ -18,15 +18,15 @@ business-os を改良する人と CC のための地図です。利用者向け�
 検査の一覧の正典は [package.json](../package.json) の `check:*` です。この文書には一覧を書きません。
 `pnpm check` で全てを走らせ、成否は終了コードで見ます。
 
-- business-os の検査の実装は `scripts/check-repo.ts` と `scripts/lib/repo-checks.ts`
-- company の重い点検（`/check`）の実装は `scripts/check.ts` と `scripts/lib/company-checks.ts`、実機の発火試験は `scripts/lib/live-check.ts`
-- hook の実装は `hooks/`。外部の依存を持たない（Plugin は利用者側で install されないため）
+- business-os の検査の実装は `plugin/scripts/check-repo.ts` と `plugin/scripts/lib/repo-checks.ts`
+- company の重い点検（`/check`）の実装は `plugin/scripts/check.ts` と `plugin/scripts/lib/company-checks.ts`、実機の発火試験は `plugin/scripts/lib/live-check.ts`
+- hook の実装は `plugin/hooks/`。外部の依存を持たない（Plugin は利用者側で install されないため）
 
 ## 手で確かめるとき
 
-- `claude --plugin-dir .` で、このリポジトリを Plugin として読み込める
+- `claude --plugin-dir ./plugin` で、配布物のフォルダを Plugin として読み込める（利用者の環境に写るのは `plugin/` の下だけ）
 - 検証用の company は `fixtures/company/`。手で試すときは、`/tmp` などに複製してから使い、フィクスチャを汚さない
-- 本物の Claude Code で hook が動くかは、`node scripts/check.ts --company <複製した company> --live` を sandbox の外で実行して確かめる
+- 本物の Claude Code で hook が動くかは、`node plugin/scripts/check.ts --company <複製した company> --live` を sandbox の外で実行して確かめる
 
 ## 文書の規約
 

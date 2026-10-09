@@ -5,7 +5,7 @@ type: decision
 business: n/a
 status: accepted
 created: 2026-09-30
-updated: 2026-10-03
+updated: 2026-10-06
 as_of: n/a
 verified: 2026-10-03
 supersedes: n/a
@@ -79,6 +79,7 @@ Routines（スケジュール起動）に移す。
 ## 影響
 
 - business-os の Skill 数は 10 で固定し、business-os のリリースで増やさない。増やしたい場合は ADR で議論する
+  - この項目は 20261004-02（配布する Skill の数を固定せず、分類ごとの追加の条件と ADR で増減を決める）で置き換えた。ほかの決定は有効
 - 業務 Skill は `company/.claude/skills/` に置く（business-os の外）。business-os の更新で消えない
 - `/retro` が business-os の改善提案を出す（20260929-05 の承認経由）。business-os が自分で育つ仕組みの中核
 - `/close` と `/quarterly` は数値を扱うため、`as_of`（データ基準日）を必須にする（20260929-09）

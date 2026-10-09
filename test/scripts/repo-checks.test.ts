@@ -18,13 +18,14 @@ import {
   checkAdrIndex,
   checkDocs,
   checkEvals,
+  checkForms,
   checkHooks,
   checkLeak,
   checkShell,
   checkSkills,
   checkTemplates,
   checkUsage,
-} from "../../scripts/lib/repo-checks.ts";
+} from "../../plugin/scripts/lib/repo-checks.ts";
 import { repoRoot } from "../helpers.ts";
 
 type Check = (root?: string) => { level: string; name: string }[];
@@ -43,6 +44,7 @@ describe("実際の business-os", () => {
     ["agents", checkAgents],
     ["shell", checkShell],
     ["evals", checkEvals],
+    ["forms", checkForms],
   ] as [string, Check][])("%s に fail が無い", (_, check) => {
     expect(failsOf(check)).toEqual([]);
   });
@@ -52,16 +54,7 @@ describe("壊した business-os の一時コピー", () => {
   let root = "";
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), "business-os-repo-"));
-    for (const dir of [
-      "skills",
-      "agents",
-      "adapters",
-      "hooks",
-      "templates",
-      "docs",
-      "scripts",
-      ".claude-plugin",
-    ]) {
+    for (const dir of ["plugin", "docs", ".claude-plugin", ".github"]) {
       cpSync(join(repoRoot, dir), join(root, dir), { recursive: true });
     }
     for (const file of [
@@ -102,30 +95,30 @@ describe("壊した business-os の一時コピー", () => {
 
   it("ダッシュボードが第 9 節に無いプロパティを使うと fail、壊れた JSON も fail", () => {
     edit(
-      "adapters/obsidian/bases/state.base",
+      "plugin/adapters/obsidian/bases/state.base",
       "      - as_of",
       "      - owner",
     );
-    edit("adapters/obsidian/vault/app.json", "{", "{,");
+    edit("plugin/adapters/obsidian/vault/app.json", "{", "{,");
     const fails = failsOf(checkAdapters, root).map((r) => r.name);
-    expect(fails).toContain("adapters/obsidian/bases/state.base");
-    expect(fails).toContain("adapters/obsidian/vault/app.json");
+    expect(fails).toContain("plugin/adapters/obsidian/bases/state.base");
+    expect(fails).toContain("plugin/adapters/obsidian/vault/app.json");
   });
 
   it("作業者に Bash を持たせる・版番号でモデルを書く・役割エージェントを同梱すると fail", () => {
     edit(
-      "agents/worker.md",
+      "plugin/agents/worker.md",
       "tools: Read, Grep, Glob, Write, Edit",
       "tools: Read, Grep, Glob, Write, Edit, Bash",
     );
-    edit("agents/worker.md", "model: sonnet", "model: claude-sonnet-5");
+    edit("plugin/agents/worker.md", "model: sonnet", "model: claude-sonnet-5");
     writeFileSync(
-      join(root, "agents", "cfo.md"),
+      join(root, "plugin", "agents", "cfo.md"),
       "---\nname: cfo\ndescription: x\nmodel: opus\ntools: Read\n---\n",
     );
     const fails = failsOf(checkAgents, root);
-    expect(fails.map((r) => r.name)).toContain("agents/worker.md");
-    expect(fails.map((r) => r.name)).toContain("agents/");
+    expect(fails.map((r) => r.name)).toContain("plugin/agents/worker.md");
+    expect(fails.map((r) => r.name)).toContain("plugin/agents/");
   });
 
   describe("Skill の検証", () => {
@@ -137,18 +130,18 @@ describe("壊した business-os の一時コピー", () => {
       checkEvals(root).find((r) => r.name === name)?.level;
 
     it("ケースの無い Skill は warn、対象外の /check は数えない", () => {
-      expect(levelOf("skills/morning")).toBe("warn");
-      expect(levelOf("skills/check")).toBeUndefined();
+      expect(levelOf("plugin/skills/morning")).toBe("warn");
+      expect(levelOf("plugin/skills/check")).toBeUndefined();
       expect(failsOf(checkEvals, root)).toEqual([]);
     });
 
     it("ケースのある Skill は pass", () => {
       addCase("evals/skills/morning/daily");
       expect(levelOf("evals/skills/morning")).toBe("pass");
-      expect(levelOf("skills/morning")).toBeUndefined();
+      expect(levelOf("plugin/skills/morning")).toBeUndefined();
     });
 
-    it("skills/ に無い名前の検証は fail（改名・削除の追従漏れ）", () => {
+    it("plugin/skills/ に無い名前の検証は fail（改名・削除の追従漏れ）", () => {
       addCase("evals/skills/mornings/daily");
       expect(failsOf(checkEvals, root).map((r) => r.name)).toContain(
         "evals/skills/mornings",
@@ -214,28 +207,28 @@ describe("壊した business-os の一時コピー", () => {
   });
 
   it("Skill の節が欠けると fail", () => {
-    edit("skills/morning/SKILL.md", "## 完了条件", "## 終わり");
+    edit("plugin/skills/morning/SKILL.md", "## 完了条件", "## 終わり");
     expect(failsOf(checkSkills, root).map((r) => r.name)).toContain(
-      "skills/morning",
+      "plugin/skills/morning",
     );
   });
 
   it("disable-model-invocation が無いと fail", () => {
-    edit("skills/adr/SKILL.md", "disable-model-invocation: true\n", "");
+    edit("plugin/skills/adr/SKILL.md", "disable-model-invocation: true\n", "");
     expect(failsOf(checkSkills, root).map((r) => r.name)).toContain(
-      "skills/adr",
+      "plugin/skills/adr",
     );
   });
 
   describe("質問の表", () => {
     const detailOf = () =>
       checkSkills(root).find(
-        (r) => r.level === "fail" && r.name === "skills/morning",
+        (r) => r.level === "fail" && r.name === "plugin/skills/morning",
       )?.detail ?? "";
 
     it("質問の表が無いと fail", () => {
       edit(
-        "skills/morning/SKILL.md",
+        "plugin/skills/morning/SKILL.md",
         "| 番号 | 見出し | 質問文 | 答えの形 | 選択肢 | 聞くとき |",
         "- 今日の優先事項の順番",
       );
@@ -244,7 +237,7 @@ describe("壊した business-os の一時コピー", () => {
 
     it("番号が 1 からの連番でないと fail", () => {
       edit(
-        "skills/morning/SKILL.md",
+        "plugin/skills/morning/SKILL.md",
         "| 2 | 優先事項の変更 |",
         "| 3 | 優先事項の変更 |",
       );
@@ -253,7 +246,7 @@ describe("壊した business-os の一時コピー", () => {
 
     it("見出しが 12 文字を超えると fail", () => {
       edit(
-        "skills/morning/SKILL.md",
+        "plugin/skills/morning/SKILL.md",
         "| 1 | 優先事項の順番 |",
         "| 1 | 今日の優先事項の順番を確かめる |",
       );
@@ -262,12 +255,12 @@ describe("壊した business-os の一時コピー", () => {
 
     it("答えの形が決まった形でない・選択肢の質問に選択肢が無いと fail", () => {
       edit(
-        "skills/morning/SKILL.md",
+        "plugin/skills/morning/SKILL.md",
         "| 選択肢（単一） | この順でよい / 変える |",
         "| 選択肢（単一） | — |",
       );
       edit(
-        "skills/morning/SKILL.md",
+        "plugin/skills/morning/SKILL.md",
         "| 自由記述 | — | 質問 1 で",
         "| 記述 | — | 質問 1 で",
       );
@@ -277,44 +270,63 @@ describe("壊した business-os の一時コピー", () => {
     });
   });
 
-  it("11 個目の Skill を足すと fail", () => {
-    mkdirSync(join(root, "skills", "extra"));
+  it("配布する Skill の一覧に無い Skill を足すと fail", () => {
+    mkdirSync(join(root, "plugin", "skills", "extra"));
     expect(failsOf(checkSkills, root).length).toBeGreaterThan(0);
   });
 
   it("hooks.json のパスに引用符が無いと fail", () => {
     edit(
-      "hooks/hooks.json",
+      "plugin/hooks/hooks.json",
       '\\"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.ts\\"',
       "${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.ts",
     );
     expect(failsOf(checkHooks, root).length).toBeGreaterThan(0);
   });
 
+  it("Issue のフォームの項目の id を変えると fail", () => {
+    edit(".github/ISSUE_TEMPLATE/bug-report.yml", "id: run-mode", "id: mode");
+    expect(failsOf(checkForms, root).length).toBeGreaterThan(0);
+  });
+
+  it("URL で事前に入力する項目を dropdown にすると fail", () => {
+    edit(
+      ".github/ISSUE_TEMPLATE/bug-report.yml",
+      "  - type: input\n    id: os",
+      "  - type: dropdown\n    id: os",
+    );
+    expect(failsOf(checkForms, root).length).toBeGreaterThan(0);
+  });
+
+  it("PreToolUse の matcher から MCP の道具の型を外すと fail", () => {
+    edit("plugin/hooks/hooks.json", "|mcp__.*", "");
+    expect(failsOf(checkHooks, root).length).toBeGreaterThan(0);
+  });
+
   it("README に無い変数を雛形に足すと fail", () => {
     edit(
-      "templates/operations/risks.md",
+      "plugin/templates/operations/risks.md",
       "# リスク台帳",
       "# リスク台帳 {{ undocumented_var }}",
     );
     expect(failsOf(checkTemplates, root).map((r) => r.name)).toContain(
-      "templates/operations/risks.md",
+      "plugin/templates/operations/risks.md",
     );
   });
 
-  it("templates/ の直下以外の README.md も雛形として検査する", () => {
+  it("plugin/templates/ の直下以外の README.md も雛形として検査する", () => {
     edit(
-      "templates/charter/repositories/README.md",
+      "plugin/templates/charter/repositories/README.md",
       "# 実装リポジトリ",
       "# 実装リポジトリ {{ undocumented_var }}",
     );
     expect(failsOf(checkTemplates, root).map((r) => r.name)).toContain(
-      "templates/charter/repositories/README.md",
+      "plugin/templates/charter/repositories/README.md",
     );
   });
 
   it("雛形のフロントマターがスキーマに合わないと fail", () => {
-    edit("templates/operations/risks.md", "type: ledger", "type: memo");
+    edit("plugin/templates/operations/risks.md", "type: ledger", "type: memo");
     expect(failsOf(checkTemplates, root).length).toBeGreaterThan(0);
   });
 

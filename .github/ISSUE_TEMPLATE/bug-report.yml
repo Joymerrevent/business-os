@@ -1,0 +1,82 @@
+name: 不具合の報告
+description: business-os の Skill・hook・点検が期待どおりに動かない
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **事業データ（会社名・事業名・人名・金額・顧客の情報）や認証情報は、絶対に貼らないでください。**
+        Issue は公開されます。ログや文書を貼るときは、固有名詞を「事業 A」「CEO」などに置き換えてください。
+  - type: textarea
+    id: what
+    attributes:
+      label: 起きたこと
+      description: 何をしたら、何が起きたか
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待した動き
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 再現の手順
+      description: 呼んだ Skill（例：/morning）と、その前後の操作
+    validations:
+      required: true
+  - type: textarea
+    id: check
+    attributes:
+      label: /check の結果（任意）
+      description: fail / warn の行だけで構いません。固有名詞は置き換えてください
+  - type: input
+    id: plugin-version
+    attributes:
+      label: business-os のバージョン
+      description: .business-os.json の pluginVersion、または /plugin の表示
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      description: macOS / Windows（WSL）/ Windows（ネイティブ）/ Linux のどれか。分かれば版も
+      placeholder: "macOS 15.6"
+    validations:
+      required: true
+  - type: input
+    id: run-mode
+    attributes:
+      label: Claude Code の動かし方
+      description: 対話モード（ふだんの画面）か、claude -p やスケジュール起動か
+      placeholder: "対話モード"
+    validations:
+      required: true
+  - type: input
+    id: claude-version
+    attributes:
+      label: Claude Code のバージョン
+      description: claude --version の出力
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js のバージョン
+      description: node --version の出力
+    validations:
+      required: true
+  - type: textarea
+    id: settings-diff
+    attributes:
+      label: .claude/settings.json が雛形と違うところ（任意）
+      description: 違うキーの名前だけを書いてください（値は書かないでください）。/report を使うと自動で集めます
+  - type: input
+    id: local-settings
+    attributes:
+      label: .claude/settings.local.json の有無（任意）
+      description: 有るなら、sandbox に関わるキーの名前（値は書かないでください）

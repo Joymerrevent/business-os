@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-03
+updated: 2026-10-09
 as_of: n/a
 verified: n/a
 ---
@@ -18,7 +18,7 @@ verified: n/a
 business-os は、1 人で複数事業を運営する人が Claude Code（CC）を「経営の手足」として使うための
 **Plugin** である。事業に依存しない形で配布し、利用者は自分の事業情報を `/onboard` で注入する。
 
-範囲に含むもの：Skill 10 個、hook、テンプレート、検査、Obsidian アダプタ、設計文書。
+範囲に含むもの：配布する Skill（経営基盤・共通業務・サポート）、hook、テンプレート、検査、Obsidian アダプタ、設計文書。
 範囲に含まないもの：事業固有の Skill、事業データ、実装リポの中身。
 
 ## 2. 全体像
@@ -54,8 +54,48 @@ company/       事業データ。非公開。利用者ごとに 1 つ。/onboard
 ```text
 business-os/
 ├── .claude-plugin/
-│   ├── plugin.json              # Plugin メタデータ。name / version / description(alpha)
-│   └── marketplace.json         # business-os 自身をマーケットプレイスとして公開する定義（/plugin marketplace add 用）
+│   └── marketplace.json         # business-os 自身をマーケットプレイスとして公開する定義（/plugin marketplace add 用）。source は ./plugin
+├── plugin/                      # 配布物。利用者の環境に写るのはこのフォルダだけ（§3.1、ADR 20261009-02）
+│   ├── .claude-plugin/
+│   │   └── plugin.json          # Plugin メタデータ。name / version / description(alpha)
+│   ├── agents/
+│   │   └── worker.md            # 作業者エージェント（sonnet、ファイルの読み書きと検索のみ）。COO から委譲される
+│   ├── skills/                  # 配布する Skill（一覧と分類の正本は plugin/hooks/lib/plugin.ts）
+│   │   ├── onboard/SKILL.md
+│   │   ├── approve/SKILL.md
+│   │   ├── check/SKILL.md
+│   │   ├── adr/SKILL.md
+│   │   ├── morning/SKILL.md
+│   │   ├── weekly-review/SKILL.md
+│   │   ├── close/SKILL.md
+│   │   ├── quarterly/SKILL.md
+│   │   ├── retro/SKILL.md
+│   │   ├── validate/SKILL.md
+│   │   └── report/SKILL.md      # サポート Skill。business-os への報告
+│   ├── hooks/
+│   │   ├── hooks.json           # hook の登録定義
+│   │   ├── session-start.ts     # 軽い点検
+│   │   ├── pre-tool-use.ts      # 書き込みガード、Bash 意味解析
+│   │   └── lib/                 # フロントマター検証、日付検証、シェル引数解析
+│   ├── scripts/
+│   │   ├── check.ts             # 重い点検（company 向け）と check:*（business-os 向け）の共有実装
+│   │   ├── check-repo.ts        # 開発用。check:* の入口（package.json の check:* が呼ぶ）
+│   │   ├── report.ts            # /report の下書きの作成・検査・送る前の照合
+│   │   ├── issue-label.ts       # 開発用。作られた Issue に報告の種類のラベルを付ける（.github/workflows/issue-label.yml）
+│   │   ├── lib/                 # 点検の中身（company-checks.ts など）
+│   │   ├── sync-plugin-version.ts # changesets の version を plugin.json へ同期
+│   │   └── pre-commit.ts        # 開発用。git の pre-commit（lint-staged と gitleaks）
+│   ├── templates/               # company の雛形。/onboard が展開する
+│   │   ├── CLAUDE.md.tmpl
+│   │   ├── settings.json.tmpl
+│   │   ├── frontmatter.schema.json
+│   │   ├── charter/             # company.md / decision-rules.md / repositories/README.md・_template.md / businesses/_template.md
+│   │   ├── operations/          # obligations.md / risks.md / state/_template.md / daily/_template.md / reviews/*.md
+│   │   ├── decisions/_template.md # company の意思決定記録
+│   │   ├── proposals/_template.md
+│   │   └── skill-conventions.md # business-os の Skill の共通規約（書き出さない）
+│   └── adapters/
+│       └── obsidian/            # 第 10 節
 ├── .claude/                     # business-os を CC で開発するときの設定（配布しない）
 │   ├── settings.json            # 秘密の読み取りと force push などを拒否する permissions（sandbox は使わない。§3.1）
 │   ├── settings.local.json      # 個人設定（gitignore）
@@ -64,44 +104,11 @@ business-os/
 ├── .changeset/                  # 変更履歴の元
 ├── .github/
 │   ├── workflows/               # check + gitleaks + audit を Linux / Windows で
-│   └── ISSUE_TEMPLATE/          # 不具合 / 提案 / 環境情報
-├── agents/
-│   └── worker.md                # 作業者エージェント（sonnet、ファイルの読み書きと検索のみ）。COO から委譲される
-├── skills/                      # 配布される経営基盤 Skill（10 個）
-│   ├── onboard/SKILL.md
-│   ├── approve/SKILL.md
-│   ├── check/SKILL.md
-│   ├── adr/SKILL.md
-│   ├── morning/SKILL.md
-│   ├── weekly-review/SKILL.md
-│   ├── close/SKILL.md
-│   ├── quarterly/SKILL.md
-│   ├── retro/SKILL.md
-│   └── validate/SKILL.md
-├── hooks/
-│   ├── hooks.json               # hook の登録定義
-│   ├── session-start.ts         # 軽い点検
-│   ├── pre-tool-use.ts          # 書き込みガード、Bash 意味解析
-│   └── lib/                     # フロントマター検証、日付検証、シェル引数解析
-├── scripts/
-│   ├── check.ts                 # 重い点検（company 向け）と check:*（business-os 向け）の共有実装
-│   ├── lib/                     # 点検の中身（company-checks.ts など）
-│   ├── sync-plugin-version.ts   # changesets の version を plugin.json へ同期
-│   └── pre-commit.ts            # 開発用。git の pre-commit（lint-staged と gitleaks）
-├── templates/                   # company の雛形。/onboard が展開する
-│   ├── CLAUDE.md.tmpl
-│   ├── settings.json.tmpl
-│   ├── frontmatter.schema.json
-│   ├── charter/                 # company.md / decision-rules.md / repositories/README.md・_template.md / businesses/_template.md
-│   ├── operations/              # obligations.md / risks.md / state/_template.md / daily/_template.md / reviews/*.md
-│   ├── decisions/_template.md   # company の意思決定記録
-│   ├── proposals/_template.md
-│   └── skill-conventions.md     # business-os の Skill の共通規約（書き出さない）
-├── adapters/
-│   └── obsidian/                # 第 10 節
+│   └── ISSUE_TEMPLATE/          # 不具合 / 改善 / Skill の追加 / Skill の削除・統合
 ├── fixtures/                    # vitest と eval が共有する前提データ（company/ が土台の検証用 company）
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）
 ├── evals/                       # Skill の動作の検証。lib/ が共通の道具、skills/<Skill 名>/<ケース名>/ がケース
+├── dev-autopilot/               # 自律開発ループの開発物（ADR 20261008-01）。文書と ADR の規則はフォルダの中の規則に従う
 ├── docs/
 │   ├── README.md                # 開発者向け入口
 │   ├── adr/                     # 設計判断記録
@@ -119,12 +126,16 @@ business-os/
 
 ### 3.1 配布物と開発物
 
-| 配布物（Plugin に含まれる） | 開発物（business-os の開発にだけ使う） |
+| 配布物（`plugin/` の下。Plugin に含まれる） | 開発物（それ以外。business-os の開発にだけ使う） |
 |---|---|
-| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` 設定ファイル群 |
+| `plugin/.claude-plugin/plugin.json` `plugin/skills/` `plugin/agents/` `plugin/hooks/` `plugin/scripts/` `plugin/templates/` `plugin/adapters/` | `.claude-plugin/marketplace.json` `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` `dev-autopilot/` 設定ファイル群 |
 
-配布専用 Skill は `skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
-`agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
+マーケットプレイスの `source` は `./plugin` で、導入と更新で利用者の環境に写るのは `plugin/` の下だけ（ADR 20261009-02）。
+利用者の環境では `${CLAUDE_PLUGIN_ROOT}` が `plugin/` の中を指すので、Skill と hook の中のパスは `plugin/` を付けずに書く。
+2026-10 以前の ADR の本文に書かれた `skills/` `hooks/` などのパスは、`plugin/` を省いた当時の形（accepted の ADR は書き換えない）。
+`dev-autopilot/` の文書と ADR の規則は、そのフォルダの中の規則に従う（ADR 20261008-01）。
+配布専用 Skill は `plugin/skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
+`plugin/agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
 business-os の開発リポジトリでは sandbox を使わない。sandbox で守るのは、business-os を入れて運用する company の側。
 開発では `gh` の認証、`.claude/` を含むブランチの切り替え、`claude -p` での実機の試験、コミットへの署名を sandbox が妨げるため。
 
@@ -247,7 +258,19 @@ business-os を改良する CC と、貢献する人向け。配布物と開発�
 
 ## 6. Skills
 
-### 6.1 経営基盤 Skill（10 個、固定）
+Skill は次の 4 つに分ける。配布する 3 つの分類の一覧は `hooks/lib/plugin.ts` が正本で、`check:skills` と起動時の点検が `skills/` のフォルダと照合する。
+数は固定しない。配布する Skill を足すときは条件を満たし、Skill ごとに ADR で決める。外すときも基準に照らして ADR で決め、外す版の前に予告する。
+
+| 分類 | 置き場 | 中身 |
+|---|---|---|
+| 経営基盤 Skill | business-os（配布） | 事業非依存で、会社を運営する以上必要な仕組み（下の表） |
+| 共通業務 Skill | business-os（配布） | 事業非依存で、どの事業の利用者も日々行う業務の作業（今は無い） |
+| サポート Skill | business-os（配布） | business-os そのもの（導入・点検・報告など）を扱い、必要なときだけ呼ぶもの（`/report`） |
+| 業務 Skill | company の `.claude/skills/` | 事業固有の作業。2 回ルールで育て、月次で剪定する |
+
+<!-- 根拠: 20261004-02 -->
+
+### 6.1 経営基盤 Skill
 
 | Skill | 起動 | 読む | 書く（直接） | 提案（承認要） | 人に聞く |
 |---|---|---|---|---|---|
@@ -263,6 +286,20 @@ business-os を改良する CC と、貢献する人向け。配布物と開発�
 | `/validate` | 新施策前 | `charter/company.md`、`decision-rules.md`、`risks.md` | `decisions/` に検証結果（ADR 形式） | 施策の開始 / 見送り | 仮説、検証方法、撤退条件 |
 
 <!-- 根拠: 20260929-07 -->
+
+### 6.1b サポート Skill
+
+| Skill | 起動 | 読む | 書く（直接） | 外部への行動 | 人に聞く |
+|---|---|---|---|---|---|
+| `/report` | 人間が呼ぶ | business-os の `scripts/lib/report-forms.ts`、直近の `/check` のレポート | 下書き（sandbox の一時フォルダ。送った後に消す）、日報の実行記録 | business-os のリポジトリへの Issue の作成（人の承認と送る直前の照合の後） | 種類、伝えたいこと、足りない項目、動かし方、置き換え、送信の承認 |
+
+- 下書きは `scripts/report.ts` が作る。事業データの型・固有名詞の辞書・利用者の名前のどれかが見つかれば下書きを作らない。辞書が無い・読めない・語が 1 つも無いときも作らない
+- `/report` は eval の対象から外す。下書きのスクリプトの判定は vitest（`test/scripts/report.test.ts`）で検査し、Bash を許す対話の台本は macOS でだけ動くため省く
+- 送る直前に `verify` が要約値の一致と再検査を確かめる。送る手段は公式の GitHub MCP の `issue_write`、無ければ入力済みの Issue 作成の URL（符号化後 4,000 バイトまで）
+- 送られた Issue には、`.github/workflows/issue-label.yml` が本文の先頭の種類の行から種類のラベルを付ける（コネクタで作ると、push の権限が無い人のラベルは捨てられるため）
+- 安全装置の不具合（`/check` の防衛の発火）は、公開の Issue にせず非公開の経路を案内する
+
+<!-- 根拠: 20261004-01 -->
 
 ### 6.2 共通規約
 
@@ -302,7 +339,7 @@ COO（主セッション）が `/retro` で「同じ視点のレビューを 2 �
 |---|---|---|
 | 1. sandbox | OS | `company/.claude/settings.json` |
 | 2. permissions | CC プロセス内 | 同上 |
-| 3. PreToolUse hook | CC プロセス内（business-os） | `business-os/hooks/pre-tool-use.ts` |
+| 3. PreToolUse hook | CC プロセス内（business-os） | `business-os/plugin/hooks/pre-tool-use.ts` |
 | 4. 承認パイプライン | 運用 | `company/docs/proposals/` と `/approve` |
 
 native Windows では sandbox が動かない（Claude Code の sandbox は macOS / Linux / WSL2 のみ対応）。
@@ -315,6 +352,11 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
 
 ```jsonc
 {
+  "env": {
+    "NODE_USE_ENV_PROXY": "1",
+    "npm_config_cache": "${TMPDIR}/npm-cache",
+    "DO_NOT_TRACK": "1"
+  },
   "sandbox": {
     "enabled": true,
     "allowUnsandboxedCommands": false,
@@ -332,7 +374,13 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
       "Edit(./docs/charter/**)", "Edit(./CLAUDE.md)",
       "Edit(./.claude/settings.json)", "Edit(./.claude/settings.local.json)", "Edit(./.business-os.json)",
       "Bash(rm -rf:*)",
-      "mcp__*__send_*", "mcp__*__post_*", "mcp__*__create_*", "mcp__*__pay_*"
+      "mcp__*__send_*", "mcp__*__post_*", "mcp__*__create_*", "mcp__*__pay_*",
+      "mcp__*__*write*", "mcp__*__issue_write", "mcp__*__delete*", "mcp__*__update*", "mcp__*__merge*",
+      "mcp__*__push*", "mcp__*__reply*", "mcp__*__forward*", "mcp__*__trash*", "mcp__*__untrash*",
+      "mcp__*__add_*", "mcp__*__assign*", "mcp__*__dismiss*", "mcp__*__fork*", "mcp__*__manage*",
+      "mcp__*__mark*", "mcp__*__unmark*", "mcp__*__request*", "mcp__*__star*", "mcp__*__unstar*",
+      "mcp__*__*trigger*", "mcp__*__label_*", "mcp__*__unlabel_*", "mcp__*__apply_*", "mcp__*__move*",
+      "mcp__*__copy*", "mcp__*__share*", "mcp__*__upload*", "mcp__*__respond*"
     ],
     "allow": [
       "Edit(./docs/operations/**)", "Edit(./docs/knowledge/**)",
@@ -348,7 +396,12 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
   `Write(...)` 規則は判定に使われない（Claude Code が起動時に警告を出す）
 - `allowUnsandboxedCommands: false` で、sandbox で失敗したコマンドを sandbox の外で再実行する逃げ道を塞ぐ。
   そのため `charter/` などを更新する `git pull` / `checkout` / `merge` は sandbox 内で失敗する。これらは人が実行する
-- `ask` の MCP パターンは動詞で網をかけたもの。`/onboard` が接続済み MCP を検出したら具体名に置き換える
+- MCP の道具の確認の本命は hook（§7.3）。`ask` の MCP パターンは、hook が時間切れで通ったときの予備として、動詞で網をかけたもの。
+  公式の GitHub MCP と Gmail のコネクタの書き換える道具をすべて拾い、読む道具を拾わないことをテストで確かめる（`test/scripts/template-mcp-ask.test.ts`）。
+  MCP の規則は必須規則の照合（厳格モード）に含めず、`.claude/settings.json` に無い予備の規則は、起動時の点検と `/check` が warn で示す（含めると、足していない company で保護対象への書き込みが全て止まるため）。
+  `/onboard` は接続済みの MCP の道具のうち外部に影響が出るものを具体名で足す（3 つ目の網）
+
+<!-- 根拠: 20261006-02 -->
 - `company`（非公開）への通常 `git push` は allow。force は deny（粗い網）と hook（本命）で止める
 - sandbox のキー名は実装初日に公式ドキュメントで確認する
 - `.claude/settings.local.json` は `.claude/settings.json` より優先され、sandbox の値を上書きできる。
@@ -358,6 +411,19 @@ native Windows では第 2〜4 層の三重で動かし、軽い点検が毎セ�
   雛形には書かない（パスは利用者ごとに違う）。Linux / WSL2 にはパスごとの許可が無いため、Skill は署名で失敗したら止め、人にコミットを頼む
 
 <!-- 根拠: 20261003-11 -->
+
+- `env` の 3 つは、sandbox の許可（通信先・書き込み先）を広げずに、sandbox の中の Node 製の道具を動かすためのもの
+  - `NODE_USE_ENV_PROXY`：Node の `fetch` は sandbox のプロキシの環境変数を使わず、許可した通信先にも届かない（`ENOTFOUND`）。
+    プロキシを通せば、許可していない通信先では Claude Code の確認が出て、黙った失敗にならない
+  - `npm_config_cache`：npm と `npx` のキャッシュを sandbox の一時フォルダに置く。`${TMPDIR}` は npm が展開する。
+    `TMPDIR` を sandbox の一時フォルダに向けるのは、sandbox のファイルの隔離が有効なとき（雛形の既定）の Claude Code。
+    隔離を無効にすると親シェルの `TMPDIR` を継ぎ、未設定（Linux に多い）なら npm は展開せず、書き込めない `/${TMPDIR}/npm-cache` を使う
+    `~/.npm/_npx` を書き込み可にすると、sandbox の外で動くコードを sandbox の中から書き換えられるため、書き込み先を広げない
+  - `DO_NOT_TRACK`：skills CLI などのテレメトリを止める
+- 通信先（`sandbox.network.allowedDomains`）は雛形に書かない。必要になったときに Claude Code の確認で人が許す
+- 雛形の `env` が `.claude/settings.json` に無いか値が違えば、起動時の点検と `/check` が warn で示す（必須規則には含めない）
+
+<!-- 根拠: 20261006-01 -->
 
 ### 7.3 `pre-tool-use.ts` の判定
 
@@ -387,6 +453,7 @@ hook は入力の `cwd` から上位へ辿り、`.business-os.json` のあるデ
 | Bash（拒否） | 引数を解析し、`git push` に force 系フラグ（`-f` / `--force` / `--force-with-lease` / `--force-if-includes`、位置不問）、`+` 付き refspec、`--no-verify` があるか | 該当は exit 2 |
 | Bash（確認） | `rm -r*`、`git reset --hard`、`git clean -f*`、`git branch -D` | 該当は ask |
 | Bash（共通） | `sh -c` / `bash -c` / `eval` の内側も同じ規則で解析する | — |
+| MCP の道具（状態によらない） | 道具の名前（`mcp__<サーバー>__<道具>` の最後の部分）の先頭が `get_` / `list_` / `search_` / `read_` か、読むだけと確かめた道具の一覧（`hooks/lib/mcp.ts`）に入っているか | どちらでもなければ ask。名前の末尾では判定しない |
 | 厳格モード | `state: active` かつ、`settings.json` の必須規則が欠けているか、`settings.local.json` が sandbox の必須の値を上書きしている・読めない場合 | 保護対象への Write / Edit を提案の有無に関わらず全拒否 |
 | hook 自身の例外 | 判定中に例外 | **exit 2（fail-closed）** |
 
@@ -397,7 +464,10 @@ hook は作業者（サブエージェント）のツール呼び出しにも、
 
 全判定を `company/.claude/hook-log-YYYYMM.jsonl` に 1 行ずつ記録する（月次でファイルを分ける。gitignore）。
 
-<!-- 根拠: 20260929-05, 20260930-01 -->
+hook の `matcher` は `Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell|mcp__.*`。hook が時間切れになると Claude Code は呼び出しを通すので、
+MCP の道具は `permissions.ask` の予備の規則（§7.2）でも止める。
+
+<!-- 根拠: 20260929-05, 20260930-01, 20261006-02 -->
 
 ### 7.4 提案ファイル
 
@@ -613,5 +683,6 @@ CI：GitHub Actions の ubuntu-latest / windows-latest / macos-latest（Node 24.
 | ADR | 設計判断記録。business-os では `docs/adr/`、company では `docs/decisions/` |
 | 軽い点検 / 重い点検 | 毎セッションのセルフチェック / 週次の `/check` |
 | 厳格モード | 運用中の company で防衛設定の欠落を検出したとき、hook が保護対象への書き込みを全拒否する状態 |
-| 経営基盤 Skill / 業務 Skill | 事業非依存で business-os に含まれる 10 個 / 事業固有で company 側に育てるもの |
+| 経営基盤 Skill / 業務 Skill | 事業非依存で business-os に含まれる、会社の運営の仕組み / 事業固有で company 側に育てるもの |
+| 共通業務 Skill / サポート Skill | business-os が配布する、どの事業でも行う業務の作業 / business-os そのものを扱う Skill |
 | 2 回ルール | 同じ依頼が 2 回目になったら Skill 化を検討する運用 |

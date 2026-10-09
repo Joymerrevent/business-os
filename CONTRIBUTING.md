@@ -50,7 +50,7 @@ pre-commit は gitleaks で秘密を探します。gitleaks が入っていな�
 ## ローカルでの動作確認
 
 ```sh
-claude --plugin-dir .
+claude --plugin-dir ./plugin
 ```
 
 で、このリポジトリを Plugin として読み込めます。

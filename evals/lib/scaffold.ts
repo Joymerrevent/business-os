@@ -6,12 +6,33 @@
 // 重ねるものは、共通の環境の名前（fixtures/<名前>/）か、ケースのフォルダの overlay/ のパス。
 // 作業場所の用意のあと、書いた順に上書きで複製する（土台 → 共通の環境 → ケースの前提データ）
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { manifestVersion } from "../../scripts/lib/version.ts";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+/**
+ * 配布物の plugin.json の version。
+ * リポジトリでは plugin/.claude-plugin/ に、claude plugin eval 用に組み立てた一時的な Plugin（evals/lib/cases/run.ts）では
+ * 直下の .claude-plugin/ にあるので、近い方から探す（plugin/ の中のモジュールは import しない。一時的な Plugin には plugin/ が無いため）
+ */
+const pluginVersion = (): string => {
+  const candidates = [join(repoRoot, "plugin"), repoRoot].map((dir) =>
+    join(dir, ".claude-plugin", "plugin.json"),
+  );
+  const path = candidates.find((candidate) => existsSync(candidate));
+  if (path === undefined) {
+    throw new Error(`plugin.json がありません：${candidates.join("、")}`);
+  }
+  const manifest = JSON.parse(readFileSync(path, "utf8")) as {
+    version?: unknown;
+  };
+  if (typeof manifest.version !== "string") {
+    throw new Error(`${path} に version がありません`);
+  }
+  return manifest.version;
+};
 
 const gitInit = (): void => {
   const run = spawnSync("git", ["init", "-q"], { encoding: "utf8" });
@@ -68,7 +89,7 @@ const SCAFFOLDS: Record<string, () => void> = {
     copyCompany();
     const state = {
       state: "initializing",
-      pluginVersion: manifestVersion(repoRoot),
+      pluginVersion: pluginVersion(),
     };
     writeFileSync(".business-os.json", `${JSON.stringify(state, null, 2)}\n`);
     gitInit();

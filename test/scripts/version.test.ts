@@ -10,11 +10,11 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { checkRelease } from "../../scripts/lib/repo-checks.ts";
+import { checkRelease } from "../../plugin/scripts/lib/repo-checks.ts";
 import {
   compareVersions,
   syncPluginVersion,
-} from "../../scripts/lib/version.ts";
+} from "../../plugin/scripts/lib/version.ts";
 
 let root = "";
 const write = (pkg: string, manifest: string) => {
@@ -23,7 +23,7 @@ const write = (pkg: string, manifest: string) => {
     JSON.stringify({ name: "business-os", version: pkg }),
   );
   writeFileSync(
-    join(root, ".claude-plugin", "plugin.json"),
+    join(root, "plugin", ".claude-plugin", "plugin.json"),
     JSON.stringify({
       name: "business-os",
       version: manifest,
@@ -34,7 +34,7 @@ const write = (pkg: string, manifest: string) => {
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), "business-os-version-"));
-  mkdirSync(join(root, ".claude-plugin"));
+  mkdirSync(join(root, "plugin", ".claude-plugin"), { recursive: true });
 });
 afterEach(() => rmSync(root, { recursive: true, force: true }));
 
@@ -43,7 +43,10 @@ describe("syncPluginVersion", () => {
     write("0.1.0", "0.0.0");
     expect(syncPluginVersion(root)).toBe("0.1.0");
     const manifest = JSON.parse(
-      readFileSync(join(root, ".claude-plugin", "plugin.json"), "utf8"),
+      readFileSync(
+        join(root, "plugin", ".claude-plugin", "plugin.json"),
+        "utf8",
+      ),
     ) as Record<string, unknown>;
     expect(manifest).toEqual({
       name: "business-os",

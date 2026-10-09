@@ -1,0 +1,27 @@
+name: 改善の提案
+description: business-os の Skill・点検・文書などを変える提案（Skill の追加・削除・統合は、それぞれ専用のフォームへ）
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **事業データ（会社名・事業名・人名・金額・顧客の情報）や認証情報は、絶対に貼らないでください。**
+        Skill を新しく足す提案は「Skill の追加の提案」、Skill を外す・まとめる提案は「Skill の削除・統合の提案」のフォームを使ってください。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 困っていること
+      description: どんな場面で、何が足りない・使いにくいか
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案
+      description: どう変わるとよいか
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考えたほかの方法（任意）

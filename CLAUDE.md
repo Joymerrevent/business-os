@@ -5,19 +5,23 @@
 
 ## 何がどこにあるか
 
-- `skills/`          配布される経営基盤 Skill 10 個。増やさない（増やすなら ADR）
-- `agents/`          作業者エージェント `worker` だけ。役割エージェントは同梱しない（ADR 20261002-01）
-- `hooks/`           SessionStart（軽い点検）と PreToolUse（書き込みガード）。TypeScript
-- `scripts/`         重い点検（`/check`）と `check:*` の共有実装、バージョン同期
-- `templates/`       company の雛形。`/onboard` が展開する
+- `plugin/`          配布物。利用者の環境に写るのはこのフォルダだけ（マーケットプレイスの `source`。ADR 20261009-02）。それ以外は開発物
+  - `plugin/.claude-plugin/plugin.json` Plugin のメタデータと版。マーケットプレイスの定義 `.claude-plugin/marketplace.json` は直下に残す
+  - `plugin/skills/`   配布する Skill（経営基盤・共通業務・サポート）。一覧の正本は `plugin/hooks/lib/plugin.ts`。足す・外すは Skill ごとに ADR
+  - `plugin/agents/`   作業者エージェント `worker` だけ。役割エージェントは同梱しない（ADR 20261002-01）
+  - `plugin/hooks/`    SessionStart（軽い点検）と PreToolUse（書き込みガード）。TypeScript
+  - `plugin/scripts/`  重い点検（`/check`）と `check:*` の共有実装、バージョン同期
+  - `plugin/templates/` company の雛形。`/onboard` が展開する
+  - `plugin/adapters/obsidian/` 任意アダプタ。business-os の機能に関与しない
 - `evals/`           Skill の動作の検証（配布物の動作には関与しない）。共通の道具は `evals/lib/`、
                      Skill ごとのケース・前提データ（`overlay/`）・台本（`dialogue.json`）は `evals/skills/<Skill 名>/<ケース名>/`
 - `fixtures/`        vitest と eval が共有する前提データ。土台の検証用 company は `fixtures/company/`
-- `adapters/obsidian/` 任意アダプタ。business-os の機能に関与しない
 - `docs/adr/`        設計判断。**ここが正典**。`docs/design/architecture.md` が構造仕様
 - `docs/usage/`      利用者向け。ADR 番号を書かない
 - `.claude/`         business-os を開発するときの設定と開発専用 Skill（配布しない）
 - `ROADMAP.md`       版ごとの方向。残作業とその状態は GitHub の Project とマイルストーンにあり、足し方も `ROADMAP.md` に書く
+- `dev-autopilot/`   自律開発ループ dev-autopilot の開発物（ADR 20261008-01）。設計判断は `dev-autopilot/docs/adr/` が正典で、
+                     絶対ルール 1 はそのフォルダの ADR にも及ぶ。文書と ADR の規則はそのフォルダの中の規則に従う
 
 ## 絶対ルール
 
@@ -27,7 +31,9 @@
    `enum` `namespace` など Node が剥がせない構文は tsc が弾く。
    例外は `evals/` の `scaffold.sh` だけで、中身は `exec node` の 1 行（`check:shell` が検査する）
 3. シンボリックリンクを使わない。パスは相対、改行は LF。
-   Markdown のリンクは標準の inline 形式（`[text](path)`）。利用者個人の全体ルールよりこのリポの規約を優先する
+   Markdown のリンクは標準の inline 形式（`[text](path)`）。利用者個人の全体ルールよりこのリポの規約を優先する。
+   company の文書を Obsidian で開いたときにリンクが追従する形に揃えるため（ADR 20261009-01）。
+   `dev-autopilot/` の中だけは inline の規則を適用しない（ADR 20261008-01）
 4. ADR と構造仕様（`docs/adr/` `docs/design/`）のフロントマターに 4 日付欄（created / updated / as_of / verified）を必ず持つ。
    該当なしは `n/a`。利用者向けの `docs/usage/` と入口の `docs/README.md` には付けない
 5. 検査は `pnpm check` が正典（`package.json` の `check:*`）。成否は終了コードで見る。Done の数を数えない
@@ -41,7 +47,7 @@
 
 ## ローカル検証
 
-- `claude --plugin-dir .` でこのリポを Plugin として読み込む
+- `claude --plugin-dir ./plugin` で配布物のフォルダを Plugin として読み込む
 - 検証用の company 相当リポ（`fixtures/company/`）で `/onboard` から動かす
 - hook の fail-closed テスト：`pnpm test`
 - Skill の動作：`pnpm eval:cases`（eval のケース）と `pnpm eval:dialogue`（質問の流れ）。
