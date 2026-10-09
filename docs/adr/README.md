@@ -109,3 +109,4 @@ accepted の ADR は書き直さないので、2 つの形式が並ぶ。古い�
 | 20261006-02 | MCP の道具は、読むだけと分かるもの以外を hook が確認に回す。雛形の名前の型の規則は予備として広げて残す | accepted |
 | 20261008-01 | 自律開発ループ dev-autopilot を開発物のフォルダ dev-autopilot/ に置き、設計判断と文書の規則をそのフォルダに閉じる | accepted |
 | 20261009-01 | business-os の Markdown のリンクは inline のままにし、dev-autopilot/ だけを規則の対象外にする | accepted |
+| 20261009-02 | 配布物を plugin/ に集め、マーケットプレイスの source をそのフォルダに向けて、開発物を利用者に配らない | accepted |
