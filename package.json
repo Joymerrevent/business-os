@@ -1,6 +1,6 @@
 {
   "name": "business-os",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "A Claude Code plugin for people who run several businesses alone (alpha).",
   "homepage": "https://github.com/Joymerrevent/business-os#readme",
