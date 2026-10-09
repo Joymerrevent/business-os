@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { kindOf, labelsFor } from "../../scripts/issue-label.ts";
+import { kindOf, labelsFor } from "../../plugin/scripts/issue-label.ts";
 import { repoRoot } from "../helpers.ts";
 
 describe("報告の種類のラベル", () => {

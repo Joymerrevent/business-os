@@ -1,7 +1,7 @@
 // business-os の検査の入口。package.json の check:* から 1 つずつ呼ぶ。
 // 成否は終了コード：fail があれば 1、無ければ 0（warn は 0）。
 //
-// 使い方：node scripts/check-repo.ts <検査の名前>
+// 使い方：node plugin/scripts/check-repo.ts <検査の名前>
 import { REPO_CHECKS } from "./lib/repo-checks.ts";
 
 const main = (): number => {
@@ -9,7 +9,7 @@ const main = (): number => {
   const check = REPO_CHECKS[name];
   if (check === undefined) {
     process.stderr.write(
-      `使い方：node scripts/check-repo.ts <${Object.keys(REPO_CHECKS).join(" | ")}>\n`,
+      `使い方：node plugin/scripts/check-repo.ts <${Object.keys(REPO_CHECKS).join(" | ")}>\n`,
     );
     return 2;
   }

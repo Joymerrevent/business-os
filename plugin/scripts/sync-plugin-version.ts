@@ -1,11 +1,11 @@
-// package.json の version を .claude-plugin/plugin.json に写す。/release で changeset version の後に呼ぶ。
+// package.json の version を plugin/.claude-plugin/plugin.json に写す。/release で changeset version の後に呼ぶ。
 //
-// 使い方：node scripts/sync-plugin-version.ts
-import { pluginRoot } from "../hooks/lib/plugin.ts";
+// 使い方：node plugin/scripts/sync-plugin-version.ts
+import { repoRoot } from "./lib/repo.ts";
 import { syncPluginVersion } from "./lib/version.ts";
 
 try {
-  const version = syncPluginVersion(pluginRoot());
+  const version = syncPluginVersion(repoRoot());
   process.stdout.write(`plugin.json の version を ${version} にしました\n`);
 } catch (error) {
   process.stderr.write(

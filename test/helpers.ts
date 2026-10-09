@@ -12,6 +12,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+/** 配布物（Plugin）のルート。利用者の環境では ${CLAUDE_PLUGIN_ROOT} がここを指す */
+export const pluginDir = join(repoRoot, "plugin");
 export const fixtureCompany = join(repoRoot, "fixtures", "company");
 
 export type HookResult = {
@@ -27,13 +29,13 @@ export const runHook = (
 ): HookResult => {
   const result = spawnSync(
     process.execPath,
-    [join(repoRoot, "hooks", `${name}.ts`)],
+    [join(pluginDir, "hooks", `${name}.ts`)],
     {
       input: typeof input === "string" ? input : JSON.stringify(input),
       encoding: "utf8",
       env: {
         ...process.env,
-        CLAUDE_PLUGIN_ROOT: repoRoot,
+        CLAUDE_PLUGIN_ROOT: pluginDir,
         BUSINESS_OS_HOOK_FAULT: "",
         ...env,
       },

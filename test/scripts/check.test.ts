@@ -7,7 +7,7 @@ import {
   runCompanyChecks,
   skillUsage,
   type CheckOptions,
-} from "../../scripts/lib/company-checks.ts";
+} from "../../plugin/scripts/lib/company-checks.ts";
 import { makeCompany, repoRoot, setState } from "../helpers.ts";
 
 const options: CheckOptions = {
@@ -28,7 +28,7 @@ const runCli = (...args: string[]) =>
   spawnSync(
     process.execPath,
     [
-      join(repoRoot, "scripts", "check.ts"),
+      join(repoRoot, "plugin", "scripts", "check.ts"),
       "--company",
       root,
       "--today",
