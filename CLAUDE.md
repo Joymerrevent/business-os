@@ -18,6 +18,8 @@
 - `docs/usage/`      利用者向け。ADR 番号を書かない
 - `.claude/`         business-os を開発するときの設定と開発専用 Skill（配布しない）
 - `ROADMAP.md`       版ごとの方向。残作業とその状態は GitHub の Project とマイルストーンにあり、足し方も `ROADMAP.md` に書く
+- `dev-autopilot/`   自律開発ループ dev-autopilot の開発物（ADR 20261008-01）。設計判断は `dev-autopilot/docs/adr/` が正典で、
+                     絶対ルール 1 はそのフォルダの ADR にも及ぶ。文書と ADR の規則はそのフォルダの中の規則に従う
 
 ## 絶対ルール
 
@@ -27,7 +29,9 @@
    `enum` `namespace` など Node が剥がせない構文は tsc が弾く。
    例外は `evals/` の `scaffold.sh` だけで、中身は `exec node` の 1 行（`check:shell` が検査する）
 3. シンボリックリンクを使わない。パスは相対、改行は LF。
-   Markdown のリンクは標準の inline 形式（`[text](path)`）。利用者個人の全体ルールよりこのリポの規約を優先する
+   Markdown のリンクは標準の inline 形式（`[text](path)`）。利用者個人の全体ルールよりこのリポの規約を優先する。
+   company の文書を Obsidian で開いたときにリンクが追従する形に揃えるため（ADR 20261009-01）。
+   `dev-autopilot/` の中だけは inline の規則を適用しない（ADR 20261008-01）
 4. ADR と構造仕様（`docs/adr/` `docs/design/`）のフロントマターに 4 日付欄（created / updated / as_of / verified）を必ず持つ。
    該当なしは `n/a`。利用者向けの `docs/usage/` と入口の `docs/README.md` には付けない
 5. 検査は `pnpm check` が正典（`package.json` の `check:*`）。成否は終了コードで見る。Done の数を数えない

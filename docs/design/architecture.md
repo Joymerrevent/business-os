@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-07
+updated: 2026-10-09
 as_of: n/a
 verified: n/a
 ---
@@ -125,8 +125,9 @@ business-os/
 
 | 配布物（Plugin に含まれる） | 開発物（business-os の開発にだけ使う） |
 |---|---|
-| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` 設定ファイル群 |
+| `.claude-plugin/` `skills/` `agents/` `hooks/` `scripts/` `templates/` `adapters/` | `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` `dev-autopilot/` 設定ファイル群 |
 
+`dev-autopilot/` の文書と ADR の規則は、そのフォルダの中の規則に従う（ADR 20261008-01）。
 配布専用 Skill は `skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
 `agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
 business-os の開発リポジトリでは sandbox を使わない。sandbox で守るのは、business-os を入れて運用する company の側。
