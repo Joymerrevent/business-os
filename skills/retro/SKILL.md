@@ -11,7 +11,8 @@ disable-model-invocation: true
 business-os と運用を、使われ方に合わせて直す提案を出す。提案は `docs/proposals/` に書き、`/approve` で反映する。
 
 1. **2 回ルール**：同じ依頼を CC に手で頼んだのが 2 回以上あれば、業務 Skill（`.claude/skills/`）にすることを提案する
-2. **剪定**：先月 1 回も使われなかった業務 Skill の削除か凍結を提案する（business-os の 10 個の Skill は対象外）
+2. **剪定**：先月 1 回も使われなかった業務 Skill の削除か凍結を提案する。
+   business-os の Skill（`/business-os:` で呼べるもの）は company では消さず、使われていなければ「business-os への改善案」として挙げる（手順 6）
 3. **CC への指示書と運用ルール**：くり返し起きた問題から、`CLAUDE.md` や判断ルールへの追記を提案する
 4. **自動起動**：2〜4 週間、決まった周期で毎回呼ばれている周期 Skill があれば、Routines（スケジュール起動）に移すことを提案する。
    設定はしない（人間が決める）
@@ -40,11 +41,18 @@ business-os と運用を、使われ方に合わせて直す提案を出す。�
 3. 集計を、元の日報の行と突き合わせてから使う（作業者の要約をそのまま信じない）
 4. 提案の候補を示し、質問 3 と質問 4 を聞く
 5. 選ばれたものを提案として書く
-   - Skill 化：`target` を `.claude/skills/<名前>/SKILL.md` にし、本文に SKILL.md の案を書く
+   - Skill 化：書く前に、既製の Skill を探す
+     - `npx skills find <作業を表す語>` で探し、見つかった Skill の名前・入れた人の数・中身の説明を提案に書く。
+       「見つからない」と出たら、通信の失敗を疑う（共通規約の「sandbox の中で起きる失敗」）
+     - 既製の Skill を使うかどうかは人間が決める。使うなら、人間が入力欄で `!` を付けて（または通常のターミナルで）
+       `gh skill preview` で中身を確かめ、`gh skill install` に `--pin <タグかコミットの SHA>` を付けて版を固定して入れる。CC は第三者の Skill を入れない
+     - 既製の Skill を使わないなら、`target` を `.claude/skills/<名前>/SKILL.md` にし、本文に SKILL.md の案を書く
    - 剪定：削除か、`disable-model-invocation: true` を付けた凍結か
    - CC への指示書・運用ルール：`target` を `CLAUDE.md` か `docs/charter/decision-rules.md` にする
 6. business-os そのもの（business-os）への改善案があれば、振り返りに「business-os への改善案」として書く。
-   business-os のリポジトリへの Issue の作成は外部への行動なので、人間が頼んだときだけ、送る前に確認して行う
+   人間が改善案を business-os に送りたいと言ったら、`/report` を案内する（Issue の作成は外部への行動なので、この Skill の中では送らない）
+   - 使われていない business-os の Skill があれば、Skill の名前と、対象期間に呼ばれた回数（0 回）を改善案に書く。
+     business-os に Skill の削除・統合を提案するときの材料になる
 7. 振り返りを雛形から書き出し、`/approve` を案内する
 
 ## 何を書くか

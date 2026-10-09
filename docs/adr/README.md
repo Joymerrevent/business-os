@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-03
+updated: 2026-10-09
 as_of: n/a
 verified: n/a
 ---
@@ -108,3 +108,6 @@ accepted の ADR は書き直さないので、2 つの形式が並ぶ。古い�
 | 20261006-01 | 雛形の env で Node にプロキシを使わせ、npm のキャッシュを sandbox の一時フォルダに置く。通信先と書き込み先の許可は雛形に足さない | accepted |
 | 20261006-02 | MCP の道具は、読むだけと分かるもの以外を hook が確認に回す。雛形の名前の型の規則は予備として広げて残す | accepted |
 | 20261007-01 | 雛形の MCP の予備の規則は必須規則に含めず、欠けていれば点検が warn で示し、/onboard --migrate の提案で足す | proposed |
+| 20261008-01 | 自律開発ループ dev-autopilot を開発物のフォルダ dev-autopilot/ に置き、設計判断と文書の規則をそのフォルダに閉じる | accepted |
+| 20261009-01 | business-os の Markdown のリンクは inline のままにし、dev-autopilot/ だけを規則の対象外にする | accepted |
+| 20261009-02 | 配布物を plugin/ に集め、マーケットプレイスの source をそのフォルダに向けて、開発物を利用者に配らない | accepted |

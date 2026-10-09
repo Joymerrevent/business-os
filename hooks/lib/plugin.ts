@@ -7,7 +7,10 @@ import { fileURLToPath } from "node:url";
 export const pluginRoot = (): string =>
   join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-/** business-os の Skill（10 個、固定）。追加・削除は ADR で決める */
+// 配布する Skill の一覧（分類ごと）。数は固定しない。足す・外すは Skill ごとに ADR で決め、ここに書く（ADR 20261004-02）。
+// 一覧は点検の正本で、skills/ のフォルダと一致しなければ check:skills が fail にする。
+
+/** 経営基盤 Skill：事業非依存で、会社を運営する以上必要な仕組み */
 export const FOUNDATION_SKILLS = [
   "onboard",
   "approve",
@@ -20,6 +23,19 @@ export const FOUNDATION_SKILLS = [
   "retro",
   "validate",
 ] as const;
+
+/** 共通業務 Skill：事業非依存で、どの事業の利用者も日々行う業務の作業 */
+export const COMMON_WORK_SKILLS: readonly string[] = [];
+
+/** サポート Skill：事業の運営ではなく、business-os そのもの（導入・点検・報告など）を扱い、必要なときだけ呼ぶもの */
+export const SUPPORT_SKILLS: readonly string[] = ["report"];
+
+/** 配布する Skill の全て */
+export const DISTRIBUTED_SKILLS: readonly string[] = [
+  ...FOUNDATION_SKILLS,
+  ...COMMON_WORK_SKILLS,
+  ...SUPPORT_SKILLS,
+];
 
 export const pluginVersion = (): string => {
   const manifest = JSON.parse(

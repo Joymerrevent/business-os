@@ -18,6 +18,7 @@ import {
   checkAdrIndex,
   checkDocs,
   checkEvals,
+  checkForms,
   checkHooks,
   checkLeak,
   checkShell,
@@ -43,6 +44,7 @@ describe("実際の business-os", () => {
     ["agents", checkAgents],
     ["shell", checkShell],
     ["evals", checkEvals],
+    ["forms", checkForms],
   ] as [string, Check][])("%s に fail が無い", (_, check) => {
     expect(failsOf(check)).toEqual([]);
   });
@@ -61,6 +63,7 @@ describe("壊した business-os の一時コピー", () => {
       "docs",
       "scripts",
       ".claude-plugin",
+      ".github",
     ]) {
       cpSync(join(repoRoot, dir), join(root, dir), { recursive: true });
     }
@@ -277,7 +280,7 @@ describe("壊した business-os の一時コピー", () => {
     });
   });
 
-  it("11 個目の Skill を足すと fail", () => {
+  it("配布する Skill の一覧に無い Skill を足すと fail", () => {
     mkdirSync(join(root, "skills", "extra"));
     expect(failsOf(checkSkills, root).length).toBeGreaterThan(0);
   });
@@ -288,6 +291,25 @@ describe("壊した business-os の一時コピー", () => {
       '\\"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.ts\\"',
       "${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.ts",
     );
+    expect(failsOf(checkHooks, root).length).toBeGreaterThan(0);
+  });
+
+  it("Issue のフォームの項目の id を変えると fail", () => {
+    edit(".github/ISSUE_TEMPLATE/bug-report.yml", "id: run-mode", "id: mode");
+    expect(failsOf(checkForms, root).length).toBeGreaterThan(0);
+  });
+
+  it("URL で事前に入力する項目を dropdown にすると fail", () => {
+    edit(
+      ".github/ISSUE_TEMPLATE/bug-report.yml",
+      "  - type: input\n    id: os",
+      "  - type: dropdown\n    id: os",
+    );
+    expect(failsOf(checkForms, root).length).toBeGreaterThan(0);
+  });
+
+  it("PreToolUse の matcher から MCP の道具の型を外すと fail", () => {
+    edit("hooks/hooks.json", "|mcp__.*", "");
     expect(failsOf(checkHooks, root).length).toBeGreaterThan(0);
   });
 

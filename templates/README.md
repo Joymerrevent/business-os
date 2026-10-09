@@ -17,7 +17,7 @@
 | 雛形 | 書き出し先（company 内） | 書き出す時 |
 |---|---|---|
 | `CLAUDE.md.tmpl` | `CLAUDE.md` | `/onboard` |
-| `settings.json.tmpl` | `.claude/settings.json` | `/onboard`。MCP の ask 規則は接続済みのツール名に置き換える |
+| `settings.json.tmpl` | `.claude/settings.json` | `/onboard`。MCP の ask 規則は接続済みのツール名に置き換える。`env` の `${TMPDIR}` は展開せずに書く（npm が展開する） |
 | `business-os.json.tmpl` | `.business-os.json` | `/onboard` の最初の行動（`state: initializing`）。完了時に `state: active` と `onboardedAt` を書く |
 | `gitignore.tmpl` | `.gitignore` | `/onboard`。Obsidian を使うときだけ、アダプタが除外の行を足す |
 | `gitattributes.tmpl` | `.gitattributes` | `/onboard` |

@@ -1,0 +1,31 @@
+name: issue-label
+
+# Issue が作られたときに、本文の先頭の報告の種類の行（または見出しの並び）から、種類のラベルを付ける。
+# 本文は誰でも書けるので、run: に本文を埋め込まない。env で渡し、scripts/issue-label.ts が決まった形だけを照合する。
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+
+      - name: 報告の種類のラベルを付ける
+        run: node scripts/issue-label.ts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          REPOSITORY: ${{ github.repository }}

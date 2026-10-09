@@ -5,11 +5,13 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { parseFrontmatter } from "../../hooks/lib/frontmatter.ts";
 import {
-  FOUNDATION_SKILLS,
+  DISTRIBUTED_SKILLS,
   frontmatterSchema,
   pluginRoot,
 } from "../../hooks/lib/plugin.ts";
 import { validate } from "../../hooks/lib/schema.ts";
+import { dictionaryTerms, LEAK_PATTERNS } from "./leak-patterns.ts";
+import { REPORT_FORMS, REPORT_KINDS } from "./report-forms.ts";
 import type { CheckResult, Level } from "./company-checks.ts";
 import { compareVersions, manifestVersion, packageVersion } from "./version.ts";
 
@@ -119,25 +121,27 @@ export const checkSkills = (root: string = pluginRoot()): CheckResult[] => {
   const dirs = readdirSync(join(root, "skills")).filter((name) =>
     statSync(join(root, "skills", name)).isDirectory(),
   );
-  const expected = new Set<string>(FOUNDATION_SKILLS);
+  const expected = new Set<string>(DISTRIBUTED_SKILLS);
   const extra = dirs.filter((name) => !expected.has(name));
-  const missing = FOUNDATION_SKILLS.filter((name) => !dirs.includes(name));
+  const missing = DISTRIBUTED_SKILLS.filter((name) => !dirs.includes(name));
   if (extra.length > 0 || missing.length > 0) {
     results.push(
       result(
         category,
-        "business-os の Skill は 10 個で固定",
+        "skills/ が配布する Skill の一覧（hooks/lib/plugin.ts）と一致する",
         "fail",
         [
           missing.length > 0 ? `無い：${missing.join(", ")}` : "",
-          extra.length > 0 ? `余分（増やすなら ADR）：${extra.join(", ")}` : "",
+          extra.length > 0
+            ? `一覧に無い（足すなら ADR で決め、一覧に足す）：${extra.join(", ")}`
+            : "",
         ]
           .filter((s) => s !== "")
           .join("、"),
       ),
     );
   }
-  for (const name of FOUNDATION_SKILLS) {
+  for (const name of DISTRIBUTED_SKILLS) {
     const path = join(root, "skills", name, "SKILL.md");
     if (!existsSync(path)) continue;
     const text = readFileSync(path, "utf8");
@@ -215,9 +219,13 @@ export const checkHooks = (root: string = pluginRoot()): CheckResult[] => {
     .map((group) => group.matcher ?? "")
     .join("|");
   const tools = matcher.split("|");
-  const missingTools = ["Write", "Edit", "Bash", "PowerShell"].filter(
-    (tool) => !tools.includes(tool),
-  );
+  const missingTools = [
+    "Write",
+    "Edit",
+    "Bash",
+    "PowerShell",
+    "mcp__.*",
+  ].filter((tool) => !tools.includes(tool));
   results.push(
     missingTools.length === 0
       ? result(category, "PreToolUse の対象ツール", "pass")
@@ -366,69 +374,13 @@ export const checkTemplates = (root: string = pluginRoot()): CheckResult[] => {
 
 // ---- 漏洩 ----
 
-const ALLOWED_EMAILS = new Set([
-  "noreply@anthropic.com",
-  "conduct@joymerrevent.com",
-]);
-const ALLOWED_HOSTS = [
-  "github.com",
-  "raw.githubusercontent.com",
-  "joymerrevent.com",
-  "claude.com",
-  "code.claude.com",
-  "docs.claude.com",
-  "anthropic.com",
-  "contributor-covenant.org",
-  "conventionalcommits.org",
-  "json.schemastore.org",
-  "json-schema.org",
-  "unpkg.com",
-  "editorconfig.org",
-  "localhost",
-];
-const hostAllowed = (host: string): boolean =>
-  ALLOWED_HOSTS.some(
-    (allowed) => host === allowed || host.endsWith(`.${allowed}`),
-  );
-
-type Pattern = {
-  name: string;
-  regex: RegExp;
-  ignore?: (match: string) => boolean;
-};
-const PATTERNS: Pattern[] = [
-  {
-    name: "メールアドレス",
-    regex: /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g,
-    ignore: (m) =>
-      ALLOWED_EMAILS.has(m.toLowerCase()) ||
-      m.endsWith("@users.noreply.github.com"),
-  },
-  {
-    name: "電話番号",
-    regex: /(?<![\d-])(?:\+81[- ]?|0)\d{1,4}-\d{1,4}-\d{3,4}(?![\d-])/g,
-  },
-  {
-    name: "法人格",
-    regex: /株式会社|有限会社|合同会社|一般社団法人|一般財団法人/g,
-  },
-  {
-    name: "通貨付きの金額",
-    regex: /[¥￥]\s?\d|\d[\d,.]*\s?円|\$\s?\d[\d,]{2,}/g,
-  },
-  {
-    name: "許可リストに無いドメイン",
-    regex: /https?:\/\/([A-Za-z0-9.-]+)/g,
-    ignore: (m) => hostAllowed(m.replace(/^https?:\/\//, "").toLowerCase()),
-  },
-];
-
 /** 検査の対象外（生成物・ロックファイル・この検査の定義そのもの） */
 const LEAK_SKIP = [
   /^pnpm-lock\.yaml$/,
   /^CHANGELOG\.md$/,
   /^\.changeset\//,
   /^scripts\/lib\/repo-checks\.ts$/,
+  /^scripts\/lib\/leak-patterns\.ts$/,
   /^test\//,
   /^fixtures\//,
   /^evals\/skills\/.+\/overlay\//,
@@ -495,14 +447,9 @@ export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
       ),
     );
   } else {
-    const dict = JSON.parse(readFileSync(resolve(dictPath), "utf8")) as {
-      terms?: unknown;
-    };
-    const terms = Array.isArray(dict.terms)
-      ? dict.terms.filter(
-          (t): t is string => typeof t === "string" && t.trim().length >= 2,
-        )
-      : [];
+    const terms = dictionaryTerms(
+      JSON.parse(readFileSync(resolve(dictPath), "utf8")) as unknown,
+    );
     const hits: string[] = [];
     for (const { file, text } of texts) {
       const lower = text.toLowerCase();
@@ -524,7 +471,7 @@ export const checkLeak = (root: string = pluginRoot()): CheckResult[] => {
   }
 
   // 3. 汎用のパターン（warn）
-  for (const pattern of PATTERNS) {
+  for (const pattern of LEAK_PATTERNS) {
     const found: string[] = [];
     for (const { file, text } of texts) {
       for (const match of text.matchAll(pattern.regex)) {
@@ -1096,6 +1043,8 @@ REPO_CHECKS["shell"] = checkShell;
 /** eval の対象外にする Skill と、その理由（ADR 20261003-02、20261003-04） */
 const EVAL_EXCLUDED: Record<string, string> = {
   check: "Bash が要るため（判定のロジックは vitest で検査する）",
+  report:
+    "下書きのスクリプトの判定（事業データの検査と送る前の照合）は vitest で検査し、Bash を許す対話の台本は macOS でだけ動くため省く",
 };
 
 /** フォルダの下に eval のケース（case.yaml か prompt.md を持つフォルダ）があるか */
@@ -1157,3 +1106,71 @@ export const checkEvals = (root: string = pluginRoot()): CheckResult[] => {
 };
 
 REPO_CHECKS["evals"] = checkEvals;
+
+// ---- Issue のフォーム ----
+
+type ParsedForm = {
+  name: string;
+  labels: string[];
+  fields: { type: string; id: string; label: string }[];
+};
+
+/** Issue のフォーム（決まった字下げで書いた YAML）から、名前・ラベル・項目を読む */
+export const parseIssueForm = (text: string): ParsedForm => {
+  const form: ParsedForm = { name: "", labels: [], fields: [] };
+  let current: { type: string; id: string; label: string } | undefined;
+  for (const line of text.split("\n")) {
+    const name = /^name:\s*(.+)$/.exec(line);
+    if (name) form.name = (name[1] ?? "").trim();
+    const labels = /^labels:\s*(\[.*\])\s*$/.exec(line);
+    if (labels) form.labels = JSON.parse(labels[1] ?? "[]") as string[];
+    const type = /^ {2}- type:\s*(\S+)/.exec(line);
+    if (type) {
+      current = { type: type[1] ?? "", id: "", label: "" };
+      form.fields.push(current);
+      continue;
+    }
+    const id = /^ {4}id:\s*(\S+)/.exec(line);
+    if (id && current) current.id = id[1] ?? "";
+    const label = /^ {6}label:\s*(.+)$/.exec(line);
+    if (label && current) current.label = (label[1] ?? "").trim();
+  }
+  form.fields = form.fields.filter((f) => f.type !== "markdown");
+  return form;
+};
+
+export const checkForms = (root: string = pluginRoot()): CheckResult[] => {
+  const category = "Issue のフォーム";
+  return REPORT_KINDS.map((kind) => {
+    const name = `.github/ISSUE_TEMPLATE/${kind}.yml`;
+    const path = join(root, name);
+    if (!existsSync(path)) {
+      return result(category, name, "fail", "フォームがありません");
+    }
+    const actual = parseIssueForm(readFileSync(path, "utf8"));
+    const expected = REPORT_FORMS[kind];
+    const problems: string[] = [];
+    if (actual.name !== expected.name)
+      problems.push(`name が「${expected.name}」ではない`);
+    if (actual.labels.join(",") !== expected.labels.join(","))
+      problems.push(`labels が ${JSON.stringify(expected.labels)} ではない`);
+    const have = actual.fields.map((f) => `${f.id}:${f.label}`).join("、");
+    const want = expected.fields.map((f) => `${f.id}:${f.label}`).join("、");
+    if (have !== want)
+      problems.push(
+        `項目の id と label が scripts/lib/report-forms.ts と違う（フォーム：${have}）`,
+      );
+    for (const f of expected.fields) {
+      const type = actual.fields.find((a) => a.id === f.id)?.type;
+      if (f.prefill && type !== "input" && type !== "textarea")
+        problems.push(
+          `${f.id} は URL で事前に入力する項目なので input か textarea にする`,
+        );
+    }
+    return problems.length === 0
+      ? result(category, name, "pass")
+      : result(category, name, "fail", problems.join("、"));
+  });
+};
+
+REPO_CHECKS["forms"] = checkForms;

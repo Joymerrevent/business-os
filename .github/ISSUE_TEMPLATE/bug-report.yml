@@ -40,15 +40,20 @@ body:
       placeholder: "0.1.0"
     validations:
       required: true
-  - type: dropdown
+  - type: input
     id: os
     attributes:
-      label: OS と動かし方
-      options:
-        - macOS
-        - Windows（WSL）
-        - Windows（ネイティブ）
-        - Linux
+      label: OS
+      description: macOS / Windows（WSL）/ Windows（ネイティブ）/ Linux のどれか。分かれば版も
+      placeholder: "macOS 15.6"
+    validations:
+      required: true
+  - type: input
+    id: run-mode
+    attributes:
+      label: Claude Code の動かし方
+      description: 対話モード（ふだんの画面）か、claude -p やスケジュール起動か
+      placeholder: "対話モード"
     validations:
       required: true
   - type: input
@@ -65,3 +70,13 @@ body:
       description: node --version の出力
     validations:
       required: true
+  - type: textarea
+    id: settings-diff
+    attributes:
+      label: .claude/settings.json が雛形と違うところ（任意）
+      description: 違うキーの名前だけを書いてください（値は書かないでください）。/report を使うと自動で集めます
+  - type: input
+    id: local-settings
+    attributes:
+      label: .claude/settings.local.json の有無（任意）
+      description: 有るなら、sandbox に関わるキーの名前（値は書かないでください）

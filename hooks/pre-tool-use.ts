@@ -1,4 +1,4 @@
-// PreToolUse hook：書き込みガードと Bash / PowerShell の意味解析（第三層の防衛）。
+// PreToolUse hook：書き込みガードと Bash / PowerShell の意味解析、MCP の道具の確認（第三層の防衛）。
 // 拒否は exit 2、確認は permissionDecision: "ask"、それ以外は無言で exit 0。
 // 判定中の例外は必ず拒否に倒す（fail-closed）。
 import { existsSync, readFileSync } from "node:fs";
@@ -18,6 +18,7 @@ import {
   type EditSpec,
 } from "./lib/frontmatter.ts";
 import { appendLog } from "./lib/log.ts";
+import { isMcpTool, judgeMcp } from "./lib/mcp.ts";
 import { frontmatterSchema } from "./lib/plugin.ts";
 import { hasApprovingProposal } from "./lib/proposals.ts";
 import { judgeCommands } from "./lib/rules.ts";
@@ -221,6 +222,9 @@ const main = (): Decision | undefined => {
   } else if (COMMAND_TOOLS.has(input.tool_name)) {
     target = asString(input.tool_input["command"]);
     result = judgeCommand(input, company);
+  } else if (isMcpTool(input.tool_name)) {
+    target = input.tool_name;
+    result = judgeMcp(input.tool_name) ?? ALLOW;
   }
   appendLog(root, {
     tool: input.tool_name,
