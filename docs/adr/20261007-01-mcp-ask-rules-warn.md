@@ -3,11 +3,11 @@ id: 20261007-01
 title: 雛形の MCP の予備の規則は必須規則に含めず、欠けていれば点検が warn で示し、/onboard --migrate の提案で足す
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-09
 as_of: 2026-10-07
-verified: n/a
+verified: 2026-10-09
 supersedes: n/a
 ---
 

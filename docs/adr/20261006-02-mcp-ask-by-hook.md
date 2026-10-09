@@ -5,13 +5,15 @@ type: decision
 business: n/a
 status: accepted
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-09
 as_of: 2026-10-06
 verified: 2026-10-06
 supersedes: n/a
 ---
 
 # 20261006-02: MCP の道具は、読むだけと分かるもの以外を hook が確認に回す。雛形の名前の型の規則は予備として広げて残す
+
+> **置き換えの案内（2026-10-09）**：決定 6.2（予備の規則を必須規則に含め、足していない company を `/check` の fail で気づかせる）と、影響の「既存の company は、雛形の `ask` の追加を人が足すまで `/check` が fail になる」は、[ADR 20261007-01](20261007-01-mcp-ask-rules-warn.md) で置き換えた。ほかの決定は変わらない。以下の本文は決めた当時の記録として残す。
 
 ## 背景と問い
 
