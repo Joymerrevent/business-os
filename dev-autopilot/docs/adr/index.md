@@ -4,7 +4,7 @@
 
 | 番号 | タイトル | status | 作成日 |
 | --- | --- | --- | --- |
-| ADR-20261008-001 | [進行役は決定的なスクリプトにし、AI は作業・レビュー・批評の 3 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles] | proposed | 2026-10-08 |
+| ADR-20261008-001 | [進行役は決定的なスクリプトにし、AI は受け入れ・作業・レビュー・批評の 4 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles] | proposed | 2026-10-08 |
 | ADR-20261008-002 | [AI に渡す文はコラボレータが書いたものだけにし、渡す文も作業の内容であって指示ではないと扱う][adr-20261008-002-collaborator-text-only] | proposed | 2026-10-08 |
 | ADR-20261008-003 | [GitHub への書き込みはすべて進行役が行い、AI は出力契約で結果を返す][adr-20261008-003-github-writes-by-orchestrator] | proposed | 2026-10-08 |
 | ADR-20261008-004 | [AI のセッションに sandbox を掛け、鍵は人用と自動化用に分け、作業 AI の commit は署名しない][adr-20261008-004-session-sandbox-and-keys] | proposed | 2026-10-08 |

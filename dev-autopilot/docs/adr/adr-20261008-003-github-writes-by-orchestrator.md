@@ -60,6 +60,7 @@ dev-autopilot は、進行役（cron が起動する Node のスクリプト。A
 - Status と Agent 欄：PR を作ったら Status を In Review にする。担当者（Assignee）はメンテナのまま、AI の担当は Project の単一選択欄「Agent」で表す。値は `worker` `reviewer` `human` `paused`（R2-6）
 - 止まった理由への対応：ADR の起票が要ると分かったら、作業 AI は実装せずに「止まった理由」を返し、進行役が Issue へコメントして `needs-human` を付ける（R2-7）
 - 計画のコメント：実装の前に作業 AI が返した計画を、進行役が Issue にコメントする。段階 2〜4 では人が計画を見て止められる（R2-9）
+- 受け入れの下書きコメント：検疫の結果、作業指示の下書き（外の人の Issue は受け入れ AI が返したもの）、依存とマイルストーンの候補、印を進行役が投稿する。人が `agent-ready` を付けた後、印のハッシュを更新し、依存とマイルストーンを確定する（4.8 節 I12、ADR-20261008-002）
 - draft / ready：PR は draft で作り、収束して Ready to Merge になったときに進行役が ready にする（R2-10）
 - マージの可否の判定は進行役が行い、結果を印として PR に書く。マージの実行は人が行い、進行役は `gh pr merge` を呼ばない（R7-1。条件と印の形は ADR-20261008-006）
 
@@ -90,7 +91,7 @@ dev-autopilot は、進行役（cron が起動する Node のスクリプト。A
 
 ### 確認方法（Confirmation）
 
-- 段階 0b（2026-10-08 に確認済み。ADR「[進行役は決定的なスクリプトにし、AI は作業・レビュー・批評の 3 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles]」（ADR-20261008-001）の段階表）で、進行役なし・GitHub 書き込みなしで `claude -p --plugin-dir <サブフォルダ> --agent dev-autopilot:worker` が入れ子の Plugin で動き（`tmp/` の偽の Plugin。実装では `dev-autopilot/plugin` を指す）、`--output-format json` で結果が返ることを実機で確かめた。`--json-schema` のスキーマ検査は段階 0c の実装で vitest に入れる
+- 段階 0b（2026-10-08 に確認済み。ADR「[進行役は決定的なスクリプトにし、AI は受け入れ・作業・レビュー・批評の 4 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles]」（ADR-20261008-001）の段階表）で、進行役なし・GitHub 書き込みなしで `claude -p --plugin-dir <サブフォルダ> --agent dev-autopilot:worker` が入れ子の Plugin で動き（`tmp/` の偽の Plugin。実装では `dev-autopilot/plugin` を指す）、`--output-format json` で結果が返ることを実機で確かめた。`--json-schema` のスキーマ検査は段階 0c の実装で vitest に入れる
 - 進行役の判定の実装（スキーマ検査と「実行の失敗」への分類、題名の規約の検査、印の組み立て、`<!-- dev-autopilot:` の除去、コメント ID からだけ印を読むこと）を vitest で検査する。結合テストは偽の `gh` を差し替えて進行役を端から端まで回す（10 節）
 - `/dev-autopilot check` が、AI のセッションに `GH_TOKEN` が渡っていないことと `gh` が認証されていないことを確かめる。確かめ方は「設定に書いてある」ではなく「実際に使えない」ことを試す（6 節）
 - 作業 AI・レビュー AI のセッションで `gh`、`claude`（再帰起動）、`git push` を使えないことを、vitest（進行役が渡す `--allowedTools` と安全設定の点検）と `check`（sandbox の中で実際に試す）で確かめる
@@ -100,7 +101,7 @@ dev-autopilot は、進行役（cron が起動する Node のスクリプト。A
 
 ### 案 A: 書き込みはすべて進行役が行い、AI は出力契約で結果を返す
 
-AI は「実装する」「レビューする」「直す」だけを担い、結果を `--output-format json --json-schema` の構造化出力と worktree の commit で返す。進行役が検証してから GitHub に書く。gh-aw の safe outputs と同じ形。
+AI は「受け入れの下書きを書く」「実装する」「レビューする」「直す」だけを担い、結果を `--output-format json --json-schema` の構造化出力と worktree の commit で返す。進行役が検証してから GitHub に書く。gh-aw の safe outputs と同じ形。
 
 - 良い点: AI のセッションに書き込みの権限が無い（P13）。コードやコメントから権限を盗む攻撃が成り立たない
 - 良い点: 判定が決定的な処理に閉じる。印の真正性（R3-5）と再レビューの入力の絞り込み（R3-6）を進行役だけで実装できる

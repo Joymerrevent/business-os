@@ -60,7 +60,7 @@ dev-autopilot/
       check/SKILL.md           点検の入口（`src/check.ts` を呼ぶ包み。判定のロジックは持たない）
       review/SKILL.md          レビュー AI の手順（change-review v2 の正本。9 節）
       review/scripts/per-commit-gates.ts  コミットごとのゲートの検査（TypeScript。単体導入でも Skill と一緒に写る）
-      intake/SKILL.md          Issue の受け入れ（指示の混入の検査、作業指示の下書き、agent-ready の付与）
+      intake/SKILL.md          Issue の受け入れ（検疫、作業指示の下書き、依存とマイルストーンの候補）。進行役が毎回の実行で自動で呼ぶ。人の操作は agent-ready だけ
     agents/
       worker.md                作業 AI（モデルは設定で）
       reviewer.md              レビュー AI
@@ -94,7 +94,7 @@ dev-autopilot/
    - business-os の `check:format` `check:lint` `check:leak` `check:shell` はリポジトリ全体の衛生の検査なので、root のまま `dev-autopilot/` にも効く。分離後は dev-autopilot 側が project-recipes で同じものを入れる
    - business-os の `check:md` は入れ子の `dev-autopilot/.markdownlint-cli2.jsonc` で `dev-autopilot/` の下だけ参照スタイルを許す（markdownlint-cli2 は下位フォルダの設定をそのフォルダ以下に適用する。2026-10-08 に `check:md` と pre-commit で確認）
 5. **文書は dev-autopilot のフォルダに閉じる。** ADR・構造仕様・使い方は `dev-autopilot/docs/` と `dev-autopilot/README.md` に置き、business-os の `docs/` には書かない。ADR の規則はメンテナの個人設定（`~/.claude`）の `adr-docs` レシピに従う：ファイル名 `adr-<yyyymmdd>-<nnn>-<title>.md`、frontmatter は `status` `created` `updated` `decision-makers` `consulted` `informed`、リンクは参照スタイル。レシピの 3 ファイル（`README.md` `index.md` `adr-template.md`）は初回だけ写して置き、以後 `~/.claude` に依存しない。business-os 側に書く ADR は橋渡しの 1 本だけで、business-os の規則で書き、中身の判断には踏み込まない。
-6. **`/verify-issue` との分担。** 汎用の部分（指示の混入の検査、作業指示の下書き、`agent-ready` の付与）は `dev-autopilot:intake` に置く。business-os の `/verify-issue` は business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初と最後で `dev-autopilot:intake` を呼ぶ。
+6. **`/verify-issue` との分担。** 汎用の部分（検疫、作業指示の下書き、依存とマイルストーンの候補）は `dev-autopilot:intake` に置き、進行役が自動で呼ぶ（人の操作は `agent-ready` だけ。要件メモ 4.8 節 I12）。business-os の `/verify-issue` は business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初と最後で `dev-autopilot:intake` を呼ぶ。
 7. **Skill は Plugin に同封する。** 進行役・agent・Skill は印の形（4.3 節 R3-3。正本は `dev-autopilot/src/marker.ts` の 1 定数）や引数で結びついていて、版がずれると黙って壊れるため、Plugin の 1 つの版で一緒に検査し、一緒に配る。別に公開して組み合わせる形は採らない。単体で使う価値があるのは `review` だけなので、`review` は手順の本体を単体で成り立たせ、dev-autopilot 向けの部分（構造化出力、無人の入力、agent の名前）は引数で渡されたときだけ使う。`${CLAUDE_PLUGIN_ROOT}` や agent の名前を手順の本体に埋め込まない。分離後は skills CLI で `skills/review/` を単体導入できるので、別の場所へ写さない。
 
 ### 導入と点検を Plugin が担う（4.9 節 S1〜S4）

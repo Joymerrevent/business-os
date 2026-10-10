@@ -55,7 +55,7 @@ dev-autopilot は、Project に登録された Issue を AI が worktree で実�
 | 未着手である | Project の Status が Todo |
 | 依存が解けている | Issue 依存（blocked by）の相手がすべて閉じている |
 | 人が止めていない | ラベル `needs-human` が無い。Project の単一選択欄「Agent」が `human` でない |
-| 人が確かめた | `/verify-issue` の検証結果のコメント（コラボレータの投稿、印 `<!-- dev-autopilot: verified body=pass\|replace -->`）がある。`replace` なら本文を渡さず作業指示コメントだけを渡す |
+| 人が承認した | 受け入れの下書きコメント（進行役の投稿、印 `<!-- dev-autopilot: intake body=pass\|replace brief=<sha256> -->`）があり、人が `agent-ready` を付けている（要件メモ 4.8 節 I12）。`replace` なら本文を渡さず、下書きの作業指示だけを渡す |
 
 `needs-human` と Agent 欄 `human` を除外する条件は、レビューの指摘「`needs-human` の Issue が翌日また選ばれる」を受けて足した（12 節「反映したもの」）。
 人が外すまで再着手しない。往復の上限に当たった Issue は Status を Todo ではなく Blocked にし（R4-2）、Todo の条件でも弾かれるようにする。
@@ -132,7 +132,7 @@ dev-autopilot は、Project に登録された Issue を AI が worktree で実�
 - 良い点: 実行の失敗と作業の失敗を分けるので、利用枠切れや一時的な障害で Issue が `needs-human` に落ちない
 - 良い点: 上限がすべて設定ファイル 1 つにあるので、段階を進めるときにコードを触らずに広げられる
 - 良い点: 段階の出口を記録フォルダの JSON から集計するので、判定の根拠が残り、後から検分できる
-- 悪い点: 人の作業が増える。`/verify-issue` → 作業指示 → `agent-ready` → 依存の入力までを人がしないと、1 件も動かない
+- 悪い点: 人の承認が要る。受け入れの下書きを読んで `agent-ready` を付けないと、1 件も動かない（準備は進行役が自動で用意する。I12）
 - 悪い点: 最初は 1 回 1 件なので、Issue が溜まっても処理は 1 日 1 件を超えない。段階 6 まで並列にならない
 - 悪い点: 触る範囲の重なりは警告に留めるため、人が依存を入れ忘れると並行する PR が競合する。競合の解消は載せ直し（R5-4）と人に委ねる
 - 悪い点: 基線（`develop`）が赤だと実行全体が止まり、赤が直るまで 1 件も着手しない。運用 Issue への通知を人が見落とすと、止まったまま日が過ぎる
@@ -176,7 +176,7 @@ dev-autopilot は、Project に登録された Issue を AI が worktree で実�
 
 ## 補足情報（More Information）
 
-- 着手の条件の前にある人の手順（`/verify-issue` → 作業指示コメント → `agent-ready`）と、渡す文の扱いは 4.8 節（I1〜I10）にある。本 ADR は進行役が読む条件だけを決める
+- 着手の条件の前にある受け入れ（進行役の自動の下書き → 人の承認 `agent-ready`）と、渡す文の扱いは 4.8 節（I1〜I12）にある。本 ADR は進行役が読む条件だけを決める
 - Status・Agent 欄・ラベルがどの順で変わるか（誰が、どの契機で）は要件メモ 4.10 節の遷移表にある。本 ADR は着手の条件（選定）だけを決める
 - 実装の出力契約（R2-5）、計画のコメント（R2-9）、draft PR（R2-10）、レビューと対応ループ（4.3 節・4.4 節）、マージの条件（4.7 節。ADR-20261008-006）は別の ADR の対象とする
 - 設定ファイルの項目（owner / repo、Project の番号と選択肢の ID、ラベル名、ラベルから型への対応、上限、記録フォルダの置き場）は 10 節の 2（ADR「dev-autopilot は分離を見越して 1 つのフォルダに Plugin の形で閉じ、導入と点検も Plugin が担う」（[ADR-20261008-008][adr-20261008-008-self-contained-plugin-layout]））に従い、dev-autopilot のコードには書かない

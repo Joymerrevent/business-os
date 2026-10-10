@@ -46,7 +46,7 @@ AI のセッションをどう隔離し、鍵と署名をどう分けるかは�
    プロジェクトの `.claude/settings.json` と hook は読まない。hook は Bash の外で動き sandbox が掛からないため、作業 AI が書き換えた hook がレビュー AI のセッションで動く経路を断つ。
    sandbox を有効にし、`denyRead` に `~/.ssh`・`~/.config/gh`・鍵と PAT の置き場（3）・進行役の設定と記録を入れ、書き込みは担当する Issue の worktree と一時フォルダと、commit に要る `.git/objects` `.git/worktrees/<名>` だけに絞り、`allowUnsandboxedCommands: false` とし、外への通信は許可した先（npm のレジストリなど）だけにする。
    雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする。npm のキャッシュとプロキシの設定は business-os の sandbox の既存の設定（ADR 20261006-01）を写す。
-   `--setting-sources user` でプロジェクト設定と hook が読まれないことは、段階 0b の残る確認 (c)（ADR「[進行役は決定的なスクリプトにし、AI は作業・レビュー・批評の 3 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles]」（ADR-20261008-001）の段階表）で実機で確かめる。
+   `--setting-sources user` でプロジェクト設定と hook が読まれないことは、段階 0b の残る確認 (c)（ADR「[進行役は決定的なスクリプトにし、AI は受け入れ・作業・レビュー・批評の 4 つの役だけを担う][adr-20261008-001-orchestrator-and-ai-roles]」（ADR-20261008-001）の段階表）で実機で確かめる。
 2. **作業 AI の commit は署名しない。** セッションの git 設定で `commit.gpgsign=false` にする。`develop` への squash マージの commit は GitHub が作って署名するので Verified になる。
    作業ブランチの commit はマージ後に消えるため、進行役が署名し直す仕組みは持たない。`develop` の ruleset に「署名必須」は入れない（入れると作業ブランチの push が通らない）。
 3. **鍵は 2 系統、置き場は 1 つのフォルダ。** 人の署名鍵（手元の SSH 鍵。dev-autopilot は触らない）と、dev-autopilot のマシン専用の deploy key（business-os だけに書き込み可。進行役だけが使う）。
