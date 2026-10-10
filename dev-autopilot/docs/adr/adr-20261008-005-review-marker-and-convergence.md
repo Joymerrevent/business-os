@@ -2,6 +2,7 @@
 status: proposed
 created: 2026-10-08
 updated: 2026-10-08
+author: Claude Code（メンテナの要件メモから起票）
 decision-makers: メンテナ
 consulted: 別の文脈のレビュー AI 2 体（安全側・実現性）
 informed: n/a

@@ -38,7 +38,7 @@ ADR の番号の決まりを、起票時に確かめる順に並べる。
    - 同じ論点の ADR が `accepted` なら、新しい ADR で置き換える（下記「承認済みの ADR は書き換えず、新しい ADR で置き換える」）。
    - 関連する ADR があれば、新しい ADR の「補足情報」にリンクを書く。
 2. [adr-template.md][template] をコピーし、上記の規則でファイル名を付ける。
-3. frontmatter の `status` を `proposed`、`created` と `updated` を起票日にする。
+3. frontmatter の `status` を `proposed`、`created` と `updated` を起票日、`author` を起票者にする。AI が起票したときは AI の名前と、起票を依頼した人を書く（例: `Claude Code（メンテナの依頼で起票）`）。承認・却下は `decision-makers` が行う。
 4. 本文を書く。任意の項目（テンプレート内に「任意の項目」とコメントがあるもの）は、不要なら削除してよい。
 5. [ADR 一覧][index] に 1 行足す。
 6. ADR 本文と一覧の 1 行だけを含む PR を作る。

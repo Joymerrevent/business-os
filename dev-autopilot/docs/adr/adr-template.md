@@ -3,6 +3,7 @@
 status: "{提案（proposed） | 却下（rejected） | 承認（accepted） | 非推奨（deprecated） | … | ADR-20261006-001 で置き換え（superseded by ADR-20261006-001）}"
 created: {作成日 YYYY-MM-DD}
 updated: {最終更新日 YYYY-MM-DD。status を変えた日など}
+author: {起票者。AI が起票したときは AI の名前と、起票を依頼した人}
 decision-makers: {決定に関わった全員}
 consulted: {意見を求めた人（多くは該当分野の専門家）。双方向でやり取りする相手}
 informed: {進捗を共有する人。一方向で知らせる相手}
