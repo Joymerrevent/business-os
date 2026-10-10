@@ -206,6 +206,52 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 - S3 **設定ファイルの正本は 1 つ**（10 節の 2）。導入が書き、点検が読み、進行役が使う。人が直接編集してもよいが、点検が整合を確かめる
 - S4 **business-os への導入は、この仕組みの最初の利用者として `setup` で行う**。手で作らない。手で作ると、分離後に `setup` が別のリポで動く保証が無くなる
 
+### 4.10 Issue の状態の遷移（2026-10-10 に整理）
+
+Issue の状態は 3 つの欄で表し、正は GitHub に置く（12 節「運用の規則」）。進行役は毎回の実行でこの 3 つから状態を組み立て直す。
+
+- Project の Status：`Todo` → `In Progress` → `In Review` → `Ready to Merge` → `Done`。止まったときは `Blocked`（P1）
+- Project の Agent 欄：空 / `worker` / `reviewer` / `human` / `paused`。「いま動いている役、または次に動く役」を表す（P2、R2-6）
+- ラベル：`agent-ready`（人が処理対象にした）、`needs-human`（人が引き取るまで進行役は触らない）、`from-review`（🟢 を起票した Issue）（P4）
+
+正常な順（上から下へ）：
+
+| # | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
+|---|---|---|---|---|---|---|
+| 1 | Issue が起票され、Project に入る | 人（外の人の Issue は人が Project に入れる） | `Todo` | 空 | — | ROADMAP の「残作業の足し方」 |
+| 2 | `/verify-issue` → 作業指示コメント → 処理対象にする。依存（blocked by）とマイルストーンもここで入れる | 人（コラボレータ） | `Todo` | 空 | `agent-ready` | I9、R1-1、P3 |
+| 3 | 棚卸しで候補に選び、基線が緑なら着手する | 進行役 | `In Progress` | `worker` | `agent-ready` | R1-1、R2-8 |
+| 4 | 計画コメントを Issue に書く（段階 2〜4 では人が止められる） | 進行役 | `In Progress` | `worker` | — | R2-9 |
+| 5 | draft PR を作る | 進行役 | `In Review` | `reviewer`（レビュー AI の実行中） | — | R2-5b、R2-6 |
+| 6 | 対応ループ：🔴 🟡 があれば作業 AI が直す | 進行役 | `In Review` | `worker`（直している間）→ `reviewer`（再レビュー中） | — | 4.4 節 |
+| 7 | 収束（CI 緑かつ `verdict=pass`）。🟢 を Issue にしてから PR を ready にする | 進行役 | `Ready to Merge` | 空 | — | R4-3、R4-1b、R2-10 |
+| 8 | マージの可否を判定し、印（`merge=ready` / `merge=human`）を PR に書く | 進行役 | `Ready to Merge` | 空 | — | R7-2b |
+| 9 | 印を見てマージする | 人 | `Ready to Merge`（進行役が次回の実行で検出するまで） | 空 | — | R7-1、R7-3b |
+| 10 | マージを検出し、Issue を閉じ、worktree を消す。Issue を閉じると Project が `Done` にする | 進行役 | `Done` | 空 | — | R7-4 |
+
+止まる遷移（どの段階からでも起きうる）：
+
+| 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
+|---|---|---|---|---|---|
+| 往復の上限（3 回）か振動 | 進行役 | `Blocked` | 変えない | `needs-human` を付ける | R4-2 |
+| ADR の起票が要る、セッションの上限、同じ実行の失敗が 3 回、漏えいの検査、渡す文の変更、検疫、Issue の状態の変化、復旧できない状態 | 進行役 | `Blocked` | 変えない | `needs-human` を付ける | R2-7、R2-12、R2-13、R2-14、I4、I7、I8、I11、12 節「運用の規則」 |
+| 利用枠切れ・時間切れ・`claude` の異常終了（3 回未満） | 進行役 | 変えない | 変えない | 変えない（次回に持ち越す） | R2-13 |
+| 人が引き取る | 人 | 変えない | `human` | — | 12 節「運用の規則」 |
+| 人が一時停止する | 人 | 変えない | `paused` | — | 12 節「運用の規則」 |
+
+止まった状態から戻す手順（人だけが行う）：
+
+- `needs-human`：原因を直してからラベルを外し、Status を戻す。PR が無ければ `Todo`（棚卸しで選び直す）、PR があれば `In Review`（進行役が次回の実行で PR の状態から再開する）。Agent 欄が `human` なら `worker` に戻す
+- `human`：返すときは Agent 欄を `worker` に戻す。Status は触った内容に合わせて人が直す
+- `paused`：再開するときは Agent 欄を空か `worker` に戻す
+
+決まり：
+
+- `needs-human` を付けるときは、どの契機でも Status を `Blocked` にする（R4-2 だけでなく全部。`Todo` のままだと翌日また選ばれるため）。本節で統一した
+- 進行役は Agent 欄を `human` と `paused` にしない。この 2 つは人の意思表示で、進行役は読むだけ
+- 進行役が起票する 🟢 の Issue（`from-review`）は、Project に入れて Status を `Todo` にし、マイルストーンと `agent-ready` は付けない。人が `/verify-issue` から始める（R4-1b）
+- Status と Agent 欄の更新はすべて進行役が GraphQL で行い、AI のセッションは触らない（R2-5、4.8 節）。更新は冪等で、すでにその値なら何もしない
+
 ## 5. いまのリポジトリに無いもの（準備の作業）
 
 5 節の P1〜P5 は、4.9 節の `setup` が作る。人が手で作るのは P6（鍵）だけ。
