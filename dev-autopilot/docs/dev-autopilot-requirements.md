@@ -128,8 +128,10 @@ AI は「実装する」「レビューする」「直す」の 3 つの作業�
 - R7-2b 判定の結果は進行役が PR のコメントに印として書く（形は R3-3 と同じ。`merge=ready` か `merge=human`、満たさない条件、head の SHA）。`ready` なら Ready to Merge にして人に渡す。`human` なら理由を添えて Ready to Merge のまま人に渡す。
   人は印を見てマージし、印と違う判断をしたとき（`ready` をマージしない、`human` をマージする）はその理由を PR にコメントする。この一致・不一致が判定の信頼度の記録になる（R6-3、7 節の段階 5 の出口）
 - R7-3 **進行役が「マージしてよい」と判定してよいパスの許可一覧**（拒否一覧ではなく許可一覧。一覧に無いパスを 1 つでも触れば `merge=human`）。設定ファイルに持つ。business-os の初期値（2026-10-08 決定、狭く始める）：
-  - `docs/usage/**`（利用者向け文書）、`test/**` `evals/**` `fixtures/**`（検査と前提データ）、`.changeset/*.md`（設定ファイル `config.json` は除く）
-  - `plugin/skills/**` と `plugin/scripts/**` は利用者の CC で動く配布物なので初期値に入れない。段階 5 で 10 件の一致を確かめた後、別の判断で広げる
+  - `docs/usage/**`（利用者向け文書）、`fixtures/**`（検査の前提データ）、`.changeset/*.md`（設定ファイル `config.json` は除く）
+  - `plugin/skills/**` と `plugin/scripts/**` は利用者の CC で動く配布物なので初期値に入れない
+  - `test/**` と `evals/**` も初期値に入れない（ADR-20261008-006 の起票時のレビューで外した）。`evals/` には唯一の bash である `evals/scaffold.sh` と `evals/lib/**` の実行されるコードが、`test/**` には hook の fail-closed テストが含まれ、テストの弱体化（消す・skip する・期待値を緩める）を許可一覧では止められず、レビュー頼みになるため
+  - `test/**` `evals/**` `plugin/skills/**` `plugin/scripts/**` は、段階 5 で 10 件の一致を確かめた後、別の判断で広げる
   - 判定は diff の状態も見る：削除（D）・改名（R）・種類の変更（T。シンボリックリンク化など）・実行属性の変更は、パスが許可一覧にあっても `merge=human`
   - 許可一覧に **含めない**（常に `merge=human`）の例：`docs/adr/**` `docs/design/**` `ROADMAP.md`、`CLAUDE.md` `.claude/**`、**`dev-autopilot/**`（自己改変）**、`.claude-plugin/**` `.github/**`、
     `plugin/hooks/**` `plugin/agents/**` `plugin/templates/**`（利用者の CC で動く防衛と雛形）、`plugin/scripts/check-repo.ts` など `check:*` の実装、`package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*`、`release/*` ブランチと `main` 向けの PR
@@ -586,7 +588,7 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したら自�
    - `develop` にも ruleset（PR 必須、force push 禁止、base と最新であること）を掛け、deploy key で直接 push できるのは作業ブランチだけにする
    - 手元の Mac で試す間（専用マシンの前）も同じ設定で動かす。sandbox が人の鍵と gh の設定を AI から隠すので、試験の段階で普段の鍵が読まれることも防げる
    - 0b で確かめること：sandbox を掛けた `claude -p` で `pnpm check` と `git commit` が通るか（npm のキャッシュとプロキシは ADR 20261006-01 の設定を写す）
-2. **マージの可否の判定の許可一覧の初期値。** **決定（2026-10-08）：狭く始める。** `docs/usage/**` `test/**` `evals/**` `fixtures/**` `.changeset/*.md` だけ。`plugin/skills/**` `plugin/scripts/**` は配布物なので含めず、段階 5 の後に別の判断で広げる（R7-3 に反映）
+2. **マージの可否の判定の許可一覧の初期値。** **決定（2026-10-08）：狭く始める。** `docs/usage/**` `fixtures/**` `.changeset/*.md` だけ。`plugin/skills/**` `plugin/scripts/**` は配布物なので含めず、`test/**` `evals/**` はテストの弱体化を許可一覧で止められないので含めず（ADR-20261008-006 の起票時のレビューで外した）、段階 5 の後に別の判断で広げる（R7-3 に反映）
 3. **配布範囲。** **決定（2026-10-08）：受け入れる。** `dev-autopilot/` は `test/` `evals/` と同じく business-os の利用者にも配られる。橋渡し ADR に「配布物に含まれるが、Plugin の名札が指す Skill・agent・hook には入れない。業務の固有名詞と秘密を置かない（`check:leak` の対象）」と書く。
    `source` を絞る案は、dev-autopilot では最初から `plugin/` に閉じる形で採る（10 節。2026-10-09 の決定）。business-os 側は ADR 20261009-02 で決めた（2026-10-09 に accepted、PR #89 で実装済み。配布物は `plugin/` の下）。入れ子の `.claude-plugin/plugin.json` を `claude plugin validate` と `--plugin-dir` がどう扱うかは 0b で確かめ、問題があれば名札を分離まで置かない
 4. **`per-commit-gates.sh` の扱い。** **決定（2026-10-08）：TypeScript に書き直す**（`dev-autopilot/src/per-commit-gates.ts`。Node 24 が直接実行。CLAUDE.md の規則 2 と整合）。9 節 S6 の「そのまま使う」は取り消す。
