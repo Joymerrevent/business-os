@@ -1,7 +1,7 @@
 ---
 status: proposed
 created: 2026-10-08
-updated: 2026-10-09
+updated: 2026-10-10
 decision-makers: メンテナ
 consulted: 別の文脈のレビュー AI 2 体（安全側・実現性）
 informed: n/a
@@ -11,7 +11,7 @@ informed: n/a
 
 ## 背景と課題（Context and Problem Statement）
 
-dev-autopilot は、business-os の Issue を AI が worktree で実装し、別の AI がレビューし、条件を満たしたら進行役がマージする自律開発ループである（[要件メモ][memo] 1 節）。
+dev-autopilot は、business-os の Issue を AI が worktree で実装し、別の AI がレビューし、条件を満たしたら進行役がマージの可否を判定して人に渡す自律開発ループである（[要件メモ][memo] 1 節）。
 dev-autopilot は business-os の開発専用の道具であり、business-os の利用者が使う Skill・agent・hook ではない。一方で、要件メモ 10 節は「将来は別リポジトリ（独立した Plugin）で管理する」と決めている。
 
 business-os には開発専用の TypeScript の置き場が無く、tsconfig の include は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけである（5 節 P7）。
@@ -80,7 +80,7 @@ dev-autopilot/
 ### 守ること（10 節「守ること」1〜7）
 
 1. **import しない。** dev-autopilot は business-os の `plugin/hooks/lib` や `plugin/scripts/lib` を import しない。要る関数は dev-autopilot 側に持つ。逆に business-os が dev-autopilot を import することもしない。
-2. **リポ固有の値は設定ファイル 1 つに出す。** 置き場は business-os 側の `.claude/dev-autopilot.json`。項目は owner / repo、Project の番号と Status の選択肢の ID、ラベル名（`agent-ready` `needs-human` `from-review`）、base ブランチ、品質ゲートのコマンド（`pnpm check`）、コミットと PR の規約（言語、Conventional Commits、changeset の要否）、自動マージの許可一覧（4.7 節 R7-3。ADR「開発の PR は進行役が許可一覧の条件でマージし、方針に係る PR は人がマージする」（[ADR-20261008-006][adr-20261008-006-orchestrator-merge-allowlist]））、モデル、予算と上限（件数・ラウンド・ターン・時間）、worktree の置き場。dev-autopilot のコードには書かない。
+2. **リポ固有の値は設定ファイル 1 つに出す。** 置き場は business-os 側の `.claude/dev-autopilot.json`。項目は owner / repo、Project の番号と Status の選択肢の ID、ラベル名（`agent-ready` `needs-human` `from-review`）、base ブランチ、品質ゲートのコマンド（`pnpm check`）、コミットと PR の規約（言語、Conventional Commits、changeset の要否）、マージの可否の判定の許可一覧（4.7 節 R7-3。ADR「開発の PR のマージの可否は進行役が許可一覧の条件で判定し、マージの実行は人が行う」（[ADR-20261008-006][adr-20261008-006-orchestrator-merge-allowlist]））、モデル、予算と上限（件数・ラウンド・ターン・時間）、worktree の置き場。dev-autopilot のコードには書かない。
    設定ファイルは worktree にも入るので、進行役は自分の clone の base ブランチ（`develop`）の版だけを読み、worktree 側の版は読まない。作業 AI が worktree の中で設定ファイルを書き換えても、進行役の判定には効かない。
 3. **起動は Plugin として。** 進行役は `claude -p --plugin-dir <dev-autopilot のパス>/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。
    配布物は `plugin/`（名札・Skill・agent）に閉じ、進行役の `src/`・テスト・前提データ・文書は配らない（business-os の ADR 20261009-02 と同じ考え方。dev-autopilot では最初からこの形にする）。
@@ -115,7 +115,7 @@ dev-autopilot/
 
 ### 分離の時期の目安（10 節）
 
-段階 5（進行役のマージ）まで business-os で動かし、設定ファイルの項目だけで別のリポに適用できると確かめられたら分離する。
+段階 5（進行役のマージの判定）まで business-os で動かし、設定ファイルの項目だけで別のリポに適用できると確かめられたら分離する。
 2 つ目の適用先ができる前に分離すると、固有の値がコードに残っていても気づけない。
 
 ### 影響（Consequences）

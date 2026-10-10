@@ -1,7 +1,7 @@
 ---
 status: proposed
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-10
 decision-makers: メンテナ
 consulted: 別の文脈のレビュー AI 2 体（安全側・実現性）
 informed: n/a
@@ -60,7 +60,7 @@ dev-autopilot は、進行役（cron が起動する Node のスクリプト。A
 - 止まった理由への対応：ADR の起票が要ると分かったら、作業 AI は実装せずに「止まった理由」を返し、進行役が Issue へコメントして `needs-human` を付ける（R2-7）
 - 計画のコメント：実装の前に作業 AI が返した計画を、進行役が Issue にコメントする。段階 2〜4 では人が計画を見て止められる（R2-9）
 - draft / ready：PR は draft で作り、収束して Ready to Merge になったときに進行役が ready にする（R2-10）
-- マージも AI ではなく進行役が行う（R7-1）。マージの条件は本 ADR の範囲外
+- マージの可否の判定は進行役が行い、結果を印として PR に書く。マージの実行は人が行い、進行役は `gh pr merge` を呼ばない（R7-1。条件と印の形は ADR-20261008-006）
 
 ### 印の真正性（R3-5）と再レビューの入力（R3-6）
 

@@ -9,7 +9,7 @@
 | ADR-20261008-003 | [GitHub への書き込みはすべて進行役が行い、AI は出力契約で結果を返す][adr-20261008-003-github-writes-by-orchestrator] | proposed | 2026-10-08 |
 | ADR-20261008-004 | [AI のセッションに sandbox を掛け、鍵は人用と自動化用に分け、作業 AI の commit は署名しない][adr-20261008-004-session-sandbox-and-keys] | proposed | 2026-10-08 |
 | ADR-20261008-005 | [レビューの判定は PR コメントの印で行い head の SHA に結びつけ、🔴 🟡 だけを直して収束させる][adr-20261008-005-review-marker-and-convergence] | proposed | 2026-10-08 |
-| ADR-20261008-006 | [開発の PR は進行役が許可一覧の条件でマージし、方針に係る PR は人がマージする][adr-20261008-006-orchestrator-merge-allowlist] | proposed | 2026-10-08 |
+| ADR-20261008-006 | [開発の PR のマージの可否は進行役が許可一覧の条件で判定し、マージの実行は人が行う][adr-20261008-006-orchestrator-merge-allowlist] | proposed | 2026-10-08 |
 | ADR-20261008-007 | [レビューの Skill は change-review の核を残して v2 に組み直し、dev-autopilot に同封する][adr-20261008-007-review-skill-v2] | proposed | 2026-10-08 |
 | ADR-20261008-008 | [dev-autopilot は分離を見越して 1 つのフォルダに Plugin の形で閉じ、導入と点検も Plugin が担う][adr-20261008-008-self-contained-plugin-layout] | proposed | 2026-10-08 |
 | ADR-20261008-009 | [着手する Issue は人のラベルとマイルストーンと依存で選び、Issue ごとの worktree と上限の中で進める][adr-20261008-009-issue-selection-worktrees-and-limits] | proposed | 2026-10-08 |
