@@ -1,5 +1,5 @@
 {
-  // dev-autopilot/ の Markdown は参照スタイルのリンク（docs/adr/README.md の規則）。business-os の規約（inline）とは別
+  // dev-autopilot/ の Markdown は参照スタイルのリンクを許す（business-os の ADR 20261008-01 の決定 5）。business-os の規約（inline）とは別
   "config": {
     "MD054": {
       "autolink": true,
