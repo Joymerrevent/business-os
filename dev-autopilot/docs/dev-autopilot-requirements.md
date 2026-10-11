@@ -454,7 +454,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（12 節「運
 | 段階 | 内容 | 出口 |
 |---|---|---|
 | 0a | 橋渡し ADR 20261008-01（business-os 側）を proposed で起票。dev-autopilot 側の ADR は段階 1 の後に本メモから起票する（冒頭の決定） | accepted（2026-10-09 に済み） |
-| 0b | 最初の薄切り：進行役なし・GitHub 書き込みなしで、手で書いた安全設定（`setup` はまだ無い）を `--settings` で渡した `claude -p` を未信頼の worktree の中で動かし、12 節末の表の未確認を実機で潰す。攻撃の再現（project の hook が走らないこと、`commondir` の差し替えが進行役の git に届かないこと）を含む | 12 節末の表の未確認がすべて「実行」で埋まる。**2026-10-11 に 8〜17 を実行で埋めた。** 残りは 6（PAT）だけで、人の操作が要る |
+| 0b | 最初の薄切り：進行役なし・GitHub 書き込みなしで、手で書いた安全設定（`setup` はまだ無い）を `--settings` で渡した `claude -p` を未信頼の worktree の中で動かし、12 節末の表の未確認を実機で潰す。攻撃の再現（project の hook が走らないこと、`commondir` の差し替えが進行役の git に届かないこと）を含む | 12 節末の表の未確認がすべて「実行」で埋まる。**2026-10-11 に 6〜17 を実行で埋めた。0b は完了** |
 | 0c | `setup` と `check` の実装（4.9 節）と、それによる準備（5 節の P1・P2・P4・P5）。deploy key と PAT の用意（12 節の判断 1）。`change-review` スキルの v2（9 節）。受け入れ（I12）と `/verify-issue` の拡張。Project の選択肢の追加を捨てる Project で先に試す（S1） | `check` が business-os で全項目 pass（`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くことを含む）。スキルの v2 は手動のレビュー 1 件で今の PR の形が出ることを確かめる |
 | 1 | 棚卸しと受け入れ（I12）を動かす（選ぶ・待たせる・下書きを書く・記録する。実装はしない）。**決定（2026-10-10）**：受け入れを含める。最初は設定 `dryRun: true` で、下書きと選定の結果を手元の記録にだけ書いて人が読む。異議が無ければ `dryRun` を切り、残りの週は Issue に実際に投稿する | 7 回の実行（lock で見送った実行と起動されなかった日は数えない。12 節「運用の規則」）で、人が `## 異議` の見出しで書いた回数（dry-run の間は記録ファイルへの追記）0。うち投稿ありの実行が 3 回以上 |
 | 2 | 計画役と実装 → draft PR を 1 件ずつ。計画（R2-9）は人が見る。レビューは人が行い、PR のマージも人。モデルの比較もここで行う：作業 AI は `opus` で始め、種類ごとに `sonnet` を試す（R4-2b の上げた件数を数える）。計画役は受け入れの `plan=` の判定を人が妥当と見たか、`fable` にした計画が `opus` と比べて違ったかを記録する | 5 件の PR のうち 4 件以上を「手直しなし」で人がマージ（手直し＝人が PR に commit を足した、または close して作り直した）。`plan=` の判定への `## 異議` の割合を記録する |
@@ -877,7 +877,7 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
 | 3 | `-p` のセッションからサブエージェントを起こせるか | **起こせる**。Agent ツールで haiku のサブエージェントが返事を返した | 実行 |
 | 4 | `--max-budget-usd` が定額のプランで効くか | **効く**。0.0001 ドルで 1 ターン後に `error_max_budget_usd` で止まり、`total_cost_usd` に見積もりの費用（0.0377）が入る | 実行 |
 | 5 | sandbox を掛けた `claude -p` で `pnpm check:types` と `git commit`（署名なし）が通るか | **通る**。`~/.ssh` の読み取りは `Operation not permitted` で止まった | 実行 |
-| 6 | fine-grained PAT で Organization 所有の Project 7 の欄を書けるか | **未確認**。PAT の発行が要る（人の作業）。**決定（2026-10-10）**：基本設計の前に人が Organization の Projects の読み書きを付けた fine-grained PAT を発行し、`gh api graphql` で欄の更新を 1 回試す。書けなければ代替（GitHub App か classic PAT）をそのとき選び直す | 未検証 |
+| 6 | fine-grained PAT で Organization 所有の Project 7 の欄を書けるか | **書ける**。Resource owner を Organization、Repository access を business-os だけ、Organization permissions に Projects の Read and write を付けた fine-grained PAT で、`gh api graphql` による Project 7 の読み取り、`addProjectV2DraftIssue`、`deleteProjectV2Item` が通った（2026-10-11、人が発行して実行）。代替（GitHub App、classic PAT）は不要 | 実行 |
 | 7 | ruleset を develop に写すときの承認の設定 | `protect-main` は `required_approving_review_count: 0`、`require_extra_approval_for_unattributed_changes: true`。develop の ruleset では後者を無効にする（自動化アカウントを足したときに自己承認できなくなる） | 読んだ（API） |
 | 8 | `claude -p --model haiku` の別名が最新の Haiku に解けるか。`--effort` が効くか。エージェント定義の `model` と `--model` の優先。`modelUsage` で実際のモデルが取れるか | **別名 `haiku` は Haiku 4.5（`claude-haiku-4-5-20251001`）に解けた。** 完全な ID `claude-haiku-5-5` は動く（`modelUsage` に `claude-haiku-5-5`。stderr に `unrecognized_model` の記録が出るが実行は成功）。`--model` はエージェント定義の `model` より優先。定義だけなら定義の値（`sonnet` → `claude-sonnet-5-5`）。`--effort low` は受理された。`modelUsage` は使われたモデル ID をキーに持つ（2026-10-11、Claude Code 2.1.285） | 実行 |
 | 9 | worktree で `git commit` が通るか。git が書く場所。親 `.git` の保護 | **通る**。作業フォルダが worktree のとき sandbox は親 `.git` への書き込みを既定で許し、`.git/config` `.git/hooks/**` `.git/worktrees/<名前>/commondir` `config.worktree` と worktree の `.claude/settings.json` は保護パスとして Bash から書けない（`Operation not permitted`）。**`.git/worktrees/<名前>/gitdir` と `.git/refs/**` は書けた**（gitdir は `denyWrite` に足す）。commit で新しく書かれたのは `objects/**` と `worktrees/<名前>/COMMIT_EDITMSG`（HEAD・index・logs は更新）。**Bash を `permissions.allow` に入れないと `git commit` は承認待ちになり `-p` では拒否される**（sandbox の自動許可の対象外。変数展開を含むコマンドも同じ）。allow に入れれば通る | 実行 |
@@ -900,6 +900,6 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
   利用者向けの不具合なので Issue #80 に起票した（2026-10-08）
 - 人への注意：`~/.ssh` の実体がクラウドの同期フォルダにある。dev-autopilot 用の鍵も人の新しい署名鍵も、同期されないパスに置く
 
-8〜17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行役の clone と worktree 2 つ）と捨てる Project で実機確認した。残る未確認は 6（PAT）だけで、人の操作が要る。
+6〜17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行役の clone と worktree 2 つ）と捨てる Project と、人が発行した PAT で実機確認した。0b の未確認は残っていない。
 「`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くこと」は 0c の出口。
 2026-10-11 の確認で要件を改めた点：AI のセッションの起動は `--setting-sources local`（6 節の (a)）、ファイルの道具は `permissions` の allow と deny で絞る（6 節の (e)）、Bash は `permissions.allow` に入れる（sandbox が境界）、`gitdir` を `denyWrite` に足す（判断 1）、`haiku` は完全な ID で書く（4.11 節）、R3-5 の (b) は `lastEditedAt`、出力契約は進行役が検証し `--json-schema` に頼らない（R2-5）、費用の記録は `stream-json`（R2-13）。
