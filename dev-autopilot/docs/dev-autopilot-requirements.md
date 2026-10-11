@@ -287,7 +287,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 
 - S1 **導入（`/dev-autopilot setup`）**：足りないものを作る。何度実行しても同じ結果になる（冪等）。まず「何を作るか」の一覧を出し、人が承認してから作る。
   外部に影響が出る操作（ラベル・Project の欄・ruleset の作成）は 1 回の承認でまとめて行い、作った後に実物を読み戻して確かめる
-  - Plugin が作れるもの：ラベル（`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`）、Project の Status の選択肢（In Review・Ready to Merge・Blocked。選択肢の追加が既存の選択肢の ID と値を保つかは 0c の前に捨てる Project で確かめる）と単一選択欄「Agent」、
+  - Plugin が作れるもの：ラベル（`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`）、Project の Status の選択肢（In Review・Ready to Merge・Blocked。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える。12 節末の表の 15）と単一選択欄「Agent」、
     base ブランチの ruleset（PR 必須、force push 禁止、必須チェック（設定の一覧）を strict で登録して「base と最新であること」を要求、`require_extra_approval_for_unattributed_changes` は無効。12 節末の表の 7）、
     deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（R2-14）、設定ファイル（`.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く）、
     cron（macOS は launchd の plist）の定義、worktree の置き場、記録と lock の置き場
@@ -454,7 +454,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（12 節「運
 | 段階 | 内容 | 出口 |
 |---|---|---|
 | 0a | 橋渡し ADR 20261008-01（business-os 側）を proposed で起票。dev-autopilot 側の ADR は段階 1 の後に本メモから起票する（冒頭の決定） | accepted（2026-10-09 に済み） |
-| 0b | 最初の薄切り：進行役なし・GitHub 書き込みなしで、手で書いた安全設定（`setup` はまだ無い）を `--settings` で渡した `claude -p` を未信頼の worktree の中で動かし、12 節末の表の未確認を実機で潰す。攻撃の再現（project の hook が走らないこと、`commondir` の差し替えが進行役の git に届かないこと）を含む | 12 節末の表の未確認がすべて「実行」で埋まる。**2026-10-11 に 8〜14・16・17 を実行で埋めた。** 残りは 6（PAT）と 15（Project の選択肢）で、どちらも人の操作が要る |
+| 0b | 最初の薄切り：進行役なし・GitHub 書き込みなしで、手で書いた安全設定（`setup` はまだ無い）を `--settings` で渡した `claude -p` を未信頼の worktree の中で動かし、12 節末の表の未確認を実機で潰す。攻撃の再現（project の hook が走らないこと、`commondir` の差し替えが進行役の git に届かないこと）を含む | 12 節末の表の未確認がすべて「実行」で埋まる。**2026-10-11 に 8〜17 を実行で埋めた。** 残りは 6（PAT）だけで、人の操作が要る |
 | 0c | `setup` と `check` の実装（4.9 節）と、それによる準備（5 節の P1・P2・P4・P5）。deploy key と PAT の用意（12 節の判断 1）。`change-review` スキルの v2（9 節）。受け入れ（I12）と `/verify-issue` の拡張。Project の選択肢の追加を捨てる Project で先に試す（S1） | `check` が business-os で全項目 pass（`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くことを含む）。スキルの v2 は手動のレビュー 1 件で今の PR の形が出ることを確かめる |
 | 1 | 棚卸しと受け入れ（I12）を動かす（選ぶ・待たせる・下書きを書く・記録する。実装はしない）。**決定（2026-10-10）**：受け入れを含める。最初は設定 `dryRun: true` で、下書きと選定の結果を手元の記録にだけ書いて人が読む。異議が無ければ `dryRun` を切り、残りの週は Issue に実際に投稿する | 7 回の実行（lock で見送った実行と起動されなかった日は数えない。12 節「運用の規則」）で、人が `## 異議` の見出しで書いた回数（dry-run の間は記録ファイルへの追記）0。うち投稿ありの実行が 3 回以上 |
 | 2 | 計画役と実装 → draft PR を 1 件ずつ。計画（R2-9）は人が見る。レビューは人が行い、PR のマージも人。モデルの比較もここで行う：作業 AI は `opus` で始め、種類ごとに `sonnet` を試す（R4-2b の上げた件数を数える）。計画役は受け入れの `plan=` の判定を人が妥当と見たか、`fable` にした計画が `opus` と比べて違ったかを記録する | 5 件の PR のうち 4 件以上を「手直しなし」で人がマージ（手直し＝人が PR に commit を足した、または close して作り直した）。`plan=` の判定への `## 異議` の割合を記録する |
@@ -886,7 +886,7 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
 | 12 | `commondir` を差し替えた worktree に対する進行役の操作 | **worktree の中で git を実行すると発火した**（`git -C <worktree> status` で差し替え先の `core.fsmonitor` が動いた）。進行役の clone から worktree のパスへの fetch、親 clone のパスへの fetch、親 clone での `git worktree list` `git worktree remove --force`、親 clone での `git log <ブランチ>` は**発火しなかった**。6 節の (b) のとおり進行役が worktree の中で git を実行しなければ届かない | 実行 |
 | 13 | sandbox の `denyRead` が Read ツールにも効くか | **効かない**（公式文書どおり。sandbox は Bash だけを覆う）。Read ツールは `denyRead` のパスを読めた。`permissions.deny` の `Read(//<絶対パス>/**)`（絶対パスは `//` 始まり。`/` 始まりはプロジェクト相対で一致しない）で止まった（`File is in a directory that is denied by your permission settings`）。Write・Edit も同じで、ホームの任意のパスに書けた。`permissions.allow` を `Write(//<worktree>/**)` `Edit(//<worktree>/**)` に絞ると、外への Write は「Path is outside allowed working directories」で拒否され、`deny` に入れた `.git/**` `.claude/**` `CLAUDE.md` への Edit も止まった。`.git/hooks/**` と `.mcp.json` は Write ツールが「sensitive file」として既定で拒む | 実行 |
 | 14 | 道具なし、`--json-schema`、強制終了時の費用 | 道具なしはエージェント定義の `tools: []` でも `--tools ""` でも成立（Read を頼んでも「道具が無い」と返す）。**`--json-schema` は `--agent` と併用すると `structured_output` が null になる**（道具の有無を問わず。`--agent` 無しなら `structured_output` に検証済みの JSON が入る）。進行役は `result` の文を自分の JSON スキーマで検証する（R2-5）。`--output-format stream-json` は `assistant` のイベントごとに `model` と `usage` を持つので、途中で止めても消費は集計できる。プロセスグループごとの kill（`setpgrp` で起動し `kill -TERM -- -<pgid>`）で孫プロセスも残らなかった（モデルが長いコマンドを実行しなかったため、`claude` 自体を途中で止める試験は未実施） | 実行（kill は model なし） |
-| 15 | Project v2 の Status に選択肢を足す GraphQL が、既存の選択肢の ID と項目の値を保つか | **未確認**。捨てる Project（dev-autopilot-lab）を Organization に作って試す（S1、0c の前）。人の承認待ち | 未検証 |
+| 15 | Project v2 の Status に選択肢を足す GraphQL が、既存の選択肢の ID と項目の値を保つか | **`updateProjectV2Field` の `singleSelectOptions` に既存の選択肢の `id` を含めて渡せば、既存の ID と項目の値は保たれ、同じ入力を 2 回送っても ID は変わらない（冪等）。`id` を渡さないと既存の ID がすべて振り直され、項目の Status の値も消える**（2026-10-11、Organization に作った捨てる Project で確認し、削除した）。`setup` は必ず現在の選択肢を読んで `id` 付きで送り、送る前に件数と名前を読み戻して照合する | 実行 |
 | 16 | リアクションや非表示で `updated_at` が変わるか | **リアクションでは変わらない。非表示（`minimizeComment`）では `updated_at` が変わる**が `lastEditedAt` は null のまま、`userContentEdits.totalCount` は 0。R3-5 の (b) は `created_at` と `updated_at` の一致でなく、GraphQL の `lastEditedAt == null`（または `userContentEdits.totalCount == 0`）で判定する（2026-10-11 に改めた） | 実行 |
 | 17 | 子プロセスの環境変数を絞る。`GIT_CONFIG_COUNT` | `env -i` に `HOME` `PATH` `USER` `LOGNAME` `TMPDIR` `TERM` `LANG` だけを渡せば `claude -p` はログイン状態を保って動き、渡さなかった変数は Bash から `unset` に見えた（`HOME` と `PATH` だけではログインが失われる）。`GIT_CONFIG_COUNT` と `GIT_CONFIG_KEY_n` / `GIT_CONFIG_VALUE_n` で `core.hooksPath` と `gc.auto` が効いた | 実行 |
 
@@ -900,6 +900,6 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
   利用者向けの不具合なので Issue #80 に起票した（2026-10-08）
 - 人への注意：`~/.ssh` の実体がクラウドの同期フォルダにある。dev-autopilot 用の鍵も人の新しい署名鍵も、同期されないパスに置く
 
-8〜14・16・17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行役の clone と worktree 2 つ）で実機確認した。残る未確認は 6（PAT）と 15（Project の選択肢）で、どちらも人の操作が要る。
+8〜17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行役の clone と worktree 2 つ）と捨てる Project で実機確認した。残る未確認は 6（PAT）だけで、人の操作が要る。
 「`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くこと」は 0c の出口。
 2026-10-11 の確認で要件を改めた点：AI のセッションの起動は `--setting-sources local`（6 節の (a)）、ファイルの道具は `permissions` の allow と deny で絞る（6 節の (e)）、Bash は `permissions.allow` に入れる（sandbox が境界）、`gitdir` を `denyWrite` に足す（判断 1）、`haiku` は完全な ID で書く（4.11 節）、R3-5 の (b) は `lastEditedAt`、出力契約は進行役が検証し `--json-schema` に頼らない（R2-5）、費用の記録は `stream-json`（R2-13）。
