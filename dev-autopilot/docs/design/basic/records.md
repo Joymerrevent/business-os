@@ -2,7 +2,7 @@
 status: draft
 created: 2026-10-11
 updated: 2026-10-11
-source: ../dev-autopilot-requirements.md
+source: ../../dev-autopilot-requirements.md
 ---
 
 # 記録の形

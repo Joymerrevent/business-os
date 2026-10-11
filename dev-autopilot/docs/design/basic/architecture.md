@@ -2,13 +2,13 @@
 status: draft
 created: 2026-10-11
 updated: 2026-10-11
-source: ../dev-autopilot-requirements.md
+source: ../../dev-autopilot-requirements.md
 ---
 
 # 進行役の全体構成
 
 dev-autopilot の進行役（AI ではない Node のスクリプト）が、何をどこに置き、1 回の実行で何をどの順に行うかを定める。
-判断の根拠は[要件メモ][req]にあり、本書は要件番号（R・I・S・P と節番号）で根拠を示す。要件と食い違ったら要件が正で、本書を直す。
+判断は[要件メモ][req]に書いてあり、本書は要件番号（R・I・S・P と節番号）で根拠を示す。要件と食い違ったら要件メモに合わせて本書を直す。
 
 ## 1. 配置
 
@@ -27,7 +27,7 @@ dev-autopilot の進行役（AI ではない Node のスクリプト）が、何
   lock                              多重起動を防ぐ lock（PID・ホスト名・起動時刻）
   settings/<role>.json              AI のセッションに --settings で渡す安全設定（進行役が起動前にハッシュを確かめる）
   tmp/<session-id>/                 セッションごとの一時フォルダ（sandbox の TMPDIR）
-<business-os の clone>/.claude/dev-autopilot.json   リポ固有の設定（S3。正本は 1 つ）
+<business-os の clone>/.claude/dev-autopilot.json   リポ固有の設定（S3。設定ファイルは 1 つだけ）
 ```
 
 進行役のプロセスの環境変数だけが持つもの：fine-grained PAT（`DEV_AUTOPILOT_GH_TOKEN`）、印の署名の鍵（`DEV_AUTOPILOT_SIGNING_KEY`）、deploy key のパス（`DEV_AUTOPILOT_DEPLOY_KEY`）。
@@ -82,7 +82,7 @@ Issue ごとに 1 回の実行で進めるのは 1 段（R1-5）。各段の「�
 | `github.ts` | GraphQL と REST の薄い包み。読み取りと、`dryRun` を尊重する書き込み | 4.8 節、4.10 節 |
 | `state.ts` | GitHub の状態から Issue ごとの状態と次の段を組み立てる（[状態の組み立て][state]） | R1-5、4.10 節 |
 | `trust.ts` | 文の出どころの判定（I1、I10）、印の真正性（R3-5） | 4.8 節 |
-| `marker.ts` | 印の形の正本（種類・欄・署名・解析） | 4.12 節 |
+| `marker.ts` | 印の形の定義（種類・欄・署名・解析）。要件 4.12 節と一致させる | 4.12 節 |
 | `quarantine.ts` | 検疫（I11）。`intake` Skill も同じものを呼ぶ | I11 |
 | `leak.ts` | 漏えい検査（R2-14）。worktree の `check:leak` は使わない | R2-14 |
 | `select.ts` | 棚卸し（R1-1）と WIP の上限 | R1-1、R1-3 |
@@ -122,7 +122,7 @@ Issue ごとに 1 回の実行で進めるのは 1 段（R1-5）。各段の「�
 | push | `GIT_SSH_COMMAND="ssh -i <deploy key>" git -C ctl push origin <SHA>:refs/heads/<branch>` | ブランチ名でなく SHA を送る |
 | git の設定 | `GIT_CONFIG_COUNT` で `core.hooksPath=<空のフォルダ>` `gc.auto=0` `commit.gpgsign=false` を渡す | 設定ファイルを書き換えない |
 
-[req]: ../dev-autopilot-requirements.md
+[req]: ../../dev-autopilot-requirements.md
 [config]: ./config.md
 [state]: ./state-machine.md
 [judgments]: ./judgments.md

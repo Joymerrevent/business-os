@@ -2,7 +2,7 @@
 status: draft
 created: 2026-10-11
 updated: 2026-10-11
-source: ../dev-autopilot-requirements.md
+source: ../../dev-autopilot-requirements.md
 ---
 
 # 固定の指示文と出力契約
@@ -29,7 +29,7 @@ AI に渡すプロンプトは、進行役が次の順で組み立てる。欄�
 | 役 | 作業の内容の欄に入れるもの | 入れないもの |
 | --- | --- | --- |
 | 受け入れ AI | Issue の題名・本文・コメント（著者を問わず。検疫済み） | リポのファイル、他の Issue |
-| 計画役 | 渡す文（I1）、base の SHA、規約の正典のパス（`CLAUDE.md`、関係する ADR） | PR、他の Issue |
+| 計画役 | 渡す文（I1）、base の SHA、規約の文書のパス（`CLAUDE.md`、関係する ADR） | PR、他の Issue |
 | 作業 AI | 渡す文（I1）、計画（`plan` の印を確かめ検疫済み）、修正のラウンドでは前回の `review` の印と指摘（🔴 🟡 だけ） | 自分の前のセッションの出力、PR の説明文 |
 | レビュー AI | 差分（`git diff origin/develop...<head>`）、変更ファイルの一覧、必須チェックの結論、渡す文（仕様の軸のため）、再レビューでは前回の印と指摘と修正コミットの範囲 | PR の説明文、作業 AI の対応コメント（R3-6） |
 | 批評者 | レビュー AI の指摘（🔴 🟡）、差分 | レビュー AI の本文の言い回し、PR の説明文 |
@@ -113,6 +113,6 @@ AI に渡すプロンプトは、進行役が次の順で組み立てる。欄�
 
 ## 5. 印
 
-GitHub のコメントに書く印の種類・欄・署名の対象は[要件メモ][req]の 4.12 節が正本で、実装の正本は `marker.ts`。本書は参照だけにし、二重に定義しない。
+GitHub のコメントに書く印の種類・欄・署名の対象は[要件メモ][req]の 4.12 節に定めてあり、実装は `marker.ts` が持つ。本書は参照だけにし、二重に定義しない。
 
-[req]: ../dev-autopilot-requirements.md
+[req]: ../../dev-autopilot-requirements.md

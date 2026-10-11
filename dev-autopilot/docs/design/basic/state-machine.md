@@ -2,7 +2,7 @@
 status: draft
 created: 2026-10-11
 updated: 2026-10-11
-source: ../dev-autopilot-requirements.md
+source: ../../dev-autopilot-requirements.md
 ---
 
 # 状態の組み立てと次の段の決定
@@ -106,7 +106,7 @@ Issue 1 件について読むもの。すべて GitHub の API から取る。
 | `review` の印の `head` がどの commit にも一致しない | force push（ruleset で禁じているので通常は起きない） |
 | `merge` の印があるのに PR が draft | 人が手で戻した |
 
-## 6. 遷移の正本との対応
+## 6. 要件 4.10 節の遷移の表との対応
 
 要件 4.10 節の表（正常な順 1〜10、止まる遷移 B1〜B7）と本書の決定表の対応。
 
