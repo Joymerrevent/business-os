@@ -31,13 +31,15 @@ informed: —
 
 ## 検討した選択肢（Considered Options）
 
-1. すべての worktree（作業用・レビュー用）を「AI の作業場所」の clone に作る。進行役はその clone に対し `git fetch origin`（読み取りだけ）と `worktree add --detach <SHA>` / `worktree remove --force` だけを行う。並列にするときは「AI の作業場所」の clone を Issue ごとに分ける
-2. レビュー用だけ進行役の clone に作る（R3-1 の文言どおり）
-3. 「AI の作業場所」の clone に objects を届けるため、進行役の clone から AI の clone へ `git push <パス>` する
+問い：worktree（作業用・レビュー用）をどちらの clone に作り、base と head の objects を AI の clone にどう届けるか。
+
+- 案A：**AI の clone に全部作り、進行役は `fetch origin` で届ける**。すべての worktree を「AI の作業場所」の clone に作る。進行役はその clone に対し `git fetch origin`（origin からの読み取り）と `worktree add --detach <SHA>` / `worktree remove --force` だけを行う。並列にするときは clone を Issue ごとに分ける
+- 案B：**レビュー用は進行役の clone に作る**。作業用は AI の clone、レビュー用は進行役の clone に作る（R3-1 の文言どおり）。objects は進行役の clone に元からあるので届ける手順は要らない
+- 案C：**AI の clone に全部作り、進行役から `push` で届ける**。worktree の置き場は案A と同じで、objects は進行役の clone から AI の clone へ `git push <パス>` で送る。AI の clone では git を実行しない
 
 ## 決定（Decision Outcome）
 
-採用した選択肢:「1」。理由: AI が書ける `.git` を「AI の作業場所」の clone に閉じ込め、進行役の clone には AI の手が届かない。`git fetch origin` は origin からの読み取りで、AI が書いた refs や config を使わない（fetch の実行場所は AI の clone だが、0b で `worktree list/remove` と同じく差し替え先の config を読まないことを確かめた操作に準ずる。0c で `fetch` も再現で確かめる）。
+採用した選択肢:「案A：AI の clone に全部作り、進行役は `fetch origin` で届ける」。理由: AI が書ける `.git` を「AI の作業場所」の clone に閉じ込め、進行役の clone には AI の手が届かない。`git fetch origin` は origin からの読み取りで、AI が書いた refs や config を使わない（fetch の実行場所は AI の clone だが、0b で `worktree list/remove` と同じく差し替え先の config を読まないことを確かめた操作に準ずる。0c で `fetch` も再現で確かめる）。
 
 中身：
 
@@ -62,18 +64,18 @@ informed: —
 
 ## 選択肢ごとの長所と短所（Pros and Cons of the Options）
 
-### 1. すべて `ai` に作り、進行役は fetch・add・remove だけ
+### 案A：すべて `ai` に作り、進行役は fetch・add・remove だけ
 
 - 良い点: 信頼の境界が「clone 単位」で単純
 - 良い点: 0b の事実（fetch と worktree 操作は発火しない）に乗る
 - 悪い点: `ai` で fetch を 1 つ実行する
 
-### 2. レビュー用だけ進行役の clone に作る
+### 案B：レビュー用だけ進行役の clone に作る
 
 - 悪い点: sandbox が親 `.git` への書き込みを許すので、AI が進行役の clone の refs を書ける。同じ実行の `git diff origin/develop...` が汚れ、漏えい検査と許可一覧の判定が空の差分を見る
 - 却下
 
-### 3. 進行役の clone から `ai` へ push で届ける
+### 案C：進行役の clone から `ai` へ push で届ける
 
 - 中立: `ai` で git を実行しないで済む
 - 悪い点: `ai` の refs を進行役が書くことになり、AI が書き換えた refs との整合を毎回取る必要がある。push は receive-pack を `ai` で起動するので、結局 `ai` の中でコマンドが動く
