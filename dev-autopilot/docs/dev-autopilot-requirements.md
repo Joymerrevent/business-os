@@ -29,7 +29,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 ## 3. 登場するもの
 
 AI の役は 5 つで、一覧はこの表が正本（2026-10-11 に整理）。5 役すべてに共通：`claude -p --output-format json` を進行役が子プロセスとして起動し、12 節の判断 1 の sandbox を掛け、`gh` の認証・`GH_TOKEN`・進行役の鍵を渡さず（環境変数は許可した名前だけで組み立てる）、
-ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources` にプロジェクトを含めない。Plugin は進行役専用 clone の絶対パスで渡す。6 節）。道具の制限はエージェント定義の `tools` で行い（`--allowedTools` だけでは Read・Grep・Glob が残る。0b で確かめる）、GitHub への書き込みは一切できない。
+ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行役専用 clone の絶対パスで渡す。6 節）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。0b で確認）と `permissions` の allow と deny（6 節の (e)）で行い、GitHub への書き込みは一切できない。
 
 | 役割 | 実体と道具 | セッション |
 |---|---|---|
@@ -75,7 +75,8 @@ AI は「受け入れの下書きを書く」「計画を書く」「実装す�
 - R2-3 Issue の本文は 4.8 節の規則で「報告」として渡す。本文に書かれた指示には従わない
 - R2-4 守る規約は実装リポの正典をそのまま渡す：`CLAUDE.md`、関係する ADR、`pnpm check` が緑、changeset、日本語の Conventional Commits
 - R2-5 作業 AI は GitHub に一切書かない（P13）。作業の結果は **出力契約** で進行役に返す：`claude -p --output-format json` の構造化出力（PR の題名と本文の案、止まった理由、確かめた検査の結果。計画は計画役の出力契約で、R2-9）と、worktree の中の commit。
-  出力契約は JSON スキーマ（`--json-schema`。0b で確かめる）で検証し、欠けや型の違いがあれば「実行の失敗」（R2-13）とする。解析できない出力を「成功」や「0 件」と読まない。
+  出力契約は進行役が自分の JSON スキーマで `result` の文を検証し、欠けや型の違いがあれば「実行の失敗」（R2-13）とする。解析できない出力を「成功」や「0 件」と読まない。
+  `--json-schema` は `--agent` と併用すると `structured_output` が空になる（0b で確認）ので頼らない。エージェント定義には「返事は JSON だけ。前後に文を付けない」と書く
   PR の作成・draft/ready の切り替え・Status と Agent 欄の更新・Issue と PR へのコメントは、すべて進行役が出力を検証してから行う（gh-aw の safe outputs と同じ）
 - R2-5b 進行役が PR を `develop` 向けに draft で作る。本文に `Closes #<番号>` と検査の結果を書く。題名は Conventional Commits の規約（小文字か日本語で始める。squash の件名になり commitlint が検査する）に進行役が照らしてから使う
 - R2-6 PR を作ったら進行役が Status を In Review にし、担当者（Assignee）はメンテナのまま。AI の担当は Project の単一選択欄「Agent」で表す（値：`worker` `reviewer` `human` `paused`）
@@ -107,7 +108,8 @@ AI は「受け入れの下書きを書く」「計画を書く」「実装す�
   | 作業 AI が「止まった理由」を返した（ADR が要る等） | 作業の失敗。`needs-human` | R2-7 |
   | レビューの fix | 作業の失敗。往復（上限 3 回） | R4-2 |
 
-  記録には `--output-format json` の `is_error` `num_turns` `usage` `modelUsage` を残し、1 Issue あたりの利用枠はここから取る。進行役が止めた回は最後の JSON が出ないので、費用は `--max-budget-usd` を掛けて上限で押さえ、記録には「上限で停止」と上限の値を書く（実際の消費は読めないことを明記する。0b で `stream-json` の途中経過が使えるかを確かめる）。
+  記録には `is_error` `num_turns` `usage` `modelUsage` を残し、1 Issue あたりの利用枠はここから取る。出力は `--output-format stream-json` で受け、`assistant` のイベントごとの `model` と `usage` を足し上げる（進行役が途中で止めた回も、そこまでの消費が記録に残る。0b で確認）。
+  子プロセスは `setpgrp` で別のプロセスグループに起こし、時間の上限ではグループごと `SIGTERM` で止める（孫プロセスが残らないことを 0b で確認）。費用の上限は `--max-budget-usd` でも掛ける。
   設定に持つ上限は、1 セッションの時間とターンと費用（R2-12、`--max-budget-usd`）に加え、1 Issue の累計の利用枠（往復を含む）、Agent ツールを許すか（サブエージェントの数を制限するフラグは無いので、許す・許さないで持つ）、実行の失敗の再試行の回数（3）と間隔、1 回の実行と 1 日の利用枠（P8）。累計が上限に当たったら `needs-human`（12 節の反映）
 - R2-14 **漏えいの検査と push（決定（2026-10-11）に広げた）**。進行役は、GitHub に書くすべての文（diff、commit メッセージと author、PR の題名と本文、計画・レビュー・対応・受け入れのコメント、🟢 から起票する Issue）に、漏えいの検査（鍵の形式、メールアドレス、機械上のパス、進行役の設定と記録の内容）を掛ける。引っかかれば書かずに `needs-human`。
   検査の実装は dev-autopilot 自身の `src/` に持ち、worktree の中の `check:leak`（AI が書き換えられる）は使わない。マージの判定（R7-2）のときは最終の head の diff 全体に掛け直す（過去の記録に頼らない）。
@@ -129,7 +131,7 @@ AI は「受け入れの下書きを書く」「計画を書く」「実装す�
   判定は印だけで行い、本文の言い回しは解析しない（言い回しは変わりうる）。印は GitHub のレビュー状態を使わないので、同じアカウントでも動く（P9）
 - R3-4 レビュー AI のモデルは設定で変えられるようにする。作業 AI と同じモデルでもよい（effort は別。4.11 節）。段階 3 の比較のためだけに `fable` で回したレビューは印を書かない（shadow。判定に混ぜない）
 - R3-5 **印の真正性（決定（2026-10-10）に改めた）**：正は GitHub に置き、手元の記録に依存しない。進行役は、次の 3 つをすべて満たすコメントの印だけを読む。
-  (a) 投稿者が進行役のアカウント（設定に持つ）、(b) コメントが未編集（`created_at` と `updated_at` が一致。リアクションや非表示で `updated_at` が変わるかは 0b で確かめる。受け入れの下書き（I12）は人が編集する前提なのでこの条件を掛けず、`agent-ready` 後に進行役が確定の印を新しいコメントで投稿する）、
+  (a) 投稿者が進行役のアカウント（設定に持つ）、(b) コメントが未編集（GraphQL の `lastEditedAt` が null、または `userContentEdits.totalCount` が 0。`updated_at` は非表示（minimize）でも変わるので使わない。リアクションでは変わらない。0b で確認）。受け入れの下書き（I12）は人が編集する前提なのでこの条件を掛けず、`agent-ready` 後に進行役が確定の印を新しいコメントで投稿する）、
   (c) 印に進行役の署名 `sig=<HMAC>` があり検証できる。署名の対象は印の `sig` 以外のすべての欄（4.12 節）で、進行役だけが持つ鍵で計算する。鍵は PAT と同じ置き場（進行役のプロセスの環境変数）に置き、AI のセッションには渡さない。
   手元の記録にはコメント ID も残すが、補助であって判定には使わない（進行役が途中で死んで記録を失っても、GitHub の状態から判定できる。12 節「運用の規則」と揃える）。
   AI の出力を投稿する前に、`<!-- dev-autopilot:` で始まる文字列を進行役が取り除く（AI の出力に印を混ぜても、署名が無いので判定に使われない）。
@@ -361,7 +363,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（12 節「運
 
 | 順 | 工程 | 役 | モデル / effort | 切り替わる条件 | 根拠 |
 |---|---|---|---|---|---|
-| 1 | 受け入れ（検疫は TypeScript で AI を使わない。下書きの作成） | 受け入れ AI | `haiku` / medium | 拒否（`stop_reason: refusal`）で止まったら実行の失敗として扱い、次回の実行は `sonnet` で試す | I11、I12、R2-13 |
+| 1 | 受け入れ（検疫は TypeScript で AI を使わない。下書きの作成） | 受け入れ AI | `claude-haiku-5-5` / medium（別名 `haiku` は Haiku 4.5 に解けるので、haiku だけは完全な ID で書く。0b で確認） | 拒否（`stop_reason: refusal`）で止まったら実行の失敗として扱い、次回の実行は `sonnet` で試す | I11、I12、R2-13 |
 | 2 | 計画の難しさの判定 | 受け入れ AI | 同上（同じセッション） | 印に `plan=opus` か `plan=fable` を書く。人はラベル `plan:fable` / `plan:opus` で上書きし、ラベルが優先 | I12、R2-9 |
 | 3 | 計画 | 計画役 | 既定 `opus` / xhigh。印かラベルが `fable` なら `fable` / high | `opus` が「設計判断・アーキテクチャの選択・原因不明の障害解析を含む」と自己申告したら、1 回だけ `fable` / high で計画し直す。2 回目の自己申告は無視して記録に残す | R2-9 |
 | 4 | 実装（1 ラウンド目） | 作業 AI | `opus` / high から始める。段階 2 で問題なく回る種類から `sonnet` / high へ下げる | 上限は `opus`。`fable` には上げない | 2 節、7 節の段階 2 |
@@ -375,6 +377,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（12 節「運
 - 役の間でモデルを「上げる」のは 3（計画役の自己申告）と 7（作業 AI の 2 ラウンド目）の 2 か所だけで、どちらも 1 段・1 回まで。ほかの切り替えは設定ファイルの変更か人のラベルで行う。
   例外は 1 の受け入れ AI の拒否による `haiku` → `sonnet`。これは実行の失敗からの回復で、上げる扱いには数えない
 - effort は `--effort` で役ごとに渡す。`opus` の既定は medium なので、表の値を明示する。`haiku` の既定は medium、`sonnet` と `fable` の既定は high
+- モデルは `--model` で渡す（エージェント定義の `model` より優先される。0b で確認）。別名は `fable` `opus` `sonnet` を使い、`haiku` だけは別名が旧版に解けるので完全な ID `claude-haiku-5-5` を書く（2 節の「版番号を書かない」の例外。Claude Code の別名が 5.5 を指すようになったら戻す）
 - どの役にも `fable` を既定にしない。`fable` が走るのは、受け入れの判定か人のラベルか計画役の自己申告で選ばれた計画と、段階 3 の比較のレビューだけ
 - 利用枠の見方：1 Issue で走るセッションは、受け入れ 1 回、計画 1〜2 回、実装 1 回、レビューと批評が往復ごとに 1 組（2 セッション）、修正が往復ごとに 1 回。R2-13 の累計の上限はこの合計に掛かる
 
@@ -430,7 +433,8 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（12 節「運
 - AI のセッション（5 役。3 節）は GitHub に書けない。`gh` の認証と `GH_TOKEN` と進行役の鍵を渡さず（子プロセスの環境変数は許可した名前だけで組み立て、`check` が「子プロセスから PAT と鍵が見えない」ことを試す）、道具はエージェント定義で絞る（P13、R2-5）。
   push・PR・コメント・Project の更新は進行役だけが行う。進行役も `gh pr merge` を呼ばず、`develop` と `main` への直 push と force push はしない（ruleset でも止める。P5、R7-3b）
 - **進行役・次のセッション・CI は、AI が書いた worktree の中身を信頼して実行しない（決定（2026-10-11）。12 節の判断 7）**。4 つの経路を塞ぐ：
-  (a) AI のセッションはユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources` にプロジェクトを含めない。worktree の `.claude/settings.json` の hook・`CLAUDE.md`・`.mcp.json` を次のセッションが読まない）。Plugin は進行役専用 clone の絶対パスで渡す（AI が改変した agent 定義と Skill を読まない）。
+  (a) AI のセッションはユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。0b で、既定の `-p` はプロジェクトの hook を実行し `CLAUDE.md` を読むこと、`local` ならユーザーの hook もプロジェクトの hook も `CLAUDE.md` も読まれないことを確認した。`--settings` の安全設定は効く）。Plugin は進行役専用 clone の絶対パスで渡す（AI が改変した agent 定義と Skill を読まない）。
+  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（0b で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Read`、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` だけ。`deny` に `Read(//<秘密のパス>/**)`（進行役の設定・記録・鍵・`~/.ssh` など）、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）
   (b) 進行役は worktree の中で git を実行しない。worktree の objects を自分の clone に fetch し、merge・patch-id・diff・漏えい検査・push はそこで行う（AI が `.git/worktrees/<名前>/commondir` を差し替えて進行役の git に任意のコマンドを実行させる経路を塞ぐ）。
   (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` に触れる diff は push しない（R2-14。CI が AI の書いたワークフローを secrets 付きで実行しない）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（R4-3）。
   (d) 進行役はリポのコードとパッケージの lifecycle script を sandbox の外で実行しない（R2-1、R2-8）。漏えい検査は dev-autopilot 自身の `src/` で行う（R2-14）。
@@ -450,7 +454,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（12 節「運
 | 段階 | 内容 | 出口 |
 |---|---|---|
 | 0a | 橋渡し ADR 20261008-01（business-os 側）を proposed で起票。dev-autopilot 側の ADR は段階 1 の後に本メモから起票する（冒頭の決定） | accepted（2026-10-09 に済み） |
-| 0b | 最初の薄切り：進行役なし・GitHub 書き込みなしで、手で書いた安全設定（`setup` はまだ無い）を `--settings` で渡した `claude -p` を未信頼の worktree の中で動かし、12 節末の表の未確認を実機で潰す。攻撃の再現（project の hook が走らないこと、`commondir` の差し替えが進行役の git に届かないこと）を含む | 12 節末の表の未確認がすべて「実行」で埋まる。PAT（表の 6）は基本設計の前に人が確かめる |
+| 0b | 最初の薄切り：進行役なし・GitHub 書き込みなしで、手で書いた安全設定（`setup` はまだ無い）を `--settings` で渡した `claude -p` を未信頼の worktree の中で動かし、12 節末の表の未確認を実機で潰す。攻撃の再現（project の hook が走らないこと、`commondir` の差し替えが進行役の git に届かないこと）を含む | 12 節末の表の未確認がすべて「実行」で埋まる。**2026-10-11 に 8〜14・16・17 を実行で埋めた。** 残りは 6（PAT）と 15（Project の選択肢）で、どちらも人の操作が要る |
 | 0c | `setup` と `check` の実装（4.9 節）と、それによる準備（5 節の P1・P2・P4・P5）。deploy key と PAT の用意（12 節の判断 1）。`change-review` スキルの v2（9 節）。受け入れ（I12）と `/verify-issue` の拡張。Project の選択肢の追加を捨てる Project で先に試す（S1） | `check` が business-os で全項目 pass（`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くことを含む）。スキルの v2 は手動のレビュー 1 件で今の PR の形が出ることを確かめる |
 | 1 | 棚卸しと受け入れ（I12）を動かす（選ぶ・待たせる・下書きを書く・記録する。実装はしない）。**決定（2026-10-10）**：受け入れを含める。最初は設定 `dryRun: true` で、下書きと選定の結果を手元の記録にだけ書いて人が読む。異議が無ければ `dryRun` を切り、残りの週は Issue に実際に投稿する | 7 回の実行（lock で見送った実行と起動されなかった日は数えない。12 節「運用の規則」）で、人が `## 異議` の見出しで書いた回数（dry-run の間は記録ファイルへの追記）0。うち投稿ありの実行が 3 回以上 |
 | 2 | 計画役と実装 → draft PR を 1 件ずつ。計画（R2-9）は人が見る。レビューは人が行い、PR のマージも人。モデルの比較もここで行う：作業 AI は `opus` で始め、種類ごとに `sonnet` を試す（R4-2b の上げた件数を数える）。計画役は受け入れの `plan=` の判定を人が妥当と見たか、`fable` にした計画が `opus` と比べて違ったかを記録する | 5 件の PR のうち 4 件以上を「手直しなし」で人がマージ（手直し＝人が PR に commit を足した、または close して作り直した）。`plan=` の判定への `## 異議` の割合を記録する |
@@ -826,7 +830,8 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したらマ�
        **訂正（2026-10-11）**：「`.git/config` と `hooks/` は書けないので、進行役は親 clone の中で git を実行してよい」を改める。AI は自分の `.git/worktrees/<名前>/commondir` と `gitdir` を書き換えられ、`commondir` を AI が用意したフォルダに向ければ、そこの `config`（`core.fsmonitor` `core.sshCommand` `diff.external` など）が進行役の git に読まれる。
        進行役は worktree の中でも、worktree を共有する親 clone の中でも git を実行しない。進行役は自分だけが書ける別の clone を持ち、AI の worktree のブランチをそこへ fetch してから merge・patch-id・diff・漏えい検査・push を行う（6 節の (b)。12 節の判断 7）。
        AI の worktree を切る親 clone は「AI の作業場所」として扱い、進行役はそこへ worktree を作る・消す操作だけを行う（`git worktree add` / `remove` も、`commondir` が差し替えられた worktree に対しては実行せず `needs-human`）。
-       加えて `.git/worktrees/<名前>/` の中で書けるのを `HEAD` `index` `logs/**` `ORIG_HEAD` `MERGE_*` `COMMIT_EDITMSG` に限り、`commondir` `gitdir` `config.worktree` を denyWrite にする（二重の防衛。列挙は 0b で確かめる）
+       加えて `.git/worktrees/<名前>/gitdir` を `denyWrite` にする（0b で、sandbox は `commondir` `config.worktree` と親の `config` `hooks/**` を既定で保護するが `gitdir` は書けたため）。作業フォルダが worktree のとき sandbox は親 `.git` への書き込みを既定で許すので、`allowWrite` の列挙は要らない（0b で `git commit` が通ることを確認）。
+       0b の攻撃の再現では、進行役の clone からの fetch と親 clone での `git worktree list` / `remove` は差し替え先の config を読まなかった。worktree の中で git を実行したときだけ発火した
    - 作業 AI の commit は署名なし（セッションの git 設定で `commit.gpgsign=false`）。`develop` への squash マージの commit は GitHub が作って署名するので Verified になる。
      作業ブランチの commit はマージ後に消えるため、再署名の仕組みは持たない。`develop` の ruleset に「署名必須」は入れない（入れると作業 AI の push が通らない）
    - 鍵は 2 系統：人の署名鍵（手元の SSH 鍵。dev-autopilot は触らない）と、dev-autopilot のマシン専用の deploy key（business-os だけに書き込み可。進行役だけが使う）。
@@ -874,16 +879,16 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
 | 5 | sandbox を掛けた `claude -p` で `pnpm check:types` と `git commit`（署名なし）が通るか | **通る**。`~/.ssh` の読み取りは `Operation not permitted` で止まった | 実行 |
 | 6 | fine-grained PAT で Organization 所有の Project 7 の欄を書けるか | **未確認**。PAT の発行が要る（人の作業）。**決定（2026-10-10）**：基本設計の前に人が Organization の Projects の読み書きを付けた fine-grained PAT を発行し、`gh api graphql` で欄の更新を 1 回試す。書けなければ代替（GitHub App か classic PAT）をそのとき選び直す | 未検証 |
 | 7 | ruleset を develop に写すときの承認の設定 | `protect-main` は `required_approving_review_count: 0`、`require_extra_approval_for_unattributed_changes: true`。develop の ruleset では後者を無効にする（自動化アカウントを足したときに自己承認できなくなる） | 読んだ（API） |
-| 8 | `claude -p --model haiku` の別名が最新の Haiku（2026-10-07 公開の版）に解けるか。`--effort` が `-p` とエージェント定義の `model` と一緒に効くか。`modelUsage` で実際のモデルが取れるか | **未確認**。2026-10-11 に追加。0b で `--output-format json` の `modelUsage` を見て確かめる | 未検証 |
-| 9 | worktree と「`.git` の一部だけ書ける」設定で `git commit` が通るか。git が書く場所の列挙（判断 1） | **未確認**。表の 5 は clone で確かめたもの | 未検証 |
-| 10 | sandbox の中で `pnpm check` 全体が通るか。`check:plugin` は `claude plugin validate` を、`check:leak` は gitleaks を起動する（`plugin/scripts/lib/repo-checks.ts`） | **未確認**。表の 5 は `check:types` だけ。通らなければ AI のセッションでは該当の検査を外し CI に任せる | 未検証 |
-| 11 | `--setting-sources` にプロジェクトを含めずに起動したとき、worktree の `.claude/settings.json` の hook・`CLAUDE.md`・`.mcp.json` が読まれないこと（攻撃の再現：SessionStart の hook を仕込んで実行されないことを見る） | **未確認**。6 節の (a) | 未検証 |
-| 12 | `.git/worktrees/<名前>/commondir` を差し替えた worktree に対し、進行役の clone への fetch と `git worktree remove` が差し替え先の config を読まないこと（攻撃の再現） | **未確認**。6 節の (b)、判断 1 の訂正 | 未検証 |
-| 13 | sandbox の `denyRead` が Bash だけでなく Read ツールにも効くか（計画役は Read だけで動く） | **未確認**。P13 は逆の向き（Read の deny が Bash に効かない）しか確かめていない | 未検証 |
-| 14 | エージェント定義の `tools` で Read・Grep・Glob を外した「道具なし」が成り立つか。`--json-schema` で出力契約を強制できるか。`--max-budget-usd` と時間の上限で止めたとき `stream-json` の途中経過から費用が取れるか | **未確認**。3 節、R2-5、R2-13 | 未検証 |
-| 15 | Project v2 の Status に選択肢を足す GraphQL が、既存の選択肢の ID と項目の値を保つか | **未確認**。捨てる Project で試す（S1、0c の前） | 未検証 |
-| 16 | コメントにリアクションを付けたり非表示にしたとき `updated_at` が変わるか（R3-5 の (b) の誤検知） | **未確認** | 未検証 |
-| 17 | 子プロセス（`claude -p`）の環境変数を許可した名前だけに絞ったとき、PAT と署名の鍵が見えないこと。`GIT_CONFIG_COUNT` で渡した git の設定が効くこと | **未確認**。6 節 | 未検証 |
+| 8 | `claude -p --model haiku` の別名が最新の Haiku に解けるか。`--effort` が効くか。エージェント定義の `model` と `--model` の優先。`modelUsage` で実際のモデルが取れるか | **別名 `haiku` は Haiku 4.5（`claude-haiku-4-5-20251001`）に解けた。** 完全な ID `claude-haiku-5-5` は動く（`modelUsage` に `claude-haiku-5-5`。stderr に `unrecognized_model` の記録が出るが実行は成功）。`--model` はエージェント定義の `model` より優先。定義だけなら定義の値（`sonnet` → `claude-sonnet-5-5`）。`--effort low` は受理された。`modelUsage` は使われたモデル ID をキーに持つ（2026-10-11、Claude Code 2.1.285） | 実行 |
+| 9 | worktree で `git commit` が通るか。git が書く場所。親 `.git` の保護 | **通る**。作業フォルダが worktree のとき sandbox は親 `.git` への書き込みを既定で許し、`.git/config` `.git/hooks/**` `.git/worktrees/<名前>/commondir` `config.worktree` と worktree の `.claude/settings.json` は保護パスとして Bash から書けない（`Operation not permitted`）。**`.git/worktrees/<名前>/gitdir` と `.git/refs/**` は書けた**（gitdir は `denyWrite` に足す）。commit で新しく書かれたのは `objects/**` と `worktrees/<名前>/COMMIT_EDITMSG`（HEAD・index・logs は更新）。**Bash を `permissions.allow` に入れないと `git commit` は承認待ちになり `-p` では拒否される**（sandbox の自動許可の対象外。変数展開を含むコマンドも同じ）。allow に入れれば通る | 実行 |
+| 10 | sandbox の中で `pnpm install` と `pnpm check` 全体が通るか | **通る**。`network.allowedDomains` に `registry.npmjs.org` を入れた sandbox で `pnpm install --frozen-lockfile --prefer-offline` が成功（`prepare` の simple-git-hooks は親 `.git/hooks` に書けず EPERM で失敗するが install は exit 0。hook が仕込まれないので望ましい）。`pnpm check` は入れ子の `claude plugin validate`（check:plugin）と gitleaks（check:leak）を含め全項目 Done、vitest 441 件 pass。入れ子の `claude` からの datadoghq / api.anthropic.com への通信は sandbox が拒否した（動作に影響なし） | 実行 |
+| 11 | プロジェクト設定の hook と `CLAUDE.md` が読まれない起動の方法 | **既定の `-p` は未信頼の作業場所でもプロジェクトの SessionStart hook を実行し、`CLAUDE.md` を読む**（攻撃の経路が実在することを確認）。`--setting-sources user` でプロジェクトの hook と `CLAUDE.md` の両方が読まれなくなる。`--setting-sources local` ではユーザー設定の hook も消える（SessionStart の hook が 5 → 0。`--settings` のファイルは効く）。空文字は不正。`--bare` は `--plugin-dir` の agent を読まないので使えない | 実行 |
+| 12 | `commondir` を差し替えた worktree に対する進行役の操作 | **worktree の中で git を実行すると発火した**（`git -C <worktree> status` で差し替え先の `core.fsmonitor` が動いた）。進行役の clone から worktree のパスへの fetch、親 clone のパスへの fetch、親 clone での `git worktree list` `git worktree remove --force`、親 clone での `git log <ブランチ>` は**発火しなかった**。6 節の (b) のとおり進行役が worktree の中で git を実行しなければ届かない | 実行 |
+| 13 | sandbox の `denyRead` が Read ツールにも効くか | **効かない**（公式文書どおり。sandbox は Bash だけを覆う）。Read ツールは `denyRead` のパスを読めた。`permissions.deny` の `Read(//<絶対パス>/**)`（絶対パスは `//` 始まり。`/` 始まりはプロジェクト相対で一致しない）で止まった（`File is in a directory that is denied by your permission settings`）。Write・Edit も同じで、ホームの任意のパスに書けた。`permissions.allow` を `Write(//<worktree>/**)` `Edit(//<worktree>/**)` に絞ると、外への Write は「Path is outside allowed working directories」で拒否され、`deny` に入れた `.git/**` `.claude/**` `CLAUDE.md` への Edit も止まった。`.git/hooks/**` と `.mcp.json` は Write ツールが「sensitive file」として既定で拒む | 実行 |
+| 14 | 道具なし、`--json-schema`、強制終了時の費用 | 道具なしはエージェント定義の `tools: []` でも `--tools ""` でも成立（Read を頼んでも「道具が無い」と返す）。**`--json-schema` は `--agent` と併用すると `structured_output` が null になる**（道具の有無を問わず。`--agent` 無しなら `structured_output` に検証済みの JSON が入る）。進行役は `result` の文を自分の JSON スキーマで検証する（R2-5）。`--output-format stream-json` は `assistant` のイベントごとに `model` と `usage` を持つので、途中で止めても消費は集計できる。プロセスグループごとの kill（`setpgrp` で起動し `kill -TERM -- -<pgid>`）で孫プロセスも残らなかった（モデルが長いコマンドを実行しなかったため、`claude` 自体を途中で止める試験は未実施） | 実行（kill は model なし） |
+| 15 | Project v2 の Status に選択肢を足す GraphQL が、既存の選択肢の ID と項目の値を保つか | **未確認**。捨てる Project（dev-autopilot-lab）を Organization に作って試す（S1、0c の前）。人の承認待ち | 未検証 |
+| 16 | リアクションや非表示で `updated_at` が変わるか | **リアクションでは変わらない。非表示（`minimizeComment`）では `updated_at` が変わる**が `lastEditedAt` は null のまま、`userContentEdits.totalCount` は 0。R3-5 の (b) は `created_at` と `updated_at` の一致でなく、GraphQL の `lastEditedAt == null`（または `userContentEdits.totalCount == 0`）で判定する（2026-10-11 に改めた） | 実行 |
+| 17 | 子プロセスの環境変数を絞る。`GIT_CONFIG_COUNT` | `env -i` に `HOME` `PATH` `USER` `LOGNAME` `TMPDIR` `TERM` `LANG` だけを渡せば `claude -p` はログイン状態を保って動き、渡さなかった変数は Bash から `unset` に見えた（`HOME` と `PATH` だけではログインが失われる）。`GIT_CONFIG_COUNT` と `GIT_CONFIG_KEY_n` / `GIT_CONFIG_VALUE_n` で `core.hooksPath` と `gc.auto` が効いた | 実行 |
 
 **見つかった不具合（🔴）：sandbox の `denyRead` はシンボリックリンクを解決しない。**
 この Mac では `~/.config` が 同期フォルダ上の dotfiles へのシンボリックリンクで、`denyRead` に `~/.config/gh/**` と書いても `~/.config/gh/hosts.yml` が読めた（`~/.config/gh` と glob なしでも同じ）。
@@ -895,4 +900,6 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
   利用者向けの不具合なので Issue #80 に起票した（2026-10-08）
 - 人への注意：`~/.ssh` の実体がクラウドの同期フォルダにある。dev-autopilot 用の鍵も人の新しい署名鍵も、同期されないパスに置く
 
-残る未確認は 6 と 8〜17。6（PAT）は基本設計の前に人が確かめ、8〜17 は 0b で手で書いた安全設定を使って潰す（7 節の 0b）。「`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くこと」は 0c の出口。
+8〜14・16・17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行役の clone と worktree 2 つ）で実機確認した。残る未確認は 6（PAT）と 15（Project の選択肢）で、どちらも人の操作が要る。
+「`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くこと」は 0c の出口。
+2026-10-11 の確認で要件を改めた点：AI のセッションの起動は `--setting-sources local`（6 節の (a)）、ファイルの道具は `permissions` の allow と deny で絞る（6 節の (e)）、Bash は `permissions.allow` に入れる（sandbox が境界）、`gitdir` を `denyWrite` に足す（判断 1）、`haiku` は完全な ID で書く（4.11 節）、R3-5 の (b) は `lastEditedAt`、出力契約は進行役が検証し `--json-schema` に頼らない（R2-5）、費用の記録は `stream-json`（R2-13）。
