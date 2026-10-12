@@ -23,7 +23,7 @@
 - **AI の作業場所の clone に新しい commit が届かない（要件定義書の D-1）。** 進行役は AI の作業場所の clone で worktree を作る・消すだけなので、
   clone に無い commit（`develop` の新しい commit、人の push、載せ直しの結果）から worktree を作れない（[05-safety.md][f05]）
 - **AI が書き換えた objects がレビューに届く。** AI が clone の objects のファイルを書き換えると、同じ clone から作ったレビュー用の worktree に書き換えた中身がエラーなしで出て、
-  `git fetch origin` を実行しても直らない（2026-10-12 に使い捨てのリポジトリで試した。git 2.50.1）。上の項目と一緒に解く
+  `git fetch origin` を実行しても直らない（[10-verified-facts.md][f10] の 18）。上の項目と一緒に解く
 - **`commondir` を書き換えられるかが食い違っている。** 12 節の判断 1 は「AI は自分の `commondir` を書き換えられる」を前提に、進行役が worktree と親 clone の中で git を実行しないと決めている。
   一方、0b の 9 では sandbox が `commondir` を保護していて書けなかった（[10-verified-facts.md][f10]）。守りを多重の守りとして残すなら、前提の書き方を直す
 - **段階 2 の Agent 欄（要件定義書の D-6）。** 4.10 節の遷移 5 と「段階による違い」は「段階 2 では Agent 欄を `human` にする」とし、

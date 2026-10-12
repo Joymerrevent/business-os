@@ -36,3 +36,13 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
 
 6〜17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行役の clone と worktree 2 つ）と捨てる Project と、人が発行した PAT で実機確認した。0b の未確認は残っていない。
 「`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くこと」は 0c の出口。
+
+## 要件の見直しの途中で確かめた事実（2026-10-12）
+
+使い捨てのリポジトリ（macOS、git 2.50.1）で確かめた。Claude Code と sandbox は使わず、AI による書き換えは、人の手で objects のファイルを書き換えて再現した。
+sandbox の中の AI が既存の objects のファイルを書き換えられるかは確かめていない（9 では、commit で新しい objects を書けた）。
+
+| # | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| 18 | clone の objects のファイルを書き換えたとき、同じ clone から作る worktree、`git fetch origin`、別の clone への送り出しがどうなるか | **worktree には書き換えた中身がエラーなしで出た**（`git worktree add --detach <SHA>` が終了コード 0）。`git fsck` は hash-path mismatch を出した。同じ clone で `git fetch --no-tags origin` を実行しても直らなかった（手元にある objects は取り直さない）。origin から新しく clone して同じ commit で worktree を作ると、正しい中身が出た。書き換えた clone から `file://` で別の場所へ clone すると、受け取り側の検査で `did not receive expected object` になり失敗した | 実行（sandbox なし） |
+| 19 | 手元のパスから `git clone` したとき、objects のファイルを共有するか | **パスから clone すると、ハードリンクで共有した**（objects のファイルのリンク数 2）。`--no-hardlinks` を付けたときと、`file://` の URL から clone したときは共有しなかった（リンク数 1） | 実行（sandbox なし） |
