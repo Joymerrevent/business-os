@@ -31,23 +31,16 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 
 | 番号 | 中身 | ファイル |
 | --- | --- | --- |
-| FLOW-n | 棚卸し、並列と競合、間隔の運用 | [01-issue-flow.md][f01] |
+| FLOW-n | 棚卸し、並列と競合、間隔の運用、Issue の状態の遷移（正常な順と止まる遷移） | [01-issue-flow.md][f01] |
 | IMPL-n | 実装、レビュー、対応ループ | [02-implement-review-fix.md][f02] |
 | MERGE-n | マージ | [03-merge.md][f03] |
 | TEXT-n | 外から入る文の扱い | [04-external-text-and-markers.md][f04] |
 | SAFE-n | 安全側に倒す設計と、隔離と鍵の分け方 | [05-safety.md][f05] |
 | SETUP-n | 導入と点検、準備の作業 | [06-setup-and-stages.md][f06] |
 | STRUCT-n | 分離を見越した構成の守ること | [07-structure.md][f07] |
-| REVIEW-n | change-review を v2 に組み直す方針 | [08-review-skill.md][f08] |
+| REVIEW-n | change-review を v2 に組み直す方針と、無人で使うには足りない点 | [08-review-skill.md][f08] |
 | UNDECIDED-n | 決めていないこと（ADR で決めること、基本設計の中で決めてよいもの、確かめること） | [09-undecided.md][f09] |
-
-表の中だけで使う番号は、次のとおり。
-
-| 番号 | 中身 | ファイル |
-| --- | --- | --- |
-| 遷移 1〜10、B1〜B7 | Issue の状態の遷移と、止まる遷移 | [01-issue-flow.md][f01] |
-| S1〜S6 | change-review を無人で使うには足りない点 | [08-review-skill.md][f08] |
-| 1〜19 | 実機で確かめた事実 | [10-verified-facts.md][f10] |
+| FACT-n | 実機で確かめた事実 | [10-verified-facts.md][f10] |
 
 ## 要件を変えるとき
 

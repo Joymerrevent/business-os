@@ -15,20 +15,20 @@
 - UNDECIDED-2 **ほかの Issue の作業場所を書き換えられる。** 「[隔離と鍵の分け方][f05]」 は、書ける場所の一覧（「他の Issue の `.git/worktrees/**` は書けない」を含む）をやめ、sandbox の既定に任せた。
   同じ clone に複数の Issue の worktree があると、ある Issue の AI が別の Issue の `gitdir` や refs を書き換えられる（[05-safety.md][f05]）
 - UNDECIDED-3 **AI が書き換えた objects がレビューに届く。** AI が clone の objects のファイルを書き換えると、同じ clone から作ったレビュー用の worktree に書き換えた中身がエラーなしで出て、
-  `git fetch origin` を実行しても直らない（[10-verified-facts.md][f10] の 18）。上の項目と一緒に解く
+  `git fetch origin` を実行しても直らない（FACT-18。[10-verified-facts.md][f10]）。上の項目と一緒に解く
 - UNDECIDED-4 **`commondir` を書き換えられるかが食い違っている。** 「[隔離と鍵の分け方][f05]」 は「AI は自分の `commondir` を書き換えられる」を前提に、進行役が worktree と親 clone の中で git を実行しないと決めている。
-  一方、0b の 9 では sandbox が `commondir` を保護していて書けなかった（[10-verified-facts.md][f10]）。守りを多重の守りとして残すなら、前提の書き方を直す
+  一方、FACT-9 では sandbox が `commondir` を保護していて書けなかった（[10-verified-facts.md][f10]）。守りを多重の守りとして残すなら、前提の書き方を直す
 
 ### 流れと段
 
 - UNDECIDED-5 **1 回の実行で進める「段」の数え方。** FLOW-4 は段を 7 つ（受け入れ〜片付け）と定めて「1 回の実行で 1 段だけ」とするが、
-  「[Issue の状態の遷移][f01]」の遷移表の 2c（承認の確定）・7（収束）・8b（載せ直し）が 7 つのどれに当たるかが無い。遷移 4 の「段階 2〜4 では計画と同じ実行で実装に入らない」は、
+  「[Issue の状態の遷移][f01]」の FLOW-18（承認の確定）・FLOW-23（収束）・FLOW-25（載せ直し）が 7 つのどれに当たるかが無い。FLOW-20 の「段階 2〜4 では計画と同じ実行で実装に入らない」は、
   段階 5 以降なら同じ実行で実装まで進むと読め、「1 段だけ」と食い違う。元の文は IMPL-10 の「段階 5 以降は同じ実行で続け」（[01-issue-flow.md][f01]、[02-implement-review-fix.md][f02]）
-- UNDECIDED-6 **基線が赤のとき。** IMPL-9 は `needs-human`。進行中の Issue を続け、新規着手だけ止める案（IMPL-9、B2。[02-implement-review-fix.md][f02]、[01-issue-flow.md][f01]）
-- UNDECIDED-7 **段階 2 の Agent 欄。** [遷移 5][f01] と「段階による違い」は「段階 2 では Agent 欄を `human` にする」とし、
+- UNDECIDED-6 **基線が赤のとき。** IMPL-9 は `needs-human`。進行中の Issue を続け、新規着手だけ止める案（IMPL-9、FLOW-29。[02-implement-review-fix.md][f02]、[01-issue-flow.md][f01]）
+- UNDECIDED-7 **段階 2 の Agent 欄。** FLOW-21 と「段階による違い」は「段階 2 では Agent 欄を `human` にする」とし、
   同じ節の決まりは「進行役は Agent 欄を `human` にしない」としている（[01-issue-flow.md][f01]）
 - UNDECIDED-8 **手元の記録を使うかどうか。** FLOW-4 は「手元の記録は使わない」、運用の規則は「手元の記録は補助にする」としている。
-  止まる遷移 B2・B3 の「同じ実行の失敗が 3 回」「累計の利用枠」は実行をまたいで数えるので、手元の記録が要る（[01-issue-flow.md][f01]）
+  止まる遷移 FLOW-29・FLOW-30 の「同じ実行の失敗が 3 回」「累計の利用枠」は実行をまたいで数えるので、手元の記録が要る（[01-issue-flow.md][f01]）
 
 ### レビューとマージ
 
@@ -43,7 +43,7 @@
 - UNDECIDED-14 **検疫で見つかったときの印。** TEXT-9 は「見つかったら下書きを作らない」と書いた直後に「下書きコメントに『混入の検査：有り（種類）』の行を必ず書く」としている。
   TEXT-12 も「有りなら下書きを作らない」。一方、「[印と固定の見出しの一覧][f04]」の `intake` の印は `quarantine=found` を持ち、下書きを作らないなら印を載せる場所が無い（[04-external-text-and-markers.md][f04]）
 - UNDECIDED-15 **受け入れの対象とマイルストーンの候補。** TEXT-12 は受け入れの対象を「マイルストーンが付いている Issue」に限りながら、マイルストーンの候補を出すことになっている。
-  「[決まっていること][f00]」の「人の関所」と [遷移 1][f01]〜2a は、起票されたら受け入れる流れで、マイルストーンを条件にしていない（[04-external-text-and-markers.md][f04]、[00-overview.md][f00]、[01-issue-flow.md][f01]）
+  「[決まっていること][f00]」の「人の関所」と FLOW-15〜FLOW-16 は、起票されたら受け入れる流れで、マイルストーンを条件にしていない（[04-external-text-and-markers.md][f04]、[00-overview.md][f00]、[01-issue-flow.md][f01]）
 
 ### 安全と設定
 
@@ -68,7 +68,7 @@
   SETUP-11 は、`dev-autopilot/` フォルダと構造仕様（`docs/design/architecture.md`）の表は済んでいるが、TypeScript の置き場（`src/` と tsconfig）はまだ無い（2026-10-12 に確認）。
   SETUP-9（`develop` の ruleset）や SETUP-10（署名の移行）なども 1 つずつ確かめ、済んだものを一覧から外す（[06-setup-and-stages.md][f06]）
 - UNDECIDED-23 **AI が触った clone の中で、進行役が fetch を実行しても安全か。** AI の作業場所の案のうち、Issue ごとの clone を使い続けて新しい commit を fetch で届ける案は、この確認が前提になる。
-  0b で確かめたのは、別の clone からの fetch と、親 clone での `worktree list` と `remove` だけ（[10-verified-facts.md][f10] の 12）。0c の点検で確かめる
+  0b で確かめたのは、別の clone からの fetch と、親 clone での `worktree list` と `remove` だけ（FACT-12。[10-verified-facts.md][f10]）。0c の点検で確かめる
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md

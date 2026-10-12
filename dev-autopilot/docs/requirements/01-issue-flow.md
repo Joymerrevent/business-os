@@ -47,51 +47,51 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 - Project の Agent 欄：空 / `worker` / `reviewer` / `human` / `paused`。「いま動いている役、または次に動く役」を表す（SETUP-6、IMPL-7）
 - ラベル：`agent-ready`（人が処理対象にした）、`needs-human`（人が引き取るまで進行役は触らない）、`from-review`（🟢 を起票した Issue）（SETUP-8）、`plan:fable` / `plan:opus`（人が計画役のモデルを上書きする。無ければ受け入れの印に従う。IMPL-10）
 
-表の読み方：Status・Agent 欄・ラベルの列は遷移の後の値。「変えない」はその遷移で触らない欄。番号は正常な順が 1〜10、止まる遷移が B1〜B7。
+表の読み方：Status・Agent 欄・ラベルの列は遷移の後の値。「変えない」はその遷移で触らない欄。番号は正常な順が FLOW-15〜FLOW-27、止まる遷移が FLOW-28〜FLOW-34。
 
 正常な順（上から下へ）：
 
 | # | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
 |---|---|---|---|---|---|---|
-| 1 | Issue が起票され、Project に入る | 自動（Project の自動追加。SETUP-1） | `Todo` | 空 | 無し | SETUP-1 |
-| 2a | 受け入れ：検疫、作業指示の下書き、依存とマイルストーンの候補を「受け入れの下書き」コメントに書く | 進行役 | 変えない | 変えない | 変えない | TEXT-12 |
-| 2b | 下書きを読み（必要なら直し）、処理対象にすると判断する | 人（コラボレータ） | 変えない | 変えない | `agent-ready` | TEXT-9、TEXT-12 |
-| 2c | `agent-ready` を検出し、下書きのハッシュで印を更新し、依存（blocked by）とマイルストーンを候補（人が直した値があればそれ）で確定する | 進行役 | 変えない | 変えない | 変えない | TEXT-12、FLOW-1、SETUP-7 |
-| 3 | 棚卸しで候補に選び、基線が緑なら着手する | 進行役 | `In Progress` | `worker` | 変えない | FLOW-1、IMPL-9 |
-| 4 | 計画役（印とラベルで決めたモデル）が計画を返し、進行役が `plan` の印付きで Issue にコメントする。段階 2〜4 ではこの実行では実装に入らず、次回の実行まで人が止められる（Agent 欄 `paused` か `needs-human`） | 進行役 | 変えない | 変えない | 変えない | IMPL-10 |
-| 5 | draft PR を作る（段階 2 ではレビュー AI が無いので Agent 欄は `human`。人がレビューする） | 進行役 | `In Review` | `reviewer`（段階 3 以降） | 変えない | IMPL-6、IMPL-7 |
-| 6 | 対応ループ：🔴 🟡 があれば作業 AI が直す。載せ直し（MERGE-6）で差分が変わったときもここに戻る | 進行役 | 変えない | `worker`（直している間）→ `reviewer`（再レビュー中） | 変えない | MERGE-6 |
-| 7 | 収束（CI 緑かつ `verdict=pass`）。🟢 を Issue にしてから PR を ready にする | 進行役 | `Ready to Merge` | 空 | 変えない | IMPL-27、IMPL-26、IMPL-11 |
-| 8 | マージの可否を判定し、印（`merge=ready` / `merge=human`）を PR に書く（段階 4 は記録にだけ残し印を書かない。shadow 判定） | 進行役 | 変えない | 変えない | 変えない | MERGE-3、「[段階][f06]」 |
-| 8b | 人が別の PR をマージし base が進んだ。載せ直して、差分が同じなら印を付け直し（Status はそのまま）、変わったら 6 に戻る（Status を `In Review` に戻す） | 進行役 | `Ready to Merge` か `In Review` | 空か `reviewer` | 変えない | MERGE-5、MERGE-6 |
-| 9 | 印を見てマージする | 人 | 変えない（進行役が次回の実行で検出するまで） | 変えない | 変えない | MERGE-1、MERGE-5 |
-| 10 | マージを検出し、Issue を閉じ、worktree を消す。Issue を閉じると Project が `Done` にする | 進行役 | `Done` | 空 | 変えない | MERGE-7 |
+| FLOW-15 | Issue が起票され、Project に入る | 自動（Project の自動追加。SETUP-1） | `Todo` | 空 | 無し | SETUP-1 |
+| FLOW-16 | 受け入れ：検疫、作業指示の下書き、依存とマイルストーンの候補を「受け入れの下書き」コメントに書く | 進行役 | 変えない | 変えない | 変えない | TEXT-12 |
+| FLOW-17 | 下書きを読み（必要なら直し）、処理対象にすると判断する | 人（コラボレータ） | 変えない | 変えない | `agent-ready` | TEXT-9、TEXT-12 |
+| FLOW-18 | `agent-ready` を検出し、下書きのハッシュで印を更新し、依存（blocked by）とマイルストーンを候補（人が直した値があればそれ）で確定する | 進行役 | 変えない | 変えない | 変えない | TEXT-12、FLOW-1、SETUP-7 |
+| FLOW-19 | 棚卸しで候補に選び、基線が緑なら着手する | 進行役 | `In Progress` | `worker` | 変えない | FLOW-1、IMPL-9 |
+| FLOW-20 | 計画役（印とラベルで決めたモデル）が計画を返し、進行役が `plan` の印付きで Issue にコメントする。段階 2〜4 ではこの実行では実装に入らず、次回の実行まで人が止められる（Agent 欄 `paused` か `needs-human`） | 進行役 | 変えない | 変えない | 変えない | IMPL-10 |
+| FLOW-21 | draft PR を作る（段階 2 ではレビュー AI が無いので Agent 欄は `human`。人がレビューする） | 進行役 | `In Review` | `reviewer`（段階 3 以降） | 変えない | IMPL-6、IMPL-7 |
+| FLOW-22 | 対応ループ：🔴 🟡 があれば作業 AI が直す。載せ直し（MERGE-6）で差分が変わったときもここに戻る | 進行役 | 変えない | `worker`（直している間）→ `reviewer`（再レビュー中） | 変えない | MERGE-6 |
+| FLOW-23 | 収束（CI 緑かつ `verdict=pass`）。🟢 を Issue にしてから PR を ready にする | 進行役 | `Ready to Merge` | 空 | 変えない | IMPL-27、IMPL-26、IMPL-11 |
+| FLOW-24 | マージの可否を判定し、印（`merge=ready` / `merge=human`）を PR に書く（段階 4 は記録にだけ残し印を書かない。shadow 判定） | 進行役 | 変えない | 変えない | 変えない | MERGE-3、「[段階][f06]」 |
+| FLOW-25 | 人が別の PR をマージし base が進んだ。載せ直して、差分が同じなら印を付け直し（Status はそのまま）、変わったら FLOW-22 に戻る（Status を `In Review` に戻す） | 進行役 | `Ready to Merge` か `In Review` | 空か `reviewer` | 変えない | MERGE-5、MERGE-6 |
+| FLOW-26 | 印を見てマージする | 人 | 変えない（進行役が次回の実行で検出するまで） | 変えない | 変えない | MERGE-1、MERGE-5 |
+| FLOW-27 | マージを検出し、Issue を閉じ、worktree を消す。Issue を閉じると Project が `Done` にする | 進行役 | `Done` | 空 | 変えない | MERGE-7 |
 
 止まる遷移（どの段階からでも起きうる）：
 
 | # | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
 |---|---|---|---|---|---|---|
-| B1 | 往復の上限（3 回）か振動 | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-24 |
-| B2 | ADR の起票が要る、基線が赤、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、進行役が実行するパスへの変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく worktree の残骸 | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-8、IMPL-9、IMPL-14、IMPL-15、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、SETUP-2、「運用の規則」 |
-| B3 | 実行の失敗（利用枠切れ、時間の上限、ターンの上限、`claude` の異常終了、出力契約の欠け、受け入れ AI の拒否。3 回未満。次回に持ち越す） | 進行役 | 変えない | 変えない | 変えない | IMPL-14 の表 |
-| B4 | 人が引き取る | 人 | 変えない | `human` | 変えない | 本節の決まり |
-| B5 | 人が一時停止する | 人 | 変えない | `paused` | 変えない | 「運用の規則」 |
-| B6 | 着手前：先行の Issue（blocked by）が閉じていないので候補に選ばない。待ち | 進行役（判定だけ。欄は変えない） | 変えない（`Todo`） | 変えない | 変えない | FLOW-1、FLOW-7、FLOW-10 |
-| B7 | 作業中：人が依存を足し、先行がまだ閉じていない。レビューと対応ループを止めて待ち、worktree と PR は残す。先行がマージされたら載せ直して続ける | 進行役（判定だけ。欄は変えない） | 変えない | 変えない | 変えない | FLOW-9、FLOW-10 |
+| FLOW-28 | 往復の上限（3 回）か振動 | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-24 |
+| FLOW-29 | ADR の起票が要る、基線が赤、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、進行役が実行するパスへの変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく worktree の残骸 | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-8、IMPL-9、IMPL-14、IMPL-15、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、SETUP-2、「運用の規則」 |
+| FLOW-30 | 実行の失敗（利用枠切れ、時間の上限、ターンの上限、`claude` の異常終了、出力契約の欠け、受け入れ AI の拒否。3 回未満。次回に持ち越す） | 進行役 | 変えない | 変えない | 変えない | IMPL-14 の表 |
+| FLOW-31 | 人が引き取る | 人 | 変えない | `human` | 変えない | 本節の決まり |
+| FLOW-32 | 人が一時停止する | 人 | 変えない | `paused` | 変えない | 「運用の規則」 |
+| FLOW-33 | 着手前：先行の Issue（blocked by）が閉じていないので候補に選ばない。待ち | 進行役（判定だけ。欄は変えない） | 変えない（`Todo`） | 変えない | 変えない | FLOW-1、FLOW-7、FLOW-10 |
+| FLOW-34 | 作業中：人が依存を足し、先行がまだ閉じていない。レビューと対応ループを止めて待ち、worktree と PR は残す。先行がマージされたら載せ直して続ける | 進行役（判定だけ。欄は変えない） | 変えない | 変えない | 変えない | FLOW-9、FLOW-10 |
 
 止まった状態から戻す手順（人だけが行う）：
 
 - `needs-human`：原因を直してからラベルを外し、Status を戻す。PR が無ければ `Todo`（棚卸しで選び直す）、PR があれば `In Review`（進行役が次回の実行で PR の状態から再開する）。Agent 欄が `human` なら `worker` に戻す
 - `human`：返すときは Agent 欄を `worker` に戻す。Status は触った内容に合わせて人が直す
 - `paused`：再開するときは Agent 欄を空か `worker` に戻す
-- 依存の待ち（B6・B7）：人の操作は要らない。先行の Issue が閉じれば、次回の実行で進行役が続ける。待ちを解きたければ人が依存（blocked by）を外す
+- 依存の待ち（FLOW-33・FLOW-34）：人の操作は要らない。先行の Issue が閉じれば、次回の実行で進行役が続ける。待ちを解きたければ人が依存（blocked by）を外す
 
 決まり：
 
 - `needs-human` を付けるときは、どの契機でも Status を `Blocked` にする（`Todo` のままだと翌日また選ばれるため）
 - 進行役は Agent 欄を `human` と `paused` にしない。この 2 つは人の意思表示で、進行役は読むだけ。`human` の Issue と PR には進行役は触らない
 - 進行役が起票する 🟢 の Issue（`from-review`）は、Project に入れて Status を `Todo` にし、マイルストーンと `agent-ready` は付けない。人がマイルストーンを付けたら受け入れ（TEXT-12）が下書きを用意し、人が `agent-ready` を付けるかを決める（IMPL-26）
-- 段階による違い：段階 2 では 5 の Agent 欄が `human`（人がレビュー）、段階 4 では 8 の印を書かない（shadow）。段階ごとの振る舞いは設定の `stage` で切り替える（STRUCT-2）
+- 段階による違い：段階 2 では FLOW-21 の Agent 欄が `human`（人がレビュー）、段階 4 では FLOW-24 の印を書かない（shadow）。段階ごとの振る舞いは設定の `stage` で切り替える（STRUCT-2）
 - Status と Agent 欄の更新はすべて進行役が GraphQL で行い、AI のセッションは触らない（IMPL-5、「[Issue と PR の本文の扱い][f04]」）。更新は冪等で、すでにその値なら何もしない
 
 ## 運用の規則

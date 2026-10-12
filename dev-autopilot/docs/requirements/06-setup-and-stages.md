@@ -8,8 +8,8 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 
 - SETUP-1 **導入（`/dev-autopilot setup`）**：足りないものを作る。何度実行しても同じ結果になる（冪等）。まず「何を作るか」の一覧を出し、人が承認してから作る。
   外部に影響が出る操作（ラベル・Project の欄・ruleset の作成）は 1 回の承認でまとめて行い、作った後に実物を読み戻して確かめる
-  - Plugin が作れるもの：ラベル（`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`）、Project の Status の選択肢（In Review・Ready to Merge・Blocked。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える。「[実機で確かめた事実][f10]」の表の 15）と単一選択欄「Agent」、
-    base ブランチの ruleset（PR 必須、force push 禁止、必須チェック（設定の一覧）を strict で登録して「base と最新であること」を要求、`require_extra_approval_for_unattributed_changes` は無効。「[実機で確かめた事実][f10]」の表の 7）、
+  - Plugin が作れるもの：ラベル（`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`）、Project の Status の選択肢（In Review・Ready to Merge・Blocked。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える。FACT-15）と単一選択欄「Agent」、
+    base ブランチの ruleset（PR 必須、force push 禁止、必須チェック（設定の一覧）を strict で登録して「base と最新であること」を要求、`require_extra_approval_for_unattributed_changes` は無効。FACT-7）、
     deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（IMPL-15）、設定ファイル（`.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く）、
     cron（macOS は launchd の plist）の定義、worktree の置き場、記録と lock の置き場
   - 人がやるもの（Plugin は手順を示し、済んだかを点検で確かめる）：SSH 鍵の作成と GitHub への登録、fine-grained PAT の発行と保管、専用マシンの用意、利用枠の確認、
