@@ -43,15 +43,15 @@ dev-autopilot/
    項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。S2）。基本設計では要件番号から項目への対応表にする
    - リポと Project：owner / repo、base ブランチ、Project の番号、Status と Agent 欄の ID と選択肢の ID（P1、P2）
    - ラベル名：`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`（P4）。ブランチの型のラベル対応表（R2-2）
-   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（4.12 節）
-   - 進行役の実行：`enabled`、`dryRun`、`stage`（段階ごとの振る舞い。4.10 節）、`devAutopilotPath`（絶対パス。10 節の 3）、worktree の置き場、記録と lock の置き場、cron の間隔（launchd の plist と二重になるので `check` がずれを検出する）
+   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（[4.12 節][f04]）
+   - 進行役の実行：`enabled`、`dryRun`、`stage`（段階ごとの振る舞い。[4.10 節][f01]）、`devAutopilotPath`（絶対パス。10 節の 3）、worktree の置き場、記録と lock の置き場、cron の間隔（launchd の plist と二重になるので `check` がずれを検出する）
    - 上限：1 回の実行で着手する件数（R1-3）、WIP の上限（R1-3）、1 回の実行の所要時間（R1-5）、受け入れの件数（I12）、往復の回数（R4-2）、セッションの時間・ターン・費用（R2-12）、1 Issue の累計の利用枠と 1 日の利用枠（R2-13、P8）、実行の失敗の再試行の回数と間隔（R2-13）、催促までの日数（R7-2b）
-   - モデル：役ごとのモデルと effort（4.11 節）、R4-2b で上げる先、受け入れ AI の拒否後のモデル、Agent ツールを許すか（R2-13）、批評者の確信度のしきい値（R3-7）
+   - モデル：役ごとのモデルと effort（[4.11 節][f02]）、R4-2b で上げる先、受け入れ AI の拒否後のモデル、Agent ツールを許すか（R2-13）、批評者の確信度のしきい値（R3-7）
    - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（R4-3）、マージ判定の許可一覧（R7-3）、方針に係るパスの一覧（R7-3）、進行役が実行するパスの一覧（R2-14）、漏えい検査の見本の置き場
    - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
-   - 安全：進行役のアカウント名（R3-5）、sandbox の `--settings` の置き場と `denyRead` `denyWrite` の一覧（「隔離と鍵の分け方」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（6 節）。PAT と署名の鍵の値は設定ファイルに書かず環境変数で渡す
+   - 安全：進行役のアカウント名（R3-5）、sandbox の `--settings` の置き場と `denyRead` `denyWrite` の一覧（「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（[6 節][f05]）。PAT と署名の鍵の値は設定ファイルに書かず環境変数で渡す
 3. **起動は Plugin として。** 進行役は `claude -p --plugin-dir <進行役専用 clone の絶対パス>/dev-autopilot/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
-   `--plugin-dir` は AI の worktree の中ではなく、進行役が実行している専用 clone（AI が書けない）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。6 節）。
+   `--plugin-dir` は AI の worktree の中ではなく、進行役が実行している専用 clone（AI が書けない）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。[6 節][f05]）。
    分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。
    配布物は `plugin/` に閉じ（business-os の ADR 20261009-02 と同じ考え方）、進行役の `src/`・テスト・前提データ・文書は配らない。
    人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行役を動かすときは、設定ファイルの `devAutopilotPath`（dev-autopilot のフォルダの絶対パス。分離前は進行役専用 clone の中の `dev-autopilot/`、分離後は専用マシンの clone）から `src/` の場所を知る。Plugin のパスを手順に埋め込まない
@@ -92,3 +92,8 @@ dev-autopilot/
 
 段階 5（進行役のマージの判定）まで business-os で動かし、設定ファイルの項目だけで別のリポに適用できると確かめられたら分離する。
 2 つ目の適用先ができる前に分離すると、固有の値がコードに残っていても気づけない。
+
+[f01]: ./01-issue-flow.md
+[f02]: ./02-implement-review-fix.md
+[f04]: ./04-external-text-and-markers.md
+[f05]: ./05-safety.md
