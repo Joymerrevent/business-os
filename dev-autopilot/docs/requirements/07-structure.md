@@ -49,7 +49,7 @@ dev-autopilot/
    - モデル：役ごとのモデルと effort（4.11 節）、R4-2b で上げる先、受け入れ AI の拒否後のモデル、Agent ツールを許すか（R2-13）、批評者の確信度のしきい値（R3-7）
    - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（R4-3）、マージ判定の許可一覧（R7-3）、方針に係るパスの一覧（R7-3）、進行役が実行するパスの一覧（R2-14）、漏えい検査の見本の置き場
    - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
-   - 安全：進行役のアカウント名（R3-5）、sandbox の `--settings` の置き場と `denyRead` `denyWrite` の一覧（12 節の判断 1）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（6 節）。PAT と署名の鍵の値は設定ファイルに書かず環境変数で渡す
+   - 安全：進行役のアカウント名（R3-5）、sandbox の `--settings` の置き場と `denyRead` `denyWrite` の一覧（「隔離と鍵の分け方」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（6 節）。PAT と署名の鍵の値は設定ファイルに書かず環境変数で渡す
 3. **起動は Plugin として。** 進行役は `claude -p --plugin-dir <進行役専用 clone の絶対パス>/dev-autopilot/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
    `--plugin-dir` は AI の worktree の中ではなく、進行役が実行している専用 clone（AI が書けない）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。6 節）。
    分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。

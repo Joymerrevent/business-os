@@ -14,11 +14,11 @@
 
 - **AI の作業場所の clone に新しい commit が届かない（要件定義書の D-1）。** 進行役は AI の作業場所の clone で worktree を作る・消すだけなので、
   clone に無い commit（`develop` の新しい commit、人の push、載せ直しの結果）から worktree を作れない（[05-safety.md][f05]）
-- **ほかの Issue の作業場所を書き換えられる（要件定義書の D-13）。** 12 節の判断 1 は、書ける場所の一覧（「他の Issue の `.git/worktrees/**` は書けない」を含む）をやめ、sandbox の既定に任せた。
+- **ほかの Issue の作業場所を書き換えられる（要件定義書の D-13）。** 「隔離と鍵の分け方」 は、書ける場所の一覧（「他の Issue の `.git/worktrees/**` は書けない」を含む）をやめ、sandbox の既定に任せた。
   同じ clone に複数の Issue の worktree があると、ある Issue の AI が別の Issue の `gitdir` や refs を書き換えられる（[05-safety.md][f05]）
 - **AI が書き換えた objects がレビューに届く。** AI が clone の objects のファイルを書き換えると、同じ clone から作ったレビュー用の worktree に書き換えた中身がエラーなしで出て、
   `git fetch origin` を実行しても直らない（[10-verified-facts.md][f10] の 18）。上の項目と一緒に解く
-- **`commondir` を書き換えられるかが食い違っている。** 12 節の判断 1 は「AI は自分の `commondir` を書き換えられる」を前提に、進行役が worktree と親 clone の中で git を実行しないと決めている。
+- **`commondir` を書き換えられるかが食い違っている。** 「隔離と鍵の分け方」 は「AI は自分の `commondir` を書き換えられる」を前提に、進行役が worktree と親 clone の中で git を実行しないと決めている。
   一方、0b の 9 では sandbox が `commondir` を保護していて書けなかった（[10-verified-facts.md][f10]）。守りを多重の守りとして残すなら、前提の書き方を直す
 
 ### 流れと段
@@ -52,7 +52,7 @@
 - **AI の読み取り範囲と秘密の置き場（要件定義書の D-10）。** Read の許可を worktree に絞りホーム全体を `denyRead` にするか。PAT・鍵・deploy key の置き場。手動実行を `launchctl kickstart` にするか（6 節の (e)。[05-safety.md][f05]）
 - **まだ値が決まっていない設定（要件定義書の D-16）。** 要件定義書の 8 節で「未定」とした値（実行時間、受け入れの件数、費用の上限、再試行の間隔、Agent ツール、確信度のしきい値、置き場）をどこで決めるか（設定の項目の一覧は 10 節の守ること 2。[07-structure.md][f07]）
 
-## 基本設計の中で決めてよいもの（要件メモの 8 節）
+## 基本設計の中で決めてよいもの
 
 - レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）
 - 実行の記録の置き場（`tmp/` か `evals/results/` と同じ扱いの新しいフォルダか。`setup` が作る「記録のフォルダ」の場所。S1）
@@ -60,7 +60,7 @@
 - クラウドの仕組みを、手元の cron の代わりか補助に使うか。2026-10-07 の公式の仕様で分かっている範囲：
   - Routine（`/schedule`）：Anthropic のクラウドで動き、GitHub のリポを clone して作業できる。起動は時刻・GitHub の webhook・API。最短 1 時間間隔。Routine 同士の連鎖は未サポート。利用枠を消費する
   - GitHub Actions の claude-code-action：PR のイベントで起動でき、`/code-review --comment` で行にコメントを書ける。レビュー AI だけをここに寄せる案がある
-  - 外部のコード実行 sandbox（E2B など）：AI のセッションを Claude Code の sandbox（12 節の判断 1）の代わりに、使い捨てのクラウドの sandbox で動かす案。
+  - 外部のコード実行 sandbox（E2B など）：AI のセッションを Claude Code の sandbox（「隔離と鍵の分け方」）の代わりに、使い捨てのクラウドの sandbox で動かす案。
     鍵と認証情報をクラウドに置くことになり、「手元の cron で始め、クラウドの仕組みを土台にしない」（2 節）と衝突する。段階 5 の出口を越えて専用マシンへの移行を決めるときの候補に留める
   - 判断の軸：専用マシンの保守の手間、利用枠と課金、鍵と認証情報をどこに置くか、進行役の判定を手元とクラウドで二重に持たないこと
 
