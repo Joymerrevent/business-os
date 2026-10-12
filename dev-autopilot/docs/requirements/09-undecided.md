@@ -6,7 +6,7 @@
 - 基本設計の中で決めてよいもの：要件の形を変えない細かい選択
 - 確かめること：判断ではなく、事実を確かめれば済むもの
 
-「要件定義書の D-n」は、[要件定義書][req]の [10 節][f07]「決めていないこと」の番号。番号の無いものは、2026-10-12 の要件の見直しで見つけた。
+「要件定義書の D-n」は、[要件定義書の 10 節「決めていないこと」][req10]の番号。要件定義書は 2026-10-13 に消したので、リンクは消す前の commit に固定してある。番号の無いものは、2026-10-12 の要件の見直しで見つけた。
 
 ## ADR で決めること
 
@@ -50,7 +50,7 @@
 ### 安全と設定
 
 - **AI の読み取り範囲と秘密の置き場（要件定義書の D-10）。** Read の許可を worktree に絞りホーム全体を `denyRead` にするか。PAT・鍵・deploy key の置き場。手動実行を `launchctl kickstart` にするか（[6 節][f05]の (e)。[05-safety.md][f05]）
-- **まだ値が決まっていない設定（要件定義書の D-16）。** 要件定義書の 8 節で「未定」とした値（実行時間、受け入れの件数、費用の上限、再試行の間隔、Agent ツール、確信度のしきい値、置き場）をどこで決めるか（設定の項目の一覧は [10 節][f07]の守ること 2。[07-structure.md][f07]）
+- **まだ値が決まっていない設定（要件定義書の D-16）。** [要件定義書の 8 節][req8]で「未定」とした値（実行時間、受け入れの件数、費用の上限、再試行の間隔、Agent ツール、確信度のしきい値、置き場）をどこで決めるか（設定の項目の一覧は [10 節][f07]の守ること 2。[07-structure.md][f07]）
 
 ## 基本設計の中で決めてよいもの
 
@@ -81,4 +81,5 @@
 [f06]: ./06-setup-and-stages.md
 [f07]: ./07-structure.md
 [f10]: ./10-verified-facts.md
-[req]: ../requirements.md
+[req10]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/requirements.md#10-決めていないこと
+[req8]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/requirements.md#8-設定に持つ値
