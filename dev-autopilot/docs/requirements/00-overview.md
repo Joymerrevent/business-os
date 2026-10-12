@@ -16,7 +16,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 | マイルストーン | リリースごとにマイルストーンを組む。ループはマイルストーンの中の Issue を対象にする |
 | 名前 | dev-autopilot。自動で動くのは「開発」。人が行き先（処理対象の Issue）を決め、AI が操縦し、異常時は人が操縦を取る。呼び方は `/dev-autopilot` |
 | 棚卸しの間隔 | 最初は 1 日 1 回。仕組みが安定したら徐々に狭める |
-| コミットの署名と鍵 | 人の鍵と自動化の鍵を分ける。人は手元の SSH 鍵で署名する（1Password の agent は使わない）。dev-autopilot のマシンには人の鍵も gh のログインも置かず、business-os に絞った deploy key（push 用）と fine-grained PAT（進行役用）だけを置く |
+| コミットの署名と鍵 | 人の鍵と自動化の鍵を分ける。人は手元の SSH 鍵で署名する（1Password の agent は使わない）。dev-autopilot のマシンには人の鍵も gh のログインも置かず、business-os に絞った deploy key（push 用）と fine-grained PAT（進行役用）だけを置く（12 節の判断 1） |
 | AI のセッションの隔離 | AI の 5 役（3 節）すべての `claude -p` に、dev-autopilot が `--settings` で渡す安全設定で Claude Code の sandbox を掛ける。進行役・次のセッション・CI は、AI が書いた worktree の中身（設定・gitdir・CI 定義・スクリプト）を信頼して実行しない（6 節、12 節の判断 7）。詳細は 12 節の判断 1 |
 | モデル | 役ごとに別名で書き、版番号を書かない（`fable` `opus` `sonnet`。CLI の `--model` が別名を受け、最新の版に解ける。`haiku` だけは完全な ID（4.11 節））。effort も役ごとに設定に持つ（`--effort`）。工程ごとのモデルと effort と切り替えの条件は 4.11 節の表が正本。要点は、作業 AI に `fable` を使わない、どの役にも `fable` を既定にしない、モデルを上げるのは計画役の自己申告と作業 AI の 2 ラウンド目の 2 か所だけ |
 | エージェント | 計画用・作業用・レビュー用・批評者・受け入れ用の 5 つのエージェント定義を `dev-autopilot/plugin/agents/` に置く（10 節）。business-os の配布物 `plugin/agents/` には入れない |
