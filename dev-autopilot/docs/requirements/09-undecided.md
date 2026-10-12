@@ -42,10 +42,14 @@ PAT は基本設計の前に発行して確かめる（12 節末の表の 6）�
   I12 も「有りなら下書きを作らない」。一方、4.12 節の `intake` の印は `quarantine=found` を持ち、下書きを作らないなら印を載せる場所が無い（[04-external-text-and-markers.md][f04]）
 - **受け入れの対象とマイルストーンの候補（要件定義書の D-15）。** I12 は受け入れの対象を「マイルストーンが付いている Issue」に限りながら、マイルストーンの候補を出すことになっている。
   2 節の「人の関所」と 4.10 節の遷移 1〜2a は、起票されたら受け入れる流れで、マイルストーンを条件にしていない（[04-external-text-and-markers.md][f04]、[00-overview.md][f00]、[01-issue-flow.md][f01]）
+- **準備の作業（5 節）が今どこまで済んでいるか。** 5 節は 2026-10-07 時点の「足りないもの」の一覧で、その後どこまで済んだかを確かめた記録が無い。
+  P7 は、`dev-autopilot/` フォルダと構造仕様（`docs/design/architecture.md`）の表は済んでいるが、TypeScript の置き場（`src/` と tsconfig）はまだ無い（2026-10-12 に確認）。
+  P5（`develop` の ruleset）や P6（署名の移行）なども 1 つずつ確かめ、済んだものを一覧から外す（[06-setup-and-stages.md][f06]）
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
 [f02]: ./02-implement-review-fix.md
 [f04]: ./04-external-text-and-markers.md
 [f05]: ./05-safety.md
+[f06]: ./06-setup-and-stages.md
 [f10]: ./10-verified-facts.md
