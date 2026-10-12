@@ -1,8 +1,8 @@
 # 安全側に倒す設計（隔離と鍵）
 
-## 6. 安全側に倒す設計
+## 安全側に倒す設計
 
-- SAFE-1 AI のセッション（5 役。[3 節][f00]）は GitHub に書けない。`gh` の認証と `GH_TOKEN` と進行役の鍵を渡さず（子プロセスの環境変数は許可した名前だけで組み立て、`check` が「子プロセスから PAT と鍵が見えない」ことを試す）、道具はエージェント定義で絞る（SETUP-18、IMPL-5）。
+- SAFE-1 AI のセッション（5 役。「[登場するもの][f00]」）は GitHub に書けない。`gh` の認証と `GH_TOKEN` と進行役の鍵を渡さず（子プロセスの環境変数は許可した名前だけで組み立て、`check` が「子プロセスから PAT と鍵が見えない」ことを試す）、道具はエージェント定義で絞る（SETUP-18、IMPL-5）。
   push・PR・コメント・Project の更新は進行役だけが行う。進行役も `gh pr merge` を呼ばず、`develop` と `main` への直 push と force push はしない（ruleset でも止める。SETUP-9、MERGE-5）
 - SAFE-2 **進行役・次のセッション・CI は、AI が書いた worktree の中身を信頼して実行しない（「[2026-10-11 のレビューで決めたこと][f11]」）**。5 つの経路を塞ぐ：
   (a) AI のセッションはユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。0b で、既定の `-p` はプロジェクトの hook を実行し `CLAUDE.md` を読むこと、`local` ならユーザーの hook もプロジェクトの hook も `CLAUDE.md` も読まれないことを確認した。`--settings` の安全設定は効く）。Plugin は進行役専用 clone の絶対パスで渡す（AI が改変した agent 定義と Skill を読まない）。
@@ -14,17 +14,17 @@
 - SAFE-3 `--max-turns` と時間の上限と `--max-budget-usd`（IMPL-13）で 1 回の作業の長さと費用を止める
 - SAFE-4 判定できない状態（API の失敗、想定外の Status、worktree の残骸）では、作業を増やさずに記録して止める（fail-closed）
 - SAFE-5 sandbox の安全設定は、書いてあることではなく「実際に読めない・書けない」ことを `check` が試して確かめる。`denyRead` `denyWrite` のパスは `setup` が実体に解決して書く（シンボリックリンクを解決しない不具合が 「[実機で確かめた事実][f10]」で見つかった）
-- SAFE-6 作業 AI・計画役・レビュー AI・批評者に渡すのはコラボレータが書いた文だけ。外の人の文は渡さない。受け入れ AI だけは、道具を持たずに外の文を読み、下書きを返す（TEXT-12）。渡す文も作業の内容であって、動き方を変える指示にはしない（[4.8 節][f04]）
-- SAFE-7 AI に渡す文は、書いた人を問わず、渡す直前に毎回、進行役の検疫を通す。検疫の限界と、検疫の代わりに頼る主の防衛は [4.8 節][f04] TEXT-11 に書く
+- SAFE-6 作業 AI・計画役・レビュー AI・批評者に渡すのはコラボレータが書いた文だけ。外の人の文は渡さない。受け入れ AI だけは、道具を持たずに外の文を読み、下書きを返す（TEXT-12）。渡す文も作業の内容であって、動き方を変える指示にはしない（「[Issue と PR の本文の扱い][f04]」）
+- SAFE-7 AI に渡す文は、書いた人を問わず、渡す直前に毎回、進行役の検疫を通す。検疫の限界と、検疫の代わりに頼る主の防衛は TEXT-11 に書く
 - SAFE-8 AI の出力が公開の場に書かれる前に、進行役が漏えいの検査を掛ける（diff だけでなく、すべてのコメント・PR の本文・commit メッセージ・起票する Issue。IMPL-15）
-- SAFE-9 処理対象の判断は人。AI が書けるのは worktree の中と、親 clone の `.git` の一部（「隔離と鍵の分け方」）だけで、GitHub には書けない。マージの実行は人だけが行い、進行役は [4.7 節][f03]の判定を印として人に渡す。方針に係る PR は判定の対象外
+- SAFE-9 処理対象の判断は人。AI が書けるのは worktree の中と、親 clone の `.git` の一部（「隔離と鍵の分け方」）だけで、GitHub には書けない。マージの実行は人だけが行い、進行役は 「[マージ][f03]」の判定を印として人に渡す。方針に係る PR は判定の対象外
 
 ## 隔離と鍵の分け方
 
 開発リポは sandbox を使わないので、同じ OS ユーザーで動く作業 AI は `~/.ssh` の鍵と `gh` の設定を Bash から読め、worktree が共有する `.git` の hook を書き換えて進行役の push 時に実行させることもできる。
 さらに GitHub の deploy key は認証専用で署名の検証に使えないので、「リポに絞った鍵 1 本で push も署名も」は成り立たない。隔離と鍵は次のように分ける。
 
-- SAFE-10 AI の 5 役（[3 節][f00]）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、`~/.ssh` `~/.config/gh` と進行役の設定・記録の読み取り禁止、
+- SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、`~/.ssh` `~/.config/gh` と進行役の設定・記録の読み取り禁止、
   書き込みはその Issue の worktree と一時フォルダと、親 clone の `.git`（sandbox が既定で書けるようにする範囲。`gitdir` は除く）だけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
   雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする（利用者向けの四重防衛と同じ考え方）。npm のキャッシュとプロキシは ADR 20261006-01 の設定を写す
 - SAFE-11 AI は worktree で作業する。worktree の gitdir と objects は親 clone の `.git/` にあり、worktree のフォルダだけでは `git commit` が通らない。
@@ -32,7 +32,7 @@
   `.git/worktrees/<名前>/gitdir` は `denyWrite` にする（0b で、sandbox は `commondir` `config.worktree` と親の `config` `hooks/**` を既定で保護するが `gitdir` は書けたため）。
   AI のセッションの git では自動 gc を止め、書く場所を増やさない
 - SAFE-12 AI は自分の `.git/worktrees/<名前>/commondir` と `gitdir` を書き換えられ、`commondir` を AI が用意したフォルダに向ければ、そこの `config`（`core.fsmonitor` `core.sshCommand` `diff.external` など）が進行役の git に読まれる。
-  進行役は worktree の中でも、worktree を共有する親 clone の中でも git を実行しない。進行役は、AI の worktree のブランチを「進行役の clone」（下）へ fetch してから merge・patch-id・diff・漏えい検査・push を行う（6 節の (b)。「[2026-10-11 のレビューで決めたこと][f11]」）。
+  進行役は worktree の中でも、worktree を共有する親 clone の中でも git を実行しない。進行役は、AI の worktree のブランチを「進行役の clone」（下）へ fetch してから merge・patch-id・diff・漏えい検査・push を行う（SAFE-2 の (b)。「[2026-10-11 のレビューで決めたこと][f11]」）。
   AI の worktree を切る親 clone は「AI の作業場所」として扱い、進行役はそこへ worktree を作る・消す操作だけを行う（`git worktree add` / `remove` も、`commondir` が差し替えられた worktree に対しては実行せず `needs-human`）。
   0b の攻撃の再現では、進行役の clone からの fetch と親 clone での `git worktree list` / `remove` は差し替え先の config を読まなかった。worktree の中で git を実行したときだけ発火した
 - SAFE-13 **進行役は AI の作業場所の clone の refs を使わない。** refs と packed-refs を AI が書けるので、base は進行役の clone で fetch した `origin/develop`、PR の head は GitHub の API が返す SHA だけを基準にする。載せ直し（MERGE-5）と push は fetch の直後に行い、push する SHA が API の head か自分の merge の結果と一致することを確かめる

@@ -1,7 +1,5 @@
 # マージ
 
-## 4.7 マージ
-
 - MERGE-1 マージの実行は人だけが行う。進行役は MERGE-2 の条件でマージの可否を判定し、結果を人に渡すところまでを担う。AI のセッションには `gh pr merge` を許さず、進行役も `gh pr merge` を呼ばない
 - MERGE-2 進行役が「マージしてよい」と判定する PR の条件（すべて満たす）
   - dev-autopilot が作った PR（進行役の署名付きの印が PR に付いていることで判定する。作者のアカウントでは判定しない。IMPL-20）で、向き先が `develop`
@@ -12,7 +10,7 @@
     変更ファイルの一覧は API でなく、進行役が自分の clone で `git diff --raw <base>...<head>` を取って作る（API のページ送りの漏れを「一覧に無い」と読まないため）
   - 変更したファイルに、方針に係るパス（下の一覧）が 1 つも無い
 - MERGE-3 判定の結果は進行役が PR のコメントに印として書く（形は IMPL-18 と同じ。`merge=ready` か `merge=human`、満たさない条件、head の SHA）。`ready` なら Ready to Merge にして人に渡す。`human` なら理由を添えて Ready to Merge のまま人に渡す。
-  人は印を見てマージし、印と違う判断をしたとき（`ready` をマージしない、`human` をマージする）はその理由を PR にコメントする。この一致・不一致が判定の信頼度の記録になる（FLOW-13、[7 節][f06]の段階 5 の出口）。
+  人は印を見てマージし、印と違う判断をしたとき（`ready` をマージしない、`human` をマージする）はその理由を PR にコメントする。この一致・不一致が判定の信頼度の記録になる（FLOW-13、[段階 5][f06] の出口）。
   **一致・不一致の数え方**：`merge=human` の PR が人にマージされたら不一致（進行役が次回の実行で検出する）。`merge=ready` の PR は、人が「## 判定と違う判断」の見出しでコメントしたら不一致、マージされたら一致。
   どちらも無く 7 日経った PR には進行役が 1 回だけ催促のコメントを書き、人が動くまで段階 5 の 10 件に数えない
 - MERGE-4 **進行役が「マージしてよい」と判定してよいパスの許可一覧**（拒否一覧ではなく許可一覧。一覧に無いパスを 1 つでも触れば `merge=human`）。設定ファイルに持つ。business-os の初期値（狭く始める）：
@@ -25,13 +23,13 @@
   - 許可一覧に **含めない**（常に `merge=human`）の例：`docs/adr/**` `docs/design/**` `ROADMAP.md`、`CLAUDE.md` `.claude/**`、**`dev-autopilot/**`（自己改変）**、`.claude-plugin/**` `.github/**`、
     `plugin/hooks/**` `plugin/agents/**` `plugin/templates/**`（利用者の CC で動く防衛と雛形）、`plugin/scripts/check-repo.ts` など `check:*` の実装、`package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*`、`release/*` ブランチと `main` 向けの PR
 - MERGE-5 人がマージするときは `gh pr merge --squash --match-head-commit <印の head SHA>` を使い、印の SHA と実際の head の一致をサーバ側でも強制する（人の手順として利用の文書に書く。将来、実行を進行役に移すときも同じコマンド）。1 回の実行で `merge=ready` にするのは 1 件まで（人が 1 件マージするごとに、残りは載せ直しと CI を経て判定し直す）。
-  ruleset（SETUP-1 が作る）に「base と最新であること」（必須チェックの strict）を入れ、古い base で pass した PR はマージされない。載せ直しは進行役が自分の clone で `git merge origin/develop` を行い、結果の SHA を push する（force push を使わない。worktree の中では git を実行しない。[6 節][f05]）
+  ruleset（SETUP-1 が作る）に「base と最新であること」（必須チェックの strict）を入れ、古い base で pass した PR はマージされない。載せ直しは進行役が自分の clone で `git merge origin/develop` を行い、結果の SHA を push する（force push を使わない。worktree の中では git を実行しない。「[安全側に倒す設計][f05]」）
 - MERGE-6 **載せ直しで head が変わったときの扱い**。載せ直しは進行役が行う。載せ直しの前後で `develop` に対する差分の patch-id（`git patch-id --stable --verbatim`。行番号を無視し、周辺の行と空白は含む。`--verbatim` を付けるのは、既定では空白の違いを無視し、インデントだけの変更を同一と読むため）が同一なら、
   進行役が同じ内容（round・件数・verdict）の印を新しい head に付け直す。再レビューはせず、往復（IMPL-24）にも数えない。CI は新しい head で改めて緑を要求する。
   patch-id が変わった（周辺が変わった、衝突した）ときだけ再レビューを行い、往復に数える。衝突の解消は作業 AI の修正セッション（IMPL-23 と同じ形）で行い、その結果に再レビューを掛ける
 - MERGE-7 マージ後（進行役は次回の実行でマージされた PR を検出する）：Issue を閉じる（`develop` 向けのため自動では閉じない）、worktree を消す（ブランチはリポ設定 `delete_branch_on_merge` が消す）、依存していた PR を MERGE-6 の手順で載せ直す
 - MERGE-8 マージの実行を人に残すので、利用者の全体ルール「PR のマージは Claude が実行しない」の例外は要らない。進行役は `gh pr merge` を呼ばない。判定（MERGE-2）の実装は vitest で検査する
-- MERGE-9 マージの実行を進行役に移すか（将来の選択肢）。段階 5 の出口（10 件で人の判断と進行役の判定が全件一致、revert 0 件）を満たしても自動では移さない。移すなら ADR で決め、そのときに揃える条件は [11 節][f11]の 4 つ（向き先が `develop`、方針に係るパスの除外、revert 率の監視、人の判断と判定の一致）と、利用者の全体ルールの例外の扱い
+- MERGE-9 マージの実行を進行役に移すか（将来の選択肢）。段階 5 の出口（10 件で人の判断と進行役の判定が全件一致、revert 0 件）を満たしても自動では移さない。移すなら ADR で決め、そのときに揃える条件は 「[同じ仕組みの有無と、業界の実践][f11]」の 4 つ（向き先が `develop`、方針に係るパスの除外、revert 率の監視、人の判断と判定の一致）と、利用者の全体ルールの例外の扱い
 
 [f05]: ./05-safety.md
 [f06]: ./06-setup-and-stages.md

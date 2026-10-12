@@ -1,6 +1,6 @@
 # 導入・準備・段階
 
-## 4.9 導入と点検（前提の基盤を Plugin が作る）
+## 導入と点検（前提の基盤を Plugin が作る）
 
 dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定ファイル・cron が揃っていないと動かない。これらを人が手で揃える前提にすると、
 分離して別のリポに入れるたびに手順書が要り、揃っているかも人の記憶に頼ることになる。business-os の `/onboard`（雛形を展開して会社を作る）と `/check`（重い点検）と同じ形で、
@@ -16,15 +16,15 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
     Project の自動追加（組み込みワークフロー「Auto-add to project」を有効にする。公開 API が無いので人が行い、`check` は有効かを読むだけ）、
     処理対象にする Issue の承認（受け入れの下書きを読んで `agent-ready` を付ける。TEXT-12）
 - SETUP-2 **点検（`/dev-autopilot check`）**：前提がすべて揃っているかを機械で確かめ、fail / warn / pass で返す。進行役は毎回の実行の最初に同じ点検を回し、
-  fail が 1 つでもあれば作業に入らず止まる（fail-closed）。見るもの：ラベルと Project の欄の存在、ruleset、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。[10 節][f07]の 2）、必須チェックの一覧が空でないこと（IMPL-27）、`gh` の認証の権限、
-  SSH 鍵で署名できるか、`claude` と Node の版、Skill の有無、前回の実行の記録、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と署名の鍵が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（[6 節][f05]）。
+  fail が 1 つでもあれば作業に入らず止まる（fail-closed）。見るもの：ラベルと Project の欄の存在、ruleset、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。STRUCT-2）、必須チェックの一覧が空でないこと（IMPL-27）、`gh` の認証の権限、
+  SSH 鍵で署名できるか、`claude` と Node の版、Skill の有無、前回の実行の記録、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と署名の鍵が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
   worktree の残骸は warn にし、Issue に紐づく残骸はその Issue だけ `needs-human`、どの Issue か分からない残骸だけ fail
-- SETUP-3 **設定ファイルの正本は 1 つ**（[10 節][f07]の 2）。導入が書き、点検が読み、進行役が使う。人が直接編集してもよいが、点検が整合を確かめる
+- SETUP-3 **設定ファイルの正本は 1 つ**（STRUCT-2）。導入が書き、点検が読み、進行役が使う。人が直接編集してもよいが、点検が整合を確かめる
 - SETUP-4 **business-os への導入は、この仕組みの最初の利用者として `setup` で行う**。手で作らない。手で作ると、分離後に `setup` が別のリポで動く保証が無くなる
 
-## 5. いまのリポジトリに無いもの（準備の作業）
+## いまのリポジトリに無いもの（準備の作業）
 
-5 節の SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、4.9 節の `setup` が作る。SETUP-7 は運用の中で進行役が入れる。人が手で作るのは SETUP-10（鍵）と、deploy key と PAT（「[隔離と鍵の分け方][f05]」）だけ。
+SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が作る。SETUP-7 は運用の中で進行役が入れる。人が手で作るのは SETUP-10（鍵）と、deploy key と PAT（「[隔離と鍵の分け方][f05]」）だけ。
 
 | # | 足りないもの | 対応 |
 |---|---|---|
@@ -34,7 +34,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 | SETUP-8 | 処理対象を示すラベルが無い | `agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus` を `setup` が足す。名前は設定ファイルに持ち、ここに書いた名前は初期値 |
 | SETUP-9 | `develop` にブランチ保護が無い | ruleset で PR 必須にする（自律セッションの直 push を仕組みで止める） |
 | SETUP-10 | コミットの署名が 1Password のソケット頼み | 人の署名は手元の SSH 鍵に移す（`gpg.format ssh`、`user.signingkey` を鍵ファイルに）。dev-autopilot は人の鍵を使わない。作業 AI の commit は署名なし、`develop` への squash マージの commit は GitHub が署名する（判断 1）。business-os の雛形（ADR 20261003-11）は利用者向けなので変えない |
-| SETUP-11 | 開発専用の TypeScript の置き場が無い（tsconfig は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけ） | 開発物のフォルダ `dev-autopilot/` を 1 つ足し、構造仕様 3.1 節の表に加える。中身は [10 節][f07]の構成 |
+| SETUP-11 | 開発専用の TypeScript の置き場が無い（tsconfig は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけ） | 開発物のフォルダ `dev-autopilot/` を 1 つ足し、構造仕様 3.1 節の表に加える。中身は 「[分離を見越した構成][f07]」の構成 |
 | SETUP-12 | `claude -p` の実行は利用枠を消費する | 1 回の実行・1 日あたりの上限を設定に持つ |
 | SETUP-13 | 作業 AI とレビュー AI が同じ GitHub アカウント（メンテナ）で投稿することになる | GitHub は PR の作者自身の approve と request changes を受け付けない。いまの運用も GitHub のレビュー状態を使わず、PR のコメントで判定している。dev-autopilot も同じで、判定は PR のコメントの固定の印（IMPL-18）で行う。アカウントは最初はメンテナの 1 つで始め、無人のマシンにはこのリポだけに絞った fine-grained PAT を置く。人と AI の投稿は印で見分ける。監査のために分けたくなったら、自動化用のアカウントをコラボレータに足す（判定の仕組みは変えずに済む） |
 | SETUP-14 | Issue のフォームに受け入れ条件の欄が無い | 外から入る Issue は報告・提案の形で、作業の定義ではない。コラボレータの作業指示コメント（TEXT-1）で補う。フォームには足さない（外の人が書く欄にしない） |
@@ -42,9 +42,9 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 | SETUP-16 | Issue を確かめる手順が dev-autopilot と結びついていない | 受け入れ（TEXT-12）を進行役が自動で行い、人の操作は `agent-ready` だけにする。順「受け入れの下書き（自動）→ `agent-ready`（人）」を利用の手順に書く。コラボレータの Issue も対象（TEXT-9）。`/verify-issue` は手動の補助 |
 | SETUP-17 | 指示の混入の検査と作業指示の下書きを行うものが無い。`/verify-issue` は外の人の不具合の報告・改善の提案を人が確かめる手順として書かれている | 検査と下書きは進行役の受け入れ（TEXT-12。`intake` エージェントと検疫のモジュール）が自動で行う。機械で探せる検査（見えない文字、HTML コメント、base64、URL、指示の形の語）は TypeScript にして vitest で検査する。`/verify-issue` は手動の補助として残し、最初の手順で同じ検疫のモジュールを呼ぶ。着手の条件は dev-autopilot の ADR に書く |
 | SETUP-18 | レビュー AI は PR のコードを実行して確かめる。その環境に GitHub のトークンや鍵があると、作業 AI が書いたコードから読み取れてしまう。開発リポは sandbox を使わないので、同じ OS ユーザーで動く限り `~/.ssh` と `~/.config/gh` は Bash から読める（`Read(~/.ssh/**)` の deny は Read ツールにしか効かない） | AI のセッションには `GH_TOKEN` を渡さず、`gh` を認証しない。GitHub への書き込みはすべて進行役が行う（IMPL-5）。AI のセッションに sandbox を掛け、鍵を分ける（「[隔離と鍵の分け方][f05]」） |
-| SETUP-19 | `change-review` スキルが利用者の全体設定（`~/.claude/skills/`）にあり、dev-autopilot の専用マシンでは無いかもしれない | レビューの Skill の正本を dev-autopilot の中（`dev-autopilot/plugin/skills/review/`）に置き、dev-autopilot が自分の Skill として読み込む。`~/.claude` には依存しない（[10 節][f07]） |
+| SETUP-19 | `change-review` スキルが利用者の全体設定（`~/.claude/skills/`）にあり、dev-autopilot の専用マシンでは無いかもしれない | レビューの Skill の正本を dev-autopilot の中（`dev-autopilot/plugin/skills/review/`）に置き、dev-autopilot が自分の Skill として読み込む。`~/.claude` には依存しない（「[分離を見越した構成][f07]」） |
 
-## 7. 段階
+## 段階
 
 段階の表はここが唯一の正本。出口は数で書き、満たしたかは記録（FLOW-5）から数える。
 
@@ -52,12 +52,12 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 |---|---|---|
 | 0a | 橋渡し ADR 20261008-01（business-os 側）を proposed で起票 | accepted（済み） |
 | 0b | 最初の薄切り：進行役なし・GitHub 書き込みなしで、手で書いた安全設定（`setup` はまだ無い）を `--settings` で渡した `claude -p` を未信頼の worktree の中で動かし、「[実機で確かめた事実][f10]」の表の未確認を実機で潰す。攻撃の再現（project の hook が走らないこと、`commondir` の差し替えが進行役の git に届かないこと）を含む | 「[実機で確かめた事実][f10]」の表の未確認がすべて「実行」で埋まる（済み） |
-| 0c | `setup` と `check` の実装（4.9 節）と、それによる準備（5 節の SETUP-5・SETUP-6・SETUP-8・SETUP-9）。deploy key と PAT の用意（「[隔離と鍵の分け方][f05]」）。`change-review` スキルの v2（[9 節][f08]）。受け入れ（TEXT-12）と `/verify-issue` の拡張 | `check` が business-os で全項目 pass（`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くことを含む）。スキルの v2 は手動のレビュー 1 件で今の PR の形が出ることを確かめる |
+| 0c | `setup` と `check` の実装（「導入と点検」）と、それによる準備（SETUP-5・SETUP-6・SETUP-8・SETUP-9）。deploy key と PAT の用意（「[隔離と鍵の分け方][f05]」）。`change-review` スキルの v2（「[レビューの Skill][f08]」）。受け入れ（TEXT-12）と `/verify-issue` の拡張 | `check` が business-os で全項目 pass（`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くことを含む）。スキルの v2 は手動のレビュー 1 件で今の PR の形が出ることを確かめる |
 | 1 | 棚卸しと受け入れ（TEXT-12）を動かす（選ぶ・待たせる・下書きを書く・記録する。実装はしない）。最初は設定 `dryRun: true` で、下書きと選定の結果を手元の記録にだけ書いて人が読む。異議が無ければ `dryRun` を切り、残りの週は Issue に実際に投稿する | 7 回の実行（lock で見送った実行と起動されなかった日は数えない。「[運用の規則][f01]」）で、人が `## 異議` の見出しで書いた回数（dry-run の間は記録ファイルへの追記）0。うち投稿ありの実行が 3 回以上 |
 | 2 | 計画役と実装 → draft PR を 1 件ずつ。計画（IMPL-10）は人が見る。レビューは人が行い、PR のマージも人。モデルの比較もここで行う：作業 AI は `opus` で始め、種類ごとに `sonnet` を試す（IMPL-25 の上げた件数を数える）。計画役は受け入れの `plan=` の判定を人が妥当と見たか、`fable` にした計画が `opus` と比べて違ったかを記録する | 5 件の PR のうち 4 件以上を「手直しなし」で人がマージ（手直し＝人が PR に commit を足した、または close して作り直した）。`plan=` の判定への `## 異議` の割合を記録する |
 | 3 | レビュー AI と批評者を足す（`review` Skill を `claude -p` で動かし、印を足す）。レビュー AI は `opus`（xhigh）を既定に、同じ PR を `fable` でも回して比べる（比較の実行は印を書かない。IMPL-19） | 5 件の PR で、人が同じ PR を `change-review` した結果（人の 🔴 🟡 の見出しの一覧）と照合し、一致率（人の 🔴 🟡 のうち AI も出した割合）が 80% 以上、却下した指摘の割合（AI だけが出した 🔴 🟡 のうち `## 却下` に書かれた割合）が 15% 以下。`opus` と `fable` の一致率・却下率・利用枠を並べ、既定のモデルを決める。人の二重レビューはこの 5 件に限る |
-| 4 | 対応ループを足す。マージは人。進行役は [4.7 節][f03]の判定を記録に残すだけで印は書かない（shadow 判定） | 5 件のうち 4 件以上が往復 3 回以内で Ready to Merge |
-| 5 | 進行役のマージの判定（[4.7 節][f03]）の印を書く。マージの実行は人のまま | 10 件で、人のマージの判断と進行役の判定（`merge=ready` / `merge=human`）が全件一致（MERGE-3 の数え方）。revert 0 件（revert＝マージから 14 日以内に、`develop` にその squash commit を revert する commit か、本文でその PR 番号を「戻す」と言及する fix の PR がマージされたもの）。満たしても実行は人のまま。実行を進行役に移すかは別の ADR で決める（MERGE-9） |
+| 4 | 対応ループを足す。マージは人。進行役は 「[マージ][f03]」の判定を記録に残すだけで印は書かない（shadow 判定） | 5 件のうち 4 件以上が往復 3 回以内で Ready to Merge |
+| 5 | 進行役のマージの判定（「[マージ][f03]」）の印を書く。マージの実行は人のまま | 10 件で、人のマージの判断と進行役の判定（`merge=ready` / `merge=human`）が全件一致（MERGE-3 の数え方）。revert 0 件（revert＝マージから 14 日以内に、`develop` にその squash commit を revert する commit か、本文でその PR 番号を「戻す」と言及する fix の PR がマージされたもの）。満たしても実行は人のまま。実行を進行役に移すかは別の ADR で決める（MERGE-9） |
 | 6 | 並列（複数 worktree。WIP の上限を 1 から上げる）と間隔の短縮 | FLOW-12 の条件（連続 7 回の実行で `needs-human` 0 件、利用枠が上限内）で判断 |
 
 [f01]: ./01-issue-flow.md
