@@ -61,7 +61,6 @@ dev-autopilot/
    - 単体テストは対象のコードの隣（`xxx.ts` → `xxx.test.ts`）。配布への影響は無い（配布物は `plugin/` に閉じ、`src/` は配られない）
    - 結合テスト（偽の `gh` と使い捨てのリポで進行役を端から端まで回す）だけ `test/` に置く。前提データは `fixtures/`
    - business-os の `check:format` `check:lint` `check:leak` `check:shell` はリポジトリ全体の衛生の検査なので、root のまま `dev-autopilot/` にも効く。分離後は dev-autopilot 側が project-recipes で同じものを入れる
-   - business-os の `check:md` は入れ子の `dev-autopilot/.markdownlint-cli2.jsonc` で `dev-autopilot/` の下だけ参照スタイルを許す（markdownlint-cli2 は下位フォルダの設定をそのフォルダ以下に適用する。`check:md` と pre-commit で確認）
 5. **文書は dev-autopilot のフォルダに閉じる。** dev-autopilot の設計判断（ADR）、構造仕様、使い方は `dev-autopilot/docs/` に置き、business-os の `docs/` には書かない。
    分離するときはフォルダごと移るので、写しも supersede も要らない
    - **ADR の規則は、利用者の全体設定の新しい規則（`project-recipes` の `adr-docs` レシピ）に従う。** business-os の旧規則（`YYYYMMDD-nn-<slug>.md`、4 日付欄）ではなく、
@@ -73,7 +72,7 @@ dev-autopilot/
    - `dev-autopilot/docs/design/`：進行役の構造仕様（状態遷移、判定の表、設定ファイルの項目）
    - `dev-autopilot/README.md`：使い方
    - **dev-autopilot の Markdown の規則は、入れ子の設定で dev-autopilot 側に持つ。** business-os の `.markdownlint-cli2.jsonc` は `**/*.md` に MD054 の inline を強制しており、
-     参照スタイルの dev-autopilot の文書と衝突する。dev-autopilot には自分の markdownlint の設定（入れ子の `dev-autopilot/.markdownlint-cli2.jsonc`。`md-lint-format` レシピ、MD054 は参照スタイル）を置く（橋渡し ADR 20261008-01 の決定 5）。
+     参照スタイルの dev-autopilot の文書と衝突する。dev-autopilot には自分の markdownlint の設定（入れ子の `dev-autopilot/.markdownlint-cli2.jsonc`。`md-lint-format` レシピ、MD054 は参照スタイル）を置く（橋渡し ADR 20261008-01 の決定 5）。markdownlint-cli2 は下位フォルダの設定をそのフォルダ以下に適用する（`check:md` と pre-commit で確認）。
      `check:adr` `check:docs` も `docs/` しか見ないので同じ扱い。これは上の 4 の具体化
    - business-os 側の ADR は橋渡しの **1 本だけ**（ADR 20261008-01。承認済み）にし、dev-autopilot の中身の判断は dev-autopilot 側の ADR に書く
 6. **`/verify-issue` との分担。** 汎用の部分（検疫、作業指示の下書き、依存とマイルストーンの候補）は `dev-autopilot:intake` に置き、進行役が自動で呼ぶ（人の操作は `agent-ready` だけ。I12）。
