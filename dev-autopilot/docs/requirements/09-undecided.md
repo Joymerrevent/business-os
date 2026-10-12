@@ -41,10 +41,26 @@
   P7 は、`dev-autopilot/` フォルダと構造仕様（`docs/design/architecture.md`）の表は済んでいるが、TypeScript の置き場（`src/` と tsconfig）はまだ無い（2026-10-12 に確認）。
   P5（`develop` の ruleset）や P6（署名の移行）なども 1 つずつ確かめ、済んだものを一覧から外す（[06-setup-and-stages.md][f06]）
 
+## 要件定義書の 10 節から移したこと（手順 3 で解く）
+
+[要件定義書][req]の 10 節「決めていないこと」（D-1〜D-16）のうち、上の節と 8 節に無いもの。文は要件定義書のまま写し、関係する要件のファイルを添えた。
+
+- **D-3** pass なのに CI が赤・無い・保留のときの扱い。赤を修正に回して往復に数えるか、無い・保留は待つか（R4-3。[02-implement-review-fix.md][f02]）
+- **D-4** 1 回の実行で `merge=ready` 1 件を超えた PR の扱い（`human` にすると一致の記録が汚れる）（R7-3b。[03-merge.md][f03]）
+- **D-5** 基線が赤のとき。R2-8 は `needs-human`。進行中の Issue を続け、新規着手だけ止める案（R2-8、B2。[02-implement-review-fix.md][f02]、[01-issue-flow.md][f01]）
+- **D-8** 印の体系の拡張。進行役の投稿すべてに印を付けるか（待ち・催促・警告・停止の理由）、署名の対象に種類・リポ・番号を含めるか、進行役の印が無効化されていたら `needs-human` にするか（4.12 節。[04-external-text-and-markers.md][f04]）
+- **D-9** PR と Issue の結びつけ。`Closes #n` でなく head のブランチ名・同じリポ・作者・印の番号で引くか（R2-5b。[02-implement-review-fix.md][f02]）
+- **D-10** AI の読み取り範囲と秘密の置き場。Read の許可を worktree に絞りホーム全体を `denyRead` にするか。PAT・鍵・deploy key の置き場。手動実行を `launchctl kickstart` にするか（6 節の (e)。[05-safety.md][f05]）
+- **D-11** 権限確認の範囲。`needs-human` を外す・Status を戻す・`plan:*` を付ける操作の人と、渡す文の編集者。渡す文の最終編集が `agent-ready` より後なら `needs-human` にするか（I10、4.10 節の戻す手順。[04-external-text-and-markers.md][f04]、[01-issue-flow.md][f01]）
+- **D-16** 要件定義書の 8 節で「未定」とした値（実行時間、受け入れの件数、費用の上限、再試行の間隔、Agent ツール、確信度のしきい値、置き場）をどこで決めるか（設定の項目の一覧は 10 節の守ること 2。[07-structure.md][f07]）
+
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
 [f02]: ./02-implement-review-fix.md
+[f03]: ./03-merge.md
 [f04]: ./04-external-text-and-markers.md
 [f05]: ./05-safety.md
 [f06]: ./06-setup-and-stages.md
+[f07]: ./07-structure.md
 [f10]: ./10-verified-facts.md
+[req]: ../requirements.md
