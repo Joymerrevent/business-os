@@ -5,7 +5,7 @@
 
 | 番号 | タイトル | status | 作成日 |
 | --- | --- | --- | --- |
-| ADR-20261011-001 | [AI の worktree は「AI の作業場所」の clone に作り、進行役はそこへ fetch だけを行う][adr-20261011-001-ai-worktree-clone-and-fetch-only] | proposed | 2026-10-11 |
+| ADR-20261011-001 | [AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone からは fetch で取り込むだけにする][adr-20261011-001-ai-worktree-clone-and-fetch-only] | proposed | 2026-10-11 |
 | ADR-20261011-002 | [1 回の実行では、AI のセッションか CI 待ちを伴う段だけを Issue ごとに 1 つ進める][adr-20261011-002-one-ai-stage-per-run] | proposed | 2026-10-11 |
 | ADR-20261011-003 | [CI の結果ごとの扱いと、1 回の実行で 2 件目以降の PR のマージ判定を次回に回すこと][adr-20261011-003-ci-states-and-merge-judgment-timing] | proposed | 2026-10-11 |
 | ADR-20261011-004 | [基線が赤のときは新規の着手だけを止め、Issue に `needs-human` は付けない][adr-20261011-004-red-baseline-blocks-new-starts-only] | proposed | 2026-10-11 |

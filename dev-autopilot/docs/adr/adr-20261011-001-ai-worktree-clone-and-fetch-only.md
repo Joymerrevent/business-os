@@ -1,90 +1,144 @@
 ---
 status: proposed
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-12
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 consulted: 設計レビューの別セッション（整合性・実装可能性・安全側の 3 体）
 informed: —
 ---
 
-# AI の worktree は「AI の作業場所」の clone に作り、進行役はそこへ fetch だけを行う
+# AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone からは fetch で取り込むだけにする
 
-[要件定義書][req]の D-1 と D-13 を決める。R3-1 の「進行役が自分の clone から切る」を置き換え、SF-2 (b) と SF-5 を補う。
+[要件定義書][req]の D-1 と D-13 を決める。R2-1・R3-1・SF-2 (b)・SF-5 の文言を改め、AI の作業場所の置き場と、人が AI の作業を見る方法を書き足す。
 
 ## 背景と課題（Context and Problem Statement）
 
-進行役は専用の clone を 2 つ持つ（SF-5）。「進行役の clone」は進行役だけが書き、`src/` を実行し push を行う。「AI の作業場所」の clone は AI の worktree を切る。
-作業フォルダが worktree のとき、Claude Code の sandbox は親 clone の `.git` への書き込みを既定で許す（付録 A）。そのため、worktree をどちらの clone に作るかで、AI が進行役の clone の `.git` を書けるかが決まる。
+次の 3 点は[要件メモ][memo]の 12 節の判断 1（2026-10-11 の訂正）で決まっており、本 ADR では選択肢にしない。
 
-要件には 3 つの穴が残っていた。
+- 進行役は専用の clone を 2 種類持つ。「進行役の clone」（以下 `ctl`）は進行役だけが書き、`src/` を実行し、fetch・merge・push を行う。AI の worktree は「AI の作業場所」の clone から作る（SF-5）
+- 作業フォルダが worktree のとき、Claude Code の sandbox は親 clone の `.git` への書き込みを既定で許す。AI は親 clone の objects・refs・`gitdir` を書ける（付録 A）
+- 進行役は worktree の中で git を実行しない。AI の commit は `ctl` へ fetch で取り込む。`commondir` を差し替えても、別の clone からの fetch は発火しない（SF-2 (b)、付録 A）
 
-1. R3-1 はレビュー用 worktree を「進行役が自分の clone から切る」と書いており、SF-5 と矛盾する。進行役の clone に worktree を作ると、AI がその `.git/refs` を書き換えられ、同じ実行で進行役が使う `origin/develop` の参照を汚せる
-2. 「AI の作業場所」の clone には、base の SHA や人が push した commit の objects を届ける手順が無い。進行役はそこで `worktree add` と `remove` しか行わないと決めている（SF-2 (b)）ので、`worktree add <SHA>` が失敗する
-3. 親 `.git` の書ける範囲について、判断 1 の当初は「他の Issue の `.git/worktrees/**` は書けない」とし、訂正では「sandbox が既定で許すので列挙は要らない」とした。並列（段階 6）で他の Issue の `gitdir` や refs を書ける状態になる（D-13）
+要件には次の穴が残っていた。
+
+1. 要件メモの R3-1 は、レビュー用 worktree を「進行役が自分の clone から切る」と書いていた。clone を 2 種類に分けた訂正に文言が追随しておらず、`ctl` に worktree を作ると AI が `ctl` の refs を書ける。要件定義書の R3-1 は作り元を書いていない
+2. AI の作業場所の clone に新しい commit を届ける手順が無い。進行役は AI の作業場所の clone で worktree の作成と削除しか行わない（SF-2 (b)）ので、clone に無い commit（`develop` の新しい commit、人の push、進行役の載せ直しの結果）で worktree を作れない
+3. 1 つの clone に複数の Issue の worktree があると、ある Issue の AI が他の Issue の `gitdir` や refs を書ける（D-13）
+4. AI の作業場所の置き場、clone の作り方、人が AI の作業を見る方法が、要件にも基本設計にも無い
+
+起票の後の試行（2026-10-12）で、次の 2 つの事実が分かった。手順と結果は「補足情報」に書く。
+
+- AI が clone の objects のファイルを書き換えると、同じ clone から作った worktree には書き換えた中身がエラーなしで出る。`git fetch origin` を実行しても直らない。一方、書き換えた objects を別の clone へ送ると受け取り側の検査で失敗するので、`ctl` には書き換えた中身が入らない
+- 手元の clone のパスから `git clone` すると、git は objects のファイルをハードリンクで共有する。`file://` か origin の URL から clone すると共有しない
+
+1 つ目の事実から、作業 AI のセッションが触った clone からレビュー用 worktree を作ると、作業 AI がレビュー AI と批評者に PR と違う中身を読ませられる。
 
 ## 判断の決め手（Decision Drivers）
 
-- AI が進行役の clone に一切書けないこと（SF-2、SF-5）
-- `commondir` の差し替えが進行役の git に届かないこと（付録 A：worktree の中で git を実行したときだけ発火する）
-- 手順が少なく、0b で確かめた事実の範囲に収まること
+- AI が `ctl` に一切書けないこと（SF-2、SF-5）
+- AI のセッションが、前のセッションの AI が細工した `.git` を読まないこと。とくにレビュー AI と批評者が、PR の本当の中身を読むこと
+- 進行役が git を実行する clone を、AI がまだ触っていない clone に限ること。AI が触った clone には、0b で確かめた操作（別の clone からの fetch）しか行わないこと
+- 手順が少なく、手元の記録に頼らないこと
 
 ## 検討した選択肢（Considered Options）
 
-問い：worktree（作業用・レビュー用）をどちらの clone に作り、base と head の objects を AI の clone にどう届けるか。
+問い：AI のセッション（計画・実装・修正・レビュー）ごとに、作業場所をどう用意するか。前のセッションの後に増えた commit（載せ直しの結果、人の push、`develop` の新しい commit）をどう渡すか。
 
-- 案A：**AI の clone に全部作り、進行役は `fetch origin` で届ける**。すべての worktree を「AI の作業場所」の clone に作る。進行役はその clone に対し `git fetch origin`（origin からの読み取り）と `worktree add --detach <SHA>` / `worktree remove --force` だけを行う。並列にするときは clone を Issue ごとに分ける
-- 案B：**レビュー用は進行役の clone に作る**。作業用は AI の clone、レビュー用は進行役の clone に作る（R3-1 の文言どおり）。objects は進行役の clone に元からあるので届ける手順は要らない
-- 案C：**AI の clone に全部作り、進行役から `push` で届ける**。worktree の置き場は案A と同じで、objects は進行役の clone から AI の clone へ `git push <パス>` で送る。AI の clone では git を実行しない
+- 案A：**セッションごとに origin から clone し直す**。AI のセッションを起動するたびに origin の URL から新しい clone を作り、AI が触る前に新しい clone から worktree を作る。古い clone は、同じ名前で作り直す直前か片付けのときに、フォルダごと消す
+- 案B：**Issue ごとの clone を使い続け、`git fetch origin` で届ける**。Issue ごとの clone を片付けまで使い続け、進行役が Issue ごとの clone で `git fetch --no-tags origin` を実行して新しい commit を届ける（本 ADR の 2026-10-11 の版が採っていた案）
+- 案C：**Issue ごとの clone を使い続け、`ctl` から push で届ける**。clone の使い方は案B と同じで、新しい commit は `ctl` から `git push <パス>` で送る
 
 ## 決定（Decision Outcome）
 
-採用した選択肢:「案A：AI の clone に全部作り、進行役は `fetch origin` で届ける」。理由: AI が書ける `.git` を「AI の作業場所」の clone に閉じ込め、進行役の clone には AI の手が届かない。`git fetch origin` は origin からの読み取りで、AI が書いた refs や config を使わない（fetch の実行場所は AI の clone だが、0b で `worktree list/remove` と同じく差し替え先の config を読まないことを確かめた操作に準ずる。0c で `fetch` も再現で確かめる）。
+採用した選択肢:「案A：セッションごとに origin から clone し直す」。理由: 進行役が git を実行する clone を、`ctl` と AI がまだ触っていない clone に限れる。AI が触った clone は `ctl` へ fetch で取り込む元にするだけなので、0b で確かめた操作の範囲に収まる。前のセッションの AI が細工した objects を、次のセッション（とくにレビュー AI と批評者）が読まない。
 
 中身：
 
-- 作業 AI・計画役・レビュー AI・批評者の worktree は、すべて「AI の作業場所」の clone（以下 `ai`）に作る
-- 進行役が `ai` に対して行う操作は 3 つだけ：`git -C ai fetch --no-tags origin`、`git -C ai worktree add --detach <path> <SHA>`、`git -C ai worktree remove --force <path>`（その後 `branch -D`）。`<SHA>` は進行役の clone で fetch した `origin/develop` か、GitHub の API が返す PR の head
-- 作業 AI の commit は、進行役の clone から `git fetch <worktree のパス> <ブランチ>` で取り込む（付録 A で発火しないことを確認済み）
-- `commondir` が差し替えられた worktree（`cat` した中身が想定の相対パスでない）には `remove` も行わず、その Issue を `needs-human` にし、点検の warn に出す
-- 並列（段階 6）に入るときは、`ai` を Issue ごとに別の clone にする（`ai/<Issue 番号>/`）。1 つの `ai` に同時に 2 つ以上の worktree を持たせない。これで「他の Issue の `.git/worktrees/**` を書ける」状態を作らない（D-13）。`allowWrite` の列挙は行わず、sandbox の既定に任せる
+- 置き場：AI の作業場所は設定の `paths.home` の下に置く。人の clone の中にも、人の clone の worktree としても作らない（R2-1）
+
+  ```text
+  <paths.home>/
+    ctl/                               進行役の clone
+    ai/<型>-issue-<番号>/               計画役と作業 AI の clone（セッションごとに作り直す）
+    ai/review-<PR 番号>-<ラウンド>/      レビュー AI と批評者の clone
+    wt/<型>-issue-<番号>/               ai/<型>-issue-<番号>/ から作る worktree（AI の作業フォルダ）
+    wt/review-<PR 番号>-<ラウンド>/      ai/review-<PR 番号>-<ラウンド>/ から作る worktree
+  ```
+
+- 手元の Mac で動かす間は、`paths.home` を人の clone と同じ階層のフォルダにしてよい（例：人の clone が `<リポ名>.worktrees/<リポ名>/` なら `<リポ名>.worktrees/autopilot/`）。人の作業場所と分けたくなったら `<リポ名>.autopilot/` に移す。移すときは実行を止め、`ctl` を移して `paths.home` を書き換える。AI の作業場所は次のセッションで作り直される
+- clone は origin の URL から作る。手元の clone（`ctl` を含む）のパスからは作らない。パスから作ると git が objects のファイルをハードリンクで共有し、AI が書き換えると `ctl` の objects まで変わるおそれがある
+- 作る手順は 2 つで、どちらも AI のセッションを起動する前に進行役が行う
+  1. `git clone --no-checkout --no-tags <origin の URL> ai/<名前>`
+  2. 計画役と作業 AI は `git -C ai/<名前> worktree add -b <ブランチ> wt/<名前> <SHA>`、レビュー AI と批評者は `git -C ai/<名前> worktree add --detach wt/<名前> <SHA>`。`<SHA>` は、計画と最初の実装では `ctl` で fetch した `origin/develop`、修正とレビューでは GitHub の API が返す PR の head
+- 修正の段でも worktree を作り直す。前のセッションの作業フォルダの中身（commit していないファイル、ビルドの結果、`node_modules`）は引き継がない。作業 AI に引き継ぐのは commit と、進行役が渡すレビューの指摘だけ
+- 取り込み：作業 AI の commit は `git -C ctl fetch <wt のパス> <ブランチ>` で取り込む（付録 A：発火しない）
+- AI のセッションを起動した後の clone では、取り込みの fetch の元にする以外に git を実行しない。`git fetch origin`・`worktree remove`・`branch -D` も行わない
+- 消す：AI の作業場所は、同じ名前で作り直す直前と、片付け（R7-4）のときに `ai/<名前>/` と `wt/<名前>/` をフォルダごと消す。git は実行しない。消す前に `ai/<名前>/.git/worktrees/<名前>/commondir` と `gitdir` をファイルとして読み、中身が作ったときと違えば、消さずに作業場所の Issue を `needs-human` にして点検の warn に出す
+- 並列（D-13）：clone は Issue ごと・レビューのラウンドごとに別なので、Issue の間でも、作業とレビューの間でも `.git` を共有しない。WIP の上限を上げても同じ形のまま動き、段階 6 で形を切り替えない。`allowWrite` の列挙は行わず、sandbox の既定に任せる
 - `.git/worktrees/<名前>/gitdir` は `denyWrite` に入れる（SF-3 のまま）
+- 人の見方
+  - AI のブランチは、進行役が push した後に、人の clone で fetch した `origin/<型>/issue-<番号>` として見る。差分は PR の画面で読む。人が引き継ぐとき（Agent 欄を `human` にしたとき）は、`origin/<型>/issue-<番号>` から手元のブランチを作る
+  - `paths.home` の下の clone を、人の clone の remote に登録しない。AI が書いた refs と objects を、人の clone へ直接入れないため
+  - `paths.home` の下のフォルダを、人のエディタのワークスペースに入れない。エディタと拡張機能（git の表示、lint の設定の読み込みなど）が、AI の書いた設定やコードを人の権限で sandbox の外で実行するおそれがあるため（試行していない）
 
 ### 影響（Consequences）
 
-- 良い点: 進行役の clone は AI の書き込みから完全に切り離される。手順は fetch・add・remove の 3 つで、0b で確かめた範囲に収まる
-- 良い点: 並列のときも、Issue の間で `.git` を共有しない
-- 悪い点: `ai` で `git fetch origin` を実行する分だけ、進行役が AI の clone の中で git を 1 つ動かす。`fetch` は作業フォルダを持たず worktree の config を読まないが、0c で `commondir` の差し替えに対して発火しないことを確かめる
-- 悪い点: 並列のときは clone が Issue の数だけ増える（business-os の大きさなら問題にならない）
+- 良い点: 進行役が git を実行するのは、`ctl` と AI がまだ触っていない clone だけになる。AI が触った clone には、0b で確かめた取り込みの fetch しか行わない
+- 良い点: レビュー AI と批評者は、origin から取ってきたままの PR の中身を読む。作業 AI が objects を細工しても、レビュー用の clone には届かない
+- 良い点: Issue の間でも作業とレビューの間でも `.git` を共有しないので、`allowWrite` の列挙も段階 6 での切り替えも要らない（D-13）
+- 良い点: worktree を作り直すかどうかの判定が無く、手元の記録を使わない
+- 悪い点: AI のセッションごとに clone と依存の導入（`pnpm install`）をやり直す。business-os の clone（`--no-checkout`）は 2026-10-12 の計測で約 1.5 秒。`pnpm install` の時間は計測していない
+- 悪い点: 作業 AI は、前のセッションの作業フォルダに残したものを修正の段で使えない
 
 ### 確認方法（Confirmation）
 
-- 0c の点検（S2）で、`ai` の `.git/config` と `hooks/` が sandbox から書けないこと、`commondir` を差し替えた worktree に対する `git -C ai fetch origin` が発火しないことを実際に試す
-- 結合テストで、進行役が `ai` に対して上の 3 つ以外の git コマンドを発行しないことを、偽の git で記録して検査する
+- 0c の点検（S2）で次を実際に試す
+  - AI が objects を書き換えた clone から `ctl` へ fetch すると失敗し、`ctl` に書き換えた中身が入らないこと
+  - `ctl` と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと（`find <clone>/.git/objects -type f -links +1` の出力が空）
+  - `.git/worktrees/<名前>/gitdir` が sandbox から書けないこと
+- 結合テストで、偽の git を使って次を検査する
+  - 進行役が、AI のセッションを起動した後の clone に対して、`ctl` からの取り込みの fetch 以外の git コマンドを発行しないこと
+  - 消す前に読んだ `commondir` か `gitdir` が作ったときと違うと、消さずに `needs-human` になること
 
 ## 選択肢ごとの長所と短所（Pros and Cons of the Options）
 
-### 案A：すべて `ai` に作り、進行役は fetch・add・remove だけ
+### 案A：セッションごとに origin から clone し直す
 
-- 良い点: 信頼の境界が「clone 単位」で単純
-- 良い点: 0b の事実（fetch と worktree 操作は発火しない）に乗る
-- 悪い点: `ai` で fetch を 1 つ実行する
+- 良い点: 進行役は AI が触った clone で git を実行しない（取り込みの fetch を除く）
+- 良い点: 前のセッションが細工した objects を、次のセッションが読まない
+- 良い点: 片付けがフォルダの削除だけで済む
+- 悪い点: セッションごとに clone と `pnpm install` をやり直す
 
-### 案B：レビュー用だけ進行役の clone に作る
+### 案B：Issue ごとの clone を使い続け、`git fetch origin` で届ける
 
-- 悪い点: sandbox が親 `.git` への書き込みを許すので、AI が進行役の clone の refs を書ける。同じ実行の `git diff origin/develop...` が汚れ、漏えい検査と許可一覧の判定が空の差分を見る
+- 良い点: clone は Issue ごとに 1 回で済み、作業フォルダの中身を修正の段に引き継げる
+- 悪い点: AI が書き換えた objects が clone に残る。`git fetch origin` は手元にある objects を取り直さないので直らず、同じ clone から作ったレビュー用 worktree に書き換えた中身が出る（2026-10-12 の試行）。作業 AI がレビュー AI に、PR と違う中身を読ませられる
+- 悪い点: AI が触った clone の中で `fetch`・`worktree remove`・`branch -D` を実行する。`fetch` は 0b で確かめていない
 - 却下
 
-### 案C：進行役の clone から `ai` へ push で届ける
+### 案C：Issue ごとの clone を使い続け、`ctl` から push で届ける
 
-- 中立: `ai` で git を実行しないで済む
-- 悪い点: `ai` の refs を進行役が書くことになり、AI が書き換えた refs との整合を毎回取る必要がある。push は receive-pack を `ai` で起動するので、結局 `ai` の中でコマンドが動く
+- 悪い点: AI が書き換えた objects が残る点は案B と同じ。push も、受け取り側がすでに持っている objects は送らない
+- 悪い点: push は AI が触った clone の中で receive-pack を起動し、AI が触った clone の refs を進行役が書く
 - 却下
 
 ## 補足情報（More Information）
 
-- 関連する要件：R2-1、R3-1、SF-2、SF-3、SF-5、付録 A（0b の 9・12）
-- 置き換える文言：R3-1 の「進行役が自分の clone から切る」→「AI の作業場所の clone に切る」。SF-2 (b) の「親 clone に対しては worktree の作成と削除だけ」→「fetch origin と worktree の作成・削除だけ」
-- 基本設計への反映：architecture の 1 節・3 節・6 節、sessions の 2 節
+- 関連する要件：R2-1、R3-1、R7-4、SF-2、SF-3、SF-5、付録 A（worktree で `git commit` が通ること、`commondir` の差し替えと fetch）
+- 前提にした要件メモの決定：12 節の判断 1（2026-10-10 の決定と 2026-10-11 の訂正）。2026-10-10 の決定は「Issue ごとの clone にする案」を退けて worktree を残した。本 ADR も worktree を残す（sandbox が親の `.git` を守ることを 0b で確かめた形のため）。作り直すのは worktree の親の clone である
+- 2026-10-12 の試行（git 2.50.1、使い捨てのリポジトリで実施）
+  - commit した後に loose object のファイルを別の中身で書き換え、`git worktree add --detach` で取り出すと、終了コード 0 で書き換えた中身が出た。`git fsck` は hash-path mismatch を報告した
+  - 同じ clone で `git fetch --no-tags origin` を実行し（終了コード 0）、書き換えたファイルを変えない新しい commit で worktree を作っても、書き換えた中身のままだった。origin から新しく clone して同じ commit で worktree を作ると、正しい中身が出た
+  - 書き換えた clone を `file://` で別の場所へ clone すると、`did not receive expected object` で失敗した
+  - 手元のパスから clone した objects のファイルはリンク数 2、`--no-hardlinks` と `file://` の URL から clone したものはリンク数 1 だった
+- 要件定義書への反映（承認の後に行う）
+  - R2-1：「AI の作業場所の clone から」→「AI のセッションごとに origin の URL から clone した AI の作業場所の clone から」
+  - R3-1：「作業場所は進行役が PR の head（API の SHA）で切る専用の worktree」→「作業場所は、進行役がレビューのたびに origin の URL から clone し、PR の head（API の SHA）で切る専用の worktree」
+  - SF-2 (b)：「親 clone に対しては worktree の作成と削除だけを行う（`commondir` が差し替えられた worktree には行わず `needs-human`）」→「AI の作業場所の clone では、AI のセッションを起動する前の clone と worktree の作成だけを行い、起動した後は `ctl` への取り込みの fetch の元にするだけにする。消すときはフォルダごと消し、`commondir` か `gitdir` が作ったときと違えば消さずに `needs-human`」
+  - SF-5：「AI の作業場所」の clone は AI のセッションごとに origin の URL から作り直し、手元の clone のパスからは作らないことを書き足す
+  - 10 節から D-1 と D-13 を消す
+- 基本設計への反映（承認の後に行う）：architecture の 1 節（配置、`paths.home` の置き方、人の見方）、3 節（計画・実装・修正・レビュー・片付けでの作業場所の作り方と消し方）、6 節（git の操作の表）
 
 [req]: ../requirements.md
+[memo]: ../dev-autopilot-requirements.md
