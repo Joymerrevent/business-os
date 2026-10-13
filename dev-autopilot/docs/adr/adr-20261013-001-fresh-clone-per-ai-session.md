@@ -1,7 +1,7 @@
 ---
 status: proposed
 created: 2026-10-13
-updated: 2026-10-13
+updated: 2026-10-14
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -72,8 +72,12 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
   手元の Mac で動かす間は、`<置き場>` を人の clone と同じ階層のフォルダにしてよい（例：人の clone が `<リポ名>.worktrees/<リポ名>/` なら `<リポ名>.worktrees/autopilot/`）。
   人の作業場所と分けたくなったら `<リポ名>.autopilot/` に移す。移すときは実行を止め、進行役の clone を移して設定を書き換える。AI の作業場所は次のセッションで作り直される
 
-- **clone の作り方**：origin の URL（GitHub）から作る。手元の clone のパスからは作らない。パスから作ると git が objects のファイルをハードリンクで共有し、AI の書き換えが元の clone に及ぶ（FACT-19）。
-  進行役の clone から `file://` で作る形も objects を共有しないが、AI の作業場所の remote が進行役の clone を指すので採らない。clone の認証は進行役の鍵で行い、AI のセッションには渡さない（SAFE-1）
+- **clone の作り方**：origin の URL（GitHub）から作る。AI に渡すのは、GitHub にあるもの（進行役が検査して push したもの、人が push したもの）だけにするため。
+  進行役の clone には、検査の前の AI の commit と、検査で止めた AI の commit（漏えいの検査に引っかかったもの、進行役・次のセッション・CI が実行するパスに触れたもの。IMPL-15）が入る。
+  進行役の clone から作ると、refs の持ち方しだいで、検査を通っていない commit が別の Issue のセッションに届きうる。届かないようにするには clone する refs を絞る手順が要り、守りが手順の正しさに頼る。
+  さらに、手元の clone のパスから作ると、git が objects のファイルをハードリンクで共有し、AI の書き換え方によっては元の clone の中身まで変わる（FACT-19）。
+  `--no-hardlinks` を付けるか `file://` の URL を使えば共有しないが、検査を通っていない commit が届きうる点は変わらないので、進行役の clone からは作らない。
+  進行役の clone から作れば通信と認証が要らず速いはずだが（計測していない）、origin からでも約 3 秒で済む。clone の認証は進行役の鍵で行い、AI のセッションには渡さない（SAFE-1）
 - **作る手順**：AI のセッションを起動する前に、進行役が次の 2 つを行う
   1. `git clone --no-checkout --no-tags <origin の URL> <置き場>/ai/<名前>`
   2. `git -C <置き場>/ai/<名前> worktree add <置き場>/wt/<名前> <SHA>`。作業 AI は `-b <ブランチ>` を付け、ほかの役は `--detach` を付ける。
