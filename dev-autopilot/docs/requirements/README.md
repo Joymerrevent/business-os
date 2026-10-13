@@ -32,7 +32,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 | 番号 | 中身 | ファイル |
 | --- | --- | --- |
 | FLOW-n | 棚卸し、並列と競合、間隔の運用、Issue の状態の遷移（正常な順と止まる遷移） | [01-issue-flow.md][f01] |
-| IMPL-n | 実装、レビュー、対応ループ | [02-implement-review-fix.md][f02] |
+| IMPL-n | 実装、レビュー、対応ループ、モデルの流れ | [02-implement-review-fix.md][f02] |
 | MERGE-n | マージ | [03-merge.md][f03] |
 | TEXT-n | 外から入る文の扱い | [04-external-text-and-markers.md][f04] |
 | SAFE-n | 安全側に倒す設計と、隔離と鍵の分け方 | [05-safety.md][f05] |
