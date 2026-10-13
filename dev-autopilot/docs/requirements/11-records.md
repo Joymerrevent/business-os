@@ -117,6 +117,17 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したらマ�
 
 レビューが挙げた「見たが無い」観点：patch-id と merge の前提、必須チェック名と ci.yml の一致、Organization 所有の Project と PAT の組み合わせ
 
+## 隔離とモデルの役割分担で採らなかった案
+
+[要件メモ][memo]の 12 節の判断 1（AI のセッションの隔離と鍵の分け方）と判断 6（モデルの役割分担）で、採らなかった案。採った形は「[隔離と鍵の分け方][f05]」と「[モデルの流れ][f02]」にある。
+
+- 隔離の案 B：AI のセッションを別の OS ユーザーで動かす。隔離は最も強いが、専用マシンの構築手順が増え、手元の Mac では運用しにくい
+- 隔離の案 C：同じ OS ユーザーのまま、鍵と git 設定の共有を受け入れ、進行役のマージの段階（今の段階 8）を見送る
+- モデルの役割分担で取り込まなかったこと：「コントロール役を `opus` にする」（進行役は AI にしない。「[登場するもの][f00]」）、「詰まったら計画役に自動で再計画させる」（3 回で `needs-human` のまま。IMPL-25）、Bedrock の地域の項（利用枠で動かす）
+
+[f00]: ./00-overview.md
+[f02]: ./02-implement-review-fix.md
+[f05]: ./05-safety.md
 [f06]: ./06-setup-and-stages.md
 [f08]: ./08-review-skill.md
 [memo]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/dev-autopilot-requirements.md
