@@ -24,7 +24,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 ## 登場するもの
 
 AI の役は 5 つで、一覧はこの表が正本。5 役すべてに共通：`claude -p --output-format json` を進行役が子プロセスとして起動し、「[隔離と鍵の分け方][f05]」 の sandbox を掛け、`gh` の認証・`GH_TOKEN`・進行役の鍵を渡さず（環境変数は許可した名前だけで組み立てる）、
-ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行役専用 clone の絶対パスで渡す。「[安全側に倒す設計][f05]」）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。0b で確認）と `permissions` の allow と deny（SAFE-2 の (e)）で行い、GitHub への書き込みは一切できない。
+ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行役専用 clone の絶対パスで渡す。「[安全側に倒す設計][f05]」）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。段階 2 で確認）と `permissions` の allow と deny（SAFE-2 の (e)）で行い、GitHub への書き込みは一切できない。
 
 | 役割 | 実体と道具 | セッション |
 |---|---|---|

@@ -22,10 +22,10 @@
 ### 流れと段
 
 - UNDECIDED-5 **1 回の実行で進める「段」の数え方。** FLOW-4 は段を 7 つ（受け入れ〜片付け）と定めて「1 回の実行で 1 段だけ」とするが、
-  「[Issue の状態の遷移][f01]」の FLOW-18（承認の確定）・FLOW-23（収束）・FLOW-25（載せ直し）が 7 つのどれに当たるかが無い。FLOW-20 の「段階 2〜4 では計画と同じ実行で実装に入らない」は、
-  段階 5 以降なら同じ実行で実装まで進むと読め、「1 段だけ」と食い違う。元の文は IMPL-10 の「段階 5 以降は同じ実行で続け」（[01-issue-flow.md][f01]、[02-implement-review-fix.md][f02]）
+  「[Issue の状態の遷移][f01]」の FLOW-18（承認の確定）・FLOW-23（収束）・FLOW-25（載せ直し）が 7 つのどれに当たるかが無い。FLOW-20 の「段階 5〜7 では計画と同じ実行で実装に入らない」は、
+  段階 8 以降なら同じ実行で実装まで進むと読め、「1 段だけ」と食い違う。元の文は IMPL-10 の「段階 8 以降は同じ実行で続け」（[01-issue-flow.md][f01]、[02-implement-review-fix.md][f02]）
 - UNDECIDED-6 **基線が赤のとき。** IMPL-9 は `needs-human`。進行中の Issue を続け、新規着手だけ止める案（IMPL-9、FLOW-29。[02-implement-review-fix.md][f02]、[01-issue-flow.md][f01]）
-- UNDECIDED-7 **段階 2 の Agent 欄。** FLOW-21 と「段階による違い」は「段階 2 では Agent 欄を `human` にする」とし、
+- UNDECIDED-7 **段階 5 の Agent 欄。** FLOW-21 と「段階による違い」は「段階 5 では Agent 欄を `human` にする」とし、
   同じ節の決まりは「進行役は Agent 欄を `human` にしない」としている（[01-issue-flow.md][f01]）
 - UNDECIDED-8 **手元の記録を使うかどうか。** FLOW-4 は「手元の記録は使わない」、運用の規則は「手元の記録は補助にする」としている。
   止まる遷移 FLOW-29・FLOW-30 の「同じ実行の失敗が 3 回」「累計の利用枠」は実行をまたいで数えるので、手元の記録が要る（[01-issue-flow.md][f01]）
@@ -54,12 +54,12 @@
 
 - UNDECIDED-18 レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）
 - UNDECIDED-19 実行の記録の置き場（`tmp/` か `evals/results/` と同じ扱いの新しいフォルダか。`setup` が作る「記録のフォルダ」の場所。SETUP-1）
-- UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。段階 3 で、1 つのアカウントで COMMENT のレビューと印の判定が動くことを実機で確かめてから決める
+- UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。段階 6 で、1 つのアカウントで COMMENT のレビューと印の判定が動くことを実機で確かめてから決める
 - UNDECIDED-21 クラウドの仕組みを、手元の cron の代わりか補助に使うか。2026-10-07 の公式の仕様で分かっている範囲：
   - Routine（`/schedule`）：Anthropic のクラウドで動き、GitHub のリポを clone して作業できる。起動は時刻・GitHub の webhook・API。最短 1 時間間隔。Routine 同士の連鎖は未サポート。利用枠を消費する
   - GitHub Actions の claude-code-action：PR のイベントで起動でき、`/code-review --comment` で行にコメントを書ける。レビュー AI だけをここに寄せる案がある
   - 外部のコード実行 sandbox（E2B など）：AI のセッションを Claude Code の sandbox（「[隔離と鍵の分け方][f05]」）の代わりに、使い捨てのクラウドの sandbox で動かす案。
-    鍵と認証情報をクラウドに置くことになり、「手元の cron で始め、クラウドの仕組みを土台にしない」（「[決まっていること][f00]」）と衝突する。段階 5 の出口を越えて専用マシンへの移行を決めるときの候補に留める
+    鍵と認証情報をクラウドに置くことになり、「手元の cron で始め、クラウドの仕組みを土台にしない」（「[決まっていること][f00]」）と衝突する。段階 8 の出口を越えて専用マシンへの移行を決めるときの候補に留める
   - 判断の軸：専用マシンの保守の手間、利用枠と課金、鍵と認証情報をどこに置くか、進行役の判定を手元とクラウドで二重に持たないこと
 
 ## 確かめること
@@ -68,7 +68,7 @@
   SETUP-11 は、`dev-autopilot/` フォルダと構造仕様（`docs/design/architecture.md`）の表は済んでいるが、TypeScript の置き場（`src/` と tsconfig）はまだ無い（2026-10-12 に確認）。
   SETUP-9（`develop` の ruleset）や SETUP-10（署名の移行）なども 1 つずつ確かめ、済んだものを一覧から外す（[06-setup-and-stages.md][f06]）
 - UNDECIDED-23 **AI が触った clone の中で、進行役が fetch を実行しても安全か。** AI の作業場所の案のうち、Issue ごとの clone を使い続けて新しい commit を fetch で届ける案は、この確認が前提になる。
-  0b で確かめたのは、別の clone からの fetch と、親 clone での `worktree list` と `remove` だけ（FACT-12。[10-verified-facts.md][f10]）。0c の点検で確かめる
+  段階 2 で確かめたのは、別の clone からの fetch と、親 clone での `worktree list` と `remove` だけ（FACT-12。[10-verified-facts.md][f10]）。段階 3 の点検で確かめる
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
