@@ -6,7 +6,7 @@
   push・PR・コメント・Project の更新は進行役だけが行う。進行役も `gh pr merge` を呼ばず、`develop` と `main` への直 push と force push はしない（ruleset でも止める。SETUP-9、MERGE-5）
 - SAFE-2 **進行役・次のセッション・CI は、AI が書いた worktree の中身を信頼して実行しない（「[2026-10-11 のレビューで決めたこと][f11]」）**。5 つの経路を塞ぐ：
   (a) AI のセッションはユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。段階 2 で、既定の `-p` はプロジェクトの hook を実行し `CLAUDE.md` を読むこと、`local` ならユーザーの hook もプロジェクトの hook も `CLAUDE.md` も読まれないことを確認した。`--settings` の安全設定は効く）。Plugin は進行役専用 clone の絶対パスで渡す（AI が改変した agent 定義と Skill を読まない）。
-  (b) 進行役は worktree の中でも、その親の clone の中でも git を実行しない（下の「隔離と鍵の分け方」）。
+  (b) 進行役は worktree の中でも、その親の clone の中でも git を実行しない。親の clone で行うのは worktree の作成と削除だけ（SAFE-12）。
   (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` に触れる diff は push しない（IMPL-15。CI が AI の書いたワークフローを secrets 付きで実行しない）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（IMPL-27）。
   (d) 進行役はリポのコードとパッケージの lifecycle script を sandbox の外で実行しない（IMPL-1、IMPL-9）。漏えい検査は dev-autopilot 自身の `src/` で行う（IMPL-15）。
   (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（段階 2 で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Read`、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` だけ。`deny` に `Read(//<秘密のパス>/**)`（進行役の設定・記録・鍵・`~/.ssh` など）、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）
