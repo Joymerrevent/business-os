@@ -26,6 +26,9 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 
 SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が作る。SETUP-7 は運用の中で進行役が入れる。人が手で作るのは SETUP-10（鍵）と、deploy key と PAT（「[隔離と鍵の分け方][f05]」）だけ。
 
+準備が済んでも、行は消さない。「対応」の欄には、済んだ後も有効な要件（例：SETUP-14 の、Issue のフォームに欄を足さないこと）があり、行の番号はほかのファイルから参照されるため。
+済んだ行は、「足りないもの」の欄の頭に `済み（YYYY-MM-DD に確認）：` と書き添える。
+
 | # | 足りないもの | 対応 |
 |---|---|---|
 | SETUP-5 | Project の Status が Todo / In Progress / Done の 3 つ | In Review・Ready to Merge・Blocked を足す。更新は GraphQL の `updateProjectV2ItemFieldValue` で行える（公式文書で確認） |
