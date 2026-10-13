@@ -59,16 +59,19 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
 
 中身：
 
-- **置き場**：AI の作業場所は、設定の置き場（STRUCT-2 の「worktree の置き場」。以下 `<置き場>`）の下に置く。人の clone の中にも、人の clone の worktree としても作らない（IMPL-1）。フォルダの名前は基本設計で決めてよい
+- **置き場**：AI の作業場所は、設定の置き場（STRUCT-2 の「worktree の置き場」。以下 `<置き場>`）の下に、AI のセッションごとに 1 つのフォルダとして置く。
+  人の clone の中にも、人の clone の worktree としても作らない（IMPL-1）。フォルダの名前は略さず、中身が分かる名前にする
 
   ```text
   <置き場>/
-    ctl/                     進行役の clone（本 ADR は場所を決めない。並べて置いてよい）
-    ai/<セッションの名前>/    AI の作業場所の clone（セッションごとに作り直す）
-    wt/<セッションの名前>/    ai/<セッションの名前>/ から作る worktree（AI の作業フォルダ）
+    controller/                  進行役の clone
+    sessions/
+      <セッションの名前>/         1 回のセッションの作業場所（セッションごとに作り直す）
+        clone/                   AI の作業場所の clone（git のデータだけ。ファイルは取り出さない）
+        worktree/                clone/ から作る worktree（AI が作業するフォルダ）
   ```
 
-  セッションの名前は、役と対象で決める（例：`<型>-issue-<番号>`、`review-<PR 番号>-r<ラウンド>`、`critic-<PR 番号>-r<ラウンド>`）。
+  セッションの名前は、役と対象を略さずに書く（`plan-issue-<番号>`、`work-issue-<番号>`、`review-pr-<PR 番号>-round-<ラウンド>`、`critic-pr-<PR 番号>-round-<ラウンド>`）。
   手元の Mac で動かす間は、`<置き場>` を人の clone と同じ階層のフォルダにしてよい（例：人の clone が `<リポ名>.worktrees/<リポ名>/` なら `<リポ名>.worktrees/autopilot/`）。
   人の作業場所と分けたくなったら `<リポ名>.autopilot/` に移す。移すときは実行を止め、進行役の clone を移して設定を書き換える。AI の作業場所は次のセッションで作り直される
 
@@ -79,17 +82,17 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
   `--no-hardlinks` を付けるか `file://` の URL を使えば共有しないが、検査を通っていない commit が届きうる点は変わらないので、進行役の clone からは作らない。
   進行役の clone から作れば通信と認証が要らず速いはずだが（計測していない）、origin からでも約 3 秒で済む。clone の認証は進行役の鍵で行い、AI のセッションには渡さない（SAFE-1）
 - **作る手順**：AI のセッションを起動する前に、進行役が次の 2 つを行う
-  1. `git clone --no-checkout --no-tags <origin の URL> <置き場>/ai/<名前>`
-  2. `git -C <置き場>/ai/<名前> worktree add <置き場>/wt/<名前> <SHA>`。作業 AI は `-b <ブランチ>` を付け、ほかの役は `--detach` を付ける。
+  1. `git clone --no-checkout --no-tags <origin の URL> <置き場>/sessions/<名前>/clone`
+  2. `git -C <置き場>/sessions/<名前>/clone worktree add <置き場>/sessions/<名前>/worktree <SHA>`。作業 AI は `-b <ブランチ>` を付け、ほかの役は `--detach` を付ける。
      `<SHA>` は、計画と最初の実装では進行役の clone で fetch した `origin/develop`、修正とレビューと批評では GitHub の API が返す PR の head（SAFE-13）
 - **セッションの間で引き継ぐもの**：進行役が push した commit と、進行役が渡す文（計画、レビューの指摘）だけ。
   前のセッションの作業フォルダの中身（commit していないファイル、ビルドの結果、`node_modules`）は引き継がない。修正の段も新しい作業場所で始める（IMPL-23 の「同じ worktree で」を改める）。依存の導入は各セッションの中で行う（IMPL-1 のまま）
 - **批評者**：レビュー AI と同じ PR の head で、別に作った作業場所で起動する（「登場するもの」の「レビュー AI と同じ worktree で」を改める）。レビュー AI も作業フォルダと `.git` を書けるので、レビュー AI の作業場所を批評者に読ませない
-- **取り込み**：作業 AI の commit は、進行役の clone で `git fetch <置き場>/wt/<名前> <ブランチ>` を実行して取り込む（FACT-12 で、`commondir` を差し替えても発火しないと確かめた操作）。
+- **取り込み**：作業 AI の commit は、進行役の clone で `git fetch <置き場>/sessions/<名前>/worktree <ブランチ>` を実行して取り込む（FACT-12 で、`commondir` を差し替えても発火しないと確かめた操作）。
   AI が書き換えた objects は、受け取り側の検査で失敗し、進行役の clone に入らない（FACT-18）
 - **AI のセッションを起動した後の clone**：進行役は、取り込みの fetch の取り出し元にする以外に git を実行しない。`git fetch origin`・`worktree remove`・`branch -D` も行わない
-- **消す**：同じ名前で作り直す直前と、片付け（FLOW-27、MERGE-7）のときに、`ai/<名前>/` と `wt/<名前>/` をフォルダごと消す。git は使わず、シンボリックリンクの先をたどらない。
-  消す前に `ai/<名前>/.git/worktrees/<名前>/commondir` と `gitdir` をファイルとして読み、作ったときの中身と違えば、消さずに作業場所の Issue を `needs-human` にし、`check` で warn にする（SAFE-4）
+- **消す**：同じ名前で作り直す直前と、片付け（FLOW-27、MERGE-7）のときに、`sessions/<名前>/` をフォルダごと消す。git は使わず、シンボリックリンクの先をたどらない。
+  消す前に `sessions/<名前>/clone/.git/worktrees/worktree/commondir` と `gitdir` をファイルとして読み（git は worktree の管理フォルダを、worktree のフォルダの名前 `worktree` で作る）、作ったときの中身と違えば、消さずに作業場所の Issue を `needs-human` にし、`check` で warn にする（SAFE-4）
 - **並列（UNDECIDED-2）**：clone はセッションごとに別なので、Issue の間でも、作業とレビューと批評の間でも `.git` を共有しない。WIP の上限を上げても（段階 9）同じ形のまま動く。
   `allowWrite` の列挙はせず、sandbox の既定に任せる（SAFE-11）
 - **`commondir` の前提（UNDECIDED-4）**：SAFE-12 の前提を次の文に改める。
