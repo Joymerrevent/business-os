@@ -112,7 +112,8 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
 - 良い点: 作り直すかどうかの判定が無く、手元の記録を使わない。UNDECIDED-24 の確認が要らなくなる
 - 悪い点: セッションごとに clone と依存の導入をやり直す。sandbox の外の計測で、clone 約 3 秒、worktree の作成 0.04 秒、`pnpm install` 1〜3 秒。sandbox の中（通信は許可した先だけ）では計測していない
 - 悪い点: 作業 AI は、前のセッションの作業フォルダに残したもの（commit していない変更、ビルドの結果）を修正の段で使えない。
-  上限に当たって途中で止まったセッションの変更（IMPL-13 は commit しない）も、次のセッションには渡らない
+  上限（IMPL-13）に当たって途中で止まったセッションの作業（直したファイル、AI が自分で積んだ commit）も、次のセッションには渡らない。
+  1 セッションに収まらない大きさの作業は、3 回とも止まって `needs-human` になる（IMPL-14）。引き継ぐかは補足情報の「範囲外」に書いた
 - 悪い点: 1 ラウンドあたりの clone が、批評者の分だけ 1 つ増える
 
 ### 確認方法（Confirmation）
@@ -168,6 +169,10 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
   決定（案A）は同じ。本 ADR は今の要件の番号で書き直し、批評者を別の作業場所にすること、UNDECIDED-4 と UNDECIDED-24 の扱い、2026-10-13 の試行を足した
 - 範囲外：依存の store（pnpm の store）をセッションの間で共有するか。前のセッションが細工したものを次のセッションが読む経路として、objects と同じ種類の論点になる。
   手元の Mac（APFS）では、store と `node_modules` のファイルは共有していなかった（リンク数 1）。専用マシンのファイルシステムでは確かめていない。要件に反映するときに、[決めていないこと][undecided]に足す
+- 範囲外：上限（IMPL-13）に当たって止まったセッションの作業を、次のセッションに引き継ぐか。本 ADR では引き継がず、次のセッションは GitHub にある状態（push 済みの commit と計画）から始める。
+  今の要件も「続きから再開する」とは書いておらず、IMPL-13 は途中の状態を commit しないと決めている。ただし Issue ごとの worktree を使い続ける今の要件の形では、やり直しの作業 AI が前のセッションの残したファイルと commit を目にしていた。
+  引き継ぐ形の案として、止まったセッションでも AI が commit した分だけを進行役の clone へ取り込み、漏えいの検査と実行するパスの検査（IMPL-15）を通して作業ブランチへ push し、次のセッションをその commit から始める形がある。
+  IMPL-13 の「途中の状態を commit しない」を変え、未完成の作業を GitHub に push することになるので、別に決める。段階 5 で上限に当たった回数を記録してから決める。要件に反映するときに、[決めていないこと][undecided]に足す
 - 要件への反映（承認の後に、別の PR で行う）
   - IMPL-1：AI の作業場所の clone は、AI のセッションごとに origin の URL から作り直すことを書き足す
   - IMPL-16：「AI の作業場所の clone から PR の head で切る専用の worktree」を、「レビューのたびに origin の URL から clone し、PR の head で切る worktree」に改める
@@ -178,7 +183,7 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
   - SAFE-16：AI の作業場所の clone はセッションごとに origin の URL から作り、手元の clone のパスからは作らないことを書き足す
   - FLOW-27、MERGE-7：「worktree を消す」を「作業場所（clone と worktree）をフォルダごと消す」に改める
   - 10-verified-facts.md：2026-10-13 の 2 つの試行を FACT-20・FACT-21 として足す
-  - 09-undecided.md：UNDECIDED-1〜4 と UNDECIDED-24 を欠番にする（本 ADR で決めた）。依存の store の論点を足す
+  - 09-undecided.md：UNDECIDED-1〜4 と UNDECIDED-24 を欠番にする（本 ADR で決めた）。依存の store の論点と、上限で止まった作業を引き継ぐかの論点を足す
 
 [undecided]: ../requirements/09-undecided.md
 [impl]: ../requirements/02-implement-review-fix.md
