@@ -7,7 +7,7 @@
 
 | 番号 | タイトル | status | 作成日 |
 | --- | --- | --- | --- |
-| ADR-20261013-001 | [AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone で git を実行しない][adr-20261013-001-fresh-clone-per-ai-session] | proposed | 2026-10-13 |
+| ADR-20261013-001 | [AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone で git を実行しない][adr-20261013-001-fresh-clone-per-ai-session] | accepted | 2026-10-13 |
 
 <!--
 行の例（表の最後に足す）:
