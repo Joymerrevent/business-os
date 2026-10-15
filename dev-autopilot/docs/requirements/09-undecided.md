@@ -10,10 +10,14 @@
 
 ### AI の作業場所
 
-- UNDECIDED-1 欠番（[ADR-20261013-001][adr-workspace] で決めた）
-- UNDECIDED-2 欠番（[ADR-20261013-001][adr-workspace] で決めた）
-- UNDECIDED-3 欠番（[ADR-20261013-001][adr-workspace] で決めた）
-- UNDECIDED-4 欠番（[ADR-20261013-001][adr-workspace] で決めた）
+- UNDECIDED-1 **欠番**（[ADR-20261013-001][adr-workspace] で決めた）：~~**AI の作業場所の clone に新しい commit が届かない。** 進行役は AI の作業場所の clone で worktree を作る・消すだけなので、
+  clone に無い commit（`develop` の新しい commit、人の push、載せ直しの結果）から worktree を作れない（[05-safety.md][f05]）~~
+- UNDECIDED-2 **欠番**（[ADR-20261013-001][adr-workspace] で決めた）：~~**ほかの Issue の作業場所を書き換えられる。** 「[隔離と鍵の分け方][f05]」は、書ける場所の一覧（「他の Issue の `.git/worktrees/**` は書けない」を含む）をやめ、sandbox の既定に任せた。
+  同じ clone に複数の Issue の worktree があると、ある Issue の AI が別の Issue の `gitdir` や refs を書き換えられる（[05-safety.md][f05]）~~
+- UNDECIDED-3 **欠番**（[ADR-20261013-001][adr-workspace] で決めた）：~~**AI が書き換えた objects がレビューに届く。** AI が clone の objects のファイルを書き換えると、同じ clone から作ったレビュー用の worktree に書き換えた中身がエラーなしで出て、
+  `git fetch origin` を実行しても直らない（FACT-18。[10-verified-facts.md][f10]）。上の項目と一緒に解く~~
+- UNDECIDED-4 **欠番**（[ADR-20261013-001][adr-workspace] で決めた）：~~**`commondir` を書き換えられるかが食い違っている。** 「[隔離と鍵の分け方][f05]」は「AI は自分の `commondir` を書き換えられる」を前提に、進行役が worktree と親 clone の中で git を実行しないと決めている。
+  一方、FACT-9 では sandbox が `commondir` を保護していて書けなかった（[10-verified-facts.md][f10]）。守りを多重の守りとして残すなら、前提の書き方を直す~~
 
 ### 流れと段
 
@@ -75,7 +79,8 @@
 - UNDECIDED-23 **準備の作業（「[いまのリポジトリに無いもの][f06]」）が今どこまで済んでいるか。** 「[いまのリポジトリに無いもの][f06]」は 2026-10-07 時点の「足りないもの」の一覧で、その後どこまで済んだかを確かめた記録が無い。
   SETUP-11 は、`dev-autopilot/` フォルダと構造仕様（`docs/design/architecture.md`）の表は済んでいるが、TypeScript の置き場（`src/` と tsconfig）はまだ無い（2026-10-12 に確認）。
   SETUP-9（`develop` の ruleset）や SETUP-10（署名の移行）なども 1 つずつ確かめ、済んだものは「[いまのリポジトリに無いもの][f06]」の冒頭の規則に従って、行を残したまま済んだことを書き添える（[06-setup-and-stages.md][f06]）
-- UNDECIDED-24 欠番（[ADR-20261013-001][adr-workspace] で、進行役が AI の触った clone で fetch しない形に決め、確かめる必要が無くなった）
+- UNDECIDED-24 **欠番**（[ADR-20261013-001][adr-workspace] で、進行役が AI の触った clone で fetch しない形に決め、確かめる必要が無くなった）：~~**AI が触った clone の中で、進行役が fetch を実行しても安全か。** AI の作業場所の案のうち、Issue ごとの clone を使い続けて新しい commit を fetch で届ける案は、この確認が前提になる。
+  段階 2 で確かめたのは、別の clone からの fetch と、親 clone での `worktree list` と `remove` だけ（FACT-12。[10-verified-facts.md][f10]）。段階 3 の点検で確かめる~~
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
