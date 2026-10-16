@@ -60,9 +60,9 @@
   TEXT-12 も「有りなら下書きを作らない」。一方、「[印と固定の見出しの一覧][f04]」の `intake` の印は `quarantine=found` を持ち、下書きを作らないなら印を載せる場所が無い（[04-external-text-and-markers.md][f04]）~~
 - UNDECIDED-15 **欠番**（[ADR-20261015-003][adr-intake] で決めた）：~~**受け入れの対象とマイルストーンの候補。** TEXT-12 は受け入れの対象を「マイルストーンが付いている Issue」に限りながら、マイルストーンの候補を出すことになっている。
   「[決まっていること][f00]」の「人の関所」と FLOW-15〜FLOW-16 は、起票されたら受け入れる流れで、マイルストーンを条件にしていない（[04-external-text-and-markers.md][f04]、[00-overview.md][f00]、[01-issue-flow.md][f01]）~~
-- UNDECIDED-35 **進行ボットが起票した Issue の本文の見分け方。** 🟢 から起票した Issue（IMPL-26）の本文は AI の出力として扱う（TEXT-1）が、印の一覧に、Issue の本文に付ける印が無い。
+- UNDECIDED-35 **欠番**（[ADR-20261016-002][adr-draft] で、Issue の本文を著者を問わず作業 AI に渡さない形に決め、見分ける必要が無くなった）：~~**進行ボットが起票した Issue の本文の見分け方。** 🟢 から起票した Issue（IMPL-26）の本文は AI の出力として扱う（TEXT-1）が、印の一覧に、Issue の本文に付ける印が無い。
   進行ボットは当面メンテナと同じアカウントで投稿する（SETUP-13）ので、著者のアカウントでは見分けられず、本文がコラボレータの文（`body=pass`）として作業 AI に届きうる。
-  [ADR-20261015-004][adr-markers] は、印の無い進行ボットのアカウントの投稿を人の投稿として読むとしている（[04-external-text-and-markers.md][f04]、[02-implement-review-fix.md][f02]）
+  [ADR-20261015-004][adr-markers] は、印の無い進行ボットのアカウントの投稿を人の投稿として読むとしている（[04-external-text-and-markers.md][f04]、[02-implement-review-fix.md][f02]）~~
 
 ### 安全と設定
 
@@ -133,4 +133,5 @@
 [adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
+[adr-draft]: ../adr/adr-20261016-002-intake-ai-drafts-every-issue.md
 [f08]: ./08-review-skill.md
