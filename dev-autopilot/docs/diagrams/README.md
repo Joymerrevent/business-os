@@ -5,10 +5,10 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 
 | 図 | 何を表すか | 元にした要件 |
 | --- | --- | --- |
-| [全体の構成][overview] | 進行役・AI の 5 役・作業場所・GitHub・人の関係。誰が何に書けるか | [00-overview.md][f00]、[01-issue-flow.md][f01]、[05-safety.md][f05] |
+| [全体の構成][overview] | 進行ボット・AI の 5 役・作業場所・GitHub・人の関係。誰が何に書けるか | [00-overview.md][f00]、[01-issue-flow.md][f01]、[05-safety.md][f05] |
 | [Issue の流れ][issue-flow] | Issue の起票からマージ後の片付けまでの正常な順と、止まる・待つ・戻す遷移。各段の担い手と Project の Status | [01-issue-flow.md][f01] の FLOW-15〜34 |
-| [隔離と鍵][isolation] | sandbox の境界、秘密の置き場、進行役の clone、GitHub への書き込みの経路 | [05-safety.md][f05] の SAFE-1〜18 |
-| [フォルダ構成と起動][structure] | `dev-autopilot/` の中の構成（予定）と、launchd・進行役・Plugin・設定の呼び出しの関係 | [07-structure.md][f07] の STRUCT-1〜7 |
+| [隔離と鍵][isolation] | sandbox の境界、秘密の置き場、進行ボットの clone、GitHub への書き込みの経路 | [05-safety.md][f05] の SAFE-1〜18 |
+| [フォルダ構成と起動][structure] | `dev-autopilot/` の中の構成（予定）と、launchd・進行ボット・Plugin・設定の呼び出しの関係 | [07-structure.md][f07] の STRUCT-1〜7 |
 
 ## 全体の構成
 
@@ -29,7 +29,7 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 ## 図を直すとき
 
 - ファイルは `.drawio.svg`（図のデータを埋め込んだ SVG）。draw.io のデスクトップ版か、VS Code の draw.io の拡張でそのまま開いて直せる
-- 色の使い分け：黄は人、青は進行役（AI ではない）、緑は AI のセッション、紫は GitHub、赤は秘密。赤の破線と × は「できない」を表す
+- 色の使い分け：黄は人、青は進行ボット（AI ではない決まった処理のプログラム）、緑は AI のセッション（受入 AI・計画 AI・作業 AI・レビュー AI・批評 AI）、紫は GitHub、赤は秘密。赤の破線と × は「できない」を表す
 - 背景は白に固定してある（閲覧側がダークモードでも線と文字が見えるように）
 - 2026-10-16 に draw.io 32.4.1 の CLI で書き出したとき、ラベルごとに代替の PNG が埋め込まれ、1 枚が 1 MB を超えた。代替の PNG はラベルの文字だけの代替に置き換えてある（ブラウザ・GitHub・VS Code のプレビューは HTML のラベルを表示するので見え方は変わらない）。draw.io で保存し直すと代替の PNG が戻ることがある
 
