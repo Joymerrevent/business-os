@@ -30,7 +30,7 @@ Issue は公開リポに誰でも立てられる。dev-autopilot が作業 AI・
   判定の対象は、作業指示コメントの投稿者だけでなく、`agent-ready` を付けた人（Issue の timeline）とコメントを編集した人（`userContentEdits`）も含む（triage 権限でもラベルは付けられるため）。満たさなければそのラベルと編集は無効として扱い、`needs-human`。
   `needs-human` を外した人（`UnlabeledEvent` の `actor`）と `plan:fable` / `plan:opus` を付けた人（`LabeledEvent` の `actor`）も確かめる。push 未満の人が外した `needs-human` は付け直して `note kind=stop reason=unauthorized-resume` を投稿し、push 未満の人が付けた `plan:*` は無いものとして扱う。
   渡す文（作業指示コメント、直した下書き）の投稿か最後の編集が、`agent-ready` を付けた時刻（`LabeledEvent` の `createdAt`）より後なら、`intake-final` を投稿せず `needs-human` にする（人は文を直してから `agent-ready` を付け直す。[ADR-20261015-004][adr-markers]）。
-  Issue の本文は渡さないので、本文の編集はこの時刻の規則に数えない（[ADR-20261016-002][adr-draft]）
+  Issue の本文は渡さないので、本文の編集は、`agent-ready` より後の編集を止める規則に数えない（[ADR-20261016-002][adr-draft]）
   進行ボットのアカウント（SETUP-13）もコラボレータだが、その投稿は常に AI の出力として扱う（TEXT-1、IMPL-20）
 - TEXT-11 **渡す直前の検疫**。進行ボットは、AI に渡す文（受付 AI に渡す Issue の題名・本文・コメント、作業指示コメント、承認された下書き、計画コメント（IMPL-10）、PR のコメント、再レビューの入力に含める文）を、**書いた人を問わず、渡す直前に毎回**、機械の検査に通す。
   検査は TEXT-9 の「指示の混入の検査」と同じ TypeScript のモジュール（`dev-autopilot/src/` に 1 つ。`intake` Skill も同じものを呼ぶ。正本は 1 つ）で、見えない文字（ゼロ幅・制御文字）、HTML コメント、長い base64 や難読化した文字列、URL、指示の形の語、欄の区切りを模した文字列を探す。
