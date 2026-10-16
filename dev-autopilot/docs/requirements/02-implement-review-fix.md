@@ -41,7 +41,7 @@
   | ターンの上限（`--max-turns`）に当たった | 実行の失敗。持ち越し | IMPL-13 |
   | `claude` の異常終了、出力契約が解析できない・欠けている | 実行の失敗。持ち越し | IMPL-5 |
   | 依存の導入でレジストリにつながらない | 実行の失敗。持ち越し | IMPL-1 |
-  | 受入 AI の拒否（`stop_reason: refusal`） | 実行の失敗。次回は `sonnet` で試す | TEXT-12 |
+  | 受付 AI の拒否（`stop_reason: refusal`） | 実行の失敗。次回は `sonnet` で試す | TEXT-12 |
   | 作業 AI が「止まった理由」を返した（ADR が要る等） | 作業の失敗。`needs-human` | IMPL-8 |
   | レビューの fix | 作業の失敗。往復（上限 3 回） | IMPL-24 |
   | CI の赤（`failure`、`timed_out`） | 作業の失敗。往復（上限 3 回） | IMPL-27 |
@@ -118,8 +118,8 @@
 
 | 順 | 番号 | 工程 | 役 | モデル / effort | 切り替わる条件 | 根拠 |
 |---|---|---|---|---|---|---|
-| 1 | IMPL-29 | 受け入れ（検疫は TypeScript で AI を使わない。下書きの作成） | 受入 AI | `claude-haiku-5-5` / medium（別名 `haiku` は Haiku 4.5 に解けるので、haiku だけは完全な ID で書く。段階 2 で確認） | 拒否（`stop_reason: refusal`）で止まったら実行の失敗として扱い、次回の実行は `sonnet` で試す | TEXT-11、TEXT-12、IMPL-14 |
-| 2 | IMPL-30 | 計画の難しさの判定 | 受入 AI | 同上（同じセッション） | 印に `plan=opus` か `plan=fable` を書く。人はラベル `plan:fable` / `plan:opus` で上書きし、ラベルが優先 | TEXT-12、IMPL-10 |
+| 1 | IMPL-29 | 受け入れ（検疫は TypeScript で AI を使わない。下書きの作成） | 受付 AI | `claude-haiku-5-5` / medium（別名 `haiku` は Haiku 4.5 に解けるので、haiku だけは完全な ID で書く。段階 2 で確認） | 拒否（`stop_reason: refusal`）で止まったら実行の失敗として扱い、次回の実行は `sonnet` で試す | TEXT-11、TEXT-12、IMPL-14 |
+| 2 | IMPL-30 | 計画の難しさの判定 | 受付 AI | 同上（同じセッション） | 印に `plan=opus` か `plan=fable` を書く。人はラベル `plan:fable` / `plan:opus` で上書きし、ラベルが優先 | TEXT-12、IMPL-10 |
 | 3 | IMPL-31 | 計画 | 計画 AI | 既定 `opus` / xhigh。印かラベルが `fable` なら `fable` / high | `opus` が「設計判断・アーキテクチャの選択・原因不明の障害解析を含む」と自己申告したら、1 回だけ `fable` / high で計画し直す。2 回目の自己申告は無視して記録に残す | IMPL-10 |
 | 4 | IMPL-32 | 実装（1 ラウンド目） | 作業 AI | `opus` / high から始める。段階 5 で問題なく回る種類から `sonnet` / high へ下げる | 上限は `opus`。`fable` には上げない | 「[決まっていること][f00]」、[段階 5][f06] |
 | 5 | IMPL-33 | レビュー | レビュー AI | `opus` / xhigh（段階 6 で `fable` / high と比べて決め直す） | 設定で変える。往復の途中では変えない | IMPL-19、[段階 6][f06] |
@@ -130,7 +130,7 @@
 決まり：
 
 - 役の間でモデルを「上げる」のは IMPL-31（計画 AIの自己申告）と IMPL-35（作業 AI の 2 ラウンド目）の 2 か所だけで、どちらも 1 段・1 回まで。ほかの切り替えは設定ファイルの変更か人のラベルで行う。
-  例外は IMPL-29 の受入 AI の拒否による `haiku` → `sonnet`。これは実行の失敗からの回復で、上げる扱いには数えない
+  例外は IMPL-29 の受付 AI の拒否による `haiku` → `sonnet`。これは実行の失敗からの回復で、上げる扱いには数えない
 - effort は `--effort` で役ごとに渡す。`opus` の既定は medium なので、表の値を明示する。`haiku` の既定は medium、`sonnet` と `fable` の既定は high
 - モデルは `--model` で渡す（エージェント定義の `model` より優先される。段階 2 で確認）。別名は `fable` `opus` `sonnet` を使い、`haiku` だけは別名が旧版に解けるので完全な ID `claude-haiku-5-5` を書く（「[決まっていること][f00]」の「版番号を書かない」の例外。Claude Code の別名が 5.5 を指すようになったら戻す）
 - どの役にも `fable` を既定にしない（無人の `-p` で max-turns の下で動かすときの `fable` のクセ（途中で止まる、ツールを 1 回ずつ）が未収束の原因になりうるため）。`fable` が走るのは、受け入れの判定か人のラベルか計画 AIの自己申告で選ばれた計画と、段階 6 の比較のレビューだけ
