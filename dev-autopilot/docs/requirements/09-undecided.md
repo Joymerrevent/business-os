@@ -35,7 +35,7 @@
 - UNDECIDED-26 **上限で止まった作業を引き継ぐか。** IMPL-13 は上限に当たったセッションの途中の状態を commit せず、[ADR-20261013-001][adr-workspace] では次のセッションを GitHub にある状態（push 済みの commit と計画）から始める。
   1 セッションに収まらない大きさの作業は、3 回とも止まって `needs-human` になる（IMPL-14）。引き継ぐ案として、止まったセッションでも AI が commit した分だけを進行ボットの clone へ取り込み、IMPL-15 の検査を通して作業ブランチへ push し、次のセッションを取り込んだ commit から始める形がある。
   IMPL-13 を変え、未完成の作業を GitHub に push することになる。段階 5 で上限に当たった回数を記録してから決める（[02-implement-review-fix.md][f02]）
-- UNDECIDED-30 **計画のやり直しを同じ実行で行うか。** 計画 AIの `opus` が自己申告したら、進行ボットは 1 回だけ `fable` で計画し直す（IMPL-10）。同じ実行で行うと、重い段の計画で AI のセッションが 2 つになる。
+- UNDECIDED-30 **計画のやり直しを同じ実行で行うか。** 計画 AI の `opus` が自己申告したら、進行ボットは 1 回だけ `fable` で計画し直す（IMPL-10）。同じ実行で行うと、重い段の計画で AI のセッションが 2 つになる。
   次の実行に回すなら、自己申告があったことと 1 回上げたことを GitHub に残す仕組み（`plan` の印の欄など）が要る。手元の記録は判定に使わない（[ADR-20261015-006][adr-flow]。[02-implement-review-fix.md][f02]）
 - UNDECIDED-31 **作業 AI のモデルを上げた件数を、どの段階で数えるか。** IMPL-25 と段階の表は、段階 5（計画と実装を動かし、レビューは人が行う段階）で「`sonnet` で始めて `opus` で通った件数」を数えるとする。
   モデルを上げるのは修正のセッション（作業 AI の 2 ラウンド目以降）で、修正のセッションは段階 7（対応ループを足す段階）で足すので、段階 5 には上げる場面が無い（[02-implement-review-fix.md][f02]、[06-setup-and-stages.md][f06]）
@@ -82,7 +82,7 @@
 
 - UNDECIDED-18 レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）
 - UNDECIDED-19 実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）
-- UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。段階 6（レビュー AI と批評 AIを足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める
+- UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。段階 6（レビュー AI と批評 AI を足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める
 - UNDECIDED-21 クラウドの仕組みを、手元の cron の代わりか補助に使うか。2026-10-07 の公式の仕様で分かっている範囲：
   - Routine（`/schedule`）：Anthropic のクラウドで動き、GitHub のリポを clone して作業できる。起動は時刻・GitHub の webhook・API。最短 1 時間間隔。Routine 同士の連鎖は未サポート。利用枠を消費する
   - GitHub Actions の claude-code-action：PR のイベントで起動でき、`/code-review --comment` で行にコメントを書ける。レビュー AI だけをここに寄せる案がある

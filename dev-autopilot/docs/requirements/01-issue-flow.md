@@ -46,7 +46,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 
 - Project の Status：`Todo` → `In Progress` → `In Review` → `Ready to Merge` → `Done`。止まったときは `Blocked`（SETUP-5）
 - Project の Agent 欄：空 / `worker` / `reviewer` / `human` / `paused`。「いま動いている役、または次に動く役」を表す（SETUP-6、IMPL-7）
-- ラベル：`agent-ready`（人が処理対象にした）、`needs-human`（人が引き取るまで進行ボットは触らない）、`from-review`（🟢 を起票した Issue）（SETUP-8）、`plan:fable` / `plan:opus`（人が計画 AIのモデルを上書きする。無ければ受け入れの印に従う。IMPL-10）
+- ラベル：`agent-ready`（人が処理対象にした）、`needs-human`（人が引き取るまで進行ボットは触らない）、`from-review`（🟢 を起票した Issue）（SETUP-8）、`plan:fable` / `plan:opus`（人が計画 AI のモデルを上書きする。無ければ受け入れの印に従う。IMPL-10）
 
 表の読み方：Status・Agent 欄・ラベルの列は遷移の後の値。「変えない」はその遷移で触らない欄。「順」は正常な順の並び。「番号」は要件の番号で、ほかの文書は番号で遷移を指す（振り直さない。[README][readme] の「要件を変えるとき」）。番号は正常な順が FLOW-15〜FLOW-27、止まる遷移が FLOW-28〜FLOW-34。
 

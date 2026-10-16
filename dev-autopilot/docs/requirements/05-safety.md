@@ -9,12 +9,12 @@
   (b) 進行ボットが AI の作業場所（親の clone と worktree）で git を実行するのは、AI のセッションを起動する前の clone と worktree の作成だけ。起動した後は、進行ボットの clone へ取り込む fetch の取り出し元にするだけで、消すときは git を使わずフォルダごと消す（SAFE-12）。
   (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` に触れる diff は push しない（IMPL-15。CI が AI の書いたワークフローを secrets 付きで実行しない）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（IMPL-27）。
   (d) 進行ボットはリポのコードとパッケージの lifecycle script を sandbox の外で実行しない（IMPL-1、IMPL-9）。漏えい検査は dev-autopilot 自身の `src/` で行う（IMPL-15）。
-  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（段階 2 で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` だけで、`Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。Read ツールは worktree の中だけを読め、外を読もうとすると `-p` では自動で拒否される（FACT-22。[ADR-20261015-001][adr-read]）。計画 AIが使う Grep と Glob も同じ（FACT-26）。`deny` に、重ねる守りとして `Read(//<秘密の置き場>/**)` と `Read(//<置き場>/controller/**)`、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）
+  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（段階 2 で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` だけで、`Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。Read ツールは worktree の中だけを読め、外を読もうとすると `-p` では自動で拒否される（FACT-22。[ADR-20261015-001][adr-read]）。計画 AI が使う Grep と Glob も同じ（FACT-26）。`deny` に、重ねる守りとして `Read(//<秘密の置き場>/**)` と `Read(//<置き場>/controller/**)`、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）
   sandbox の `--settings` のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる。一時フォルダはセッションごとに別のものを作る
 - SAFE-3 `--max-turns` と時間の上限と `--max-budget-usd`（IMPL-13）で 1 回の作業の長さと費用を止める
 - SAFE-4 判定できない状態（API の失敗、想定外の Status、作業場所の残骸。UNDECIDED-27）では、作業を増やさずに記録して止める（fail-closed）
 - SAFE-5 sandbox の安全設定は、書いてあることではなく「実際に読めない・書けない」ことを `check` が試して確かめる。`denyRead` `denyWrite` のパスは `setup` が実体に解決して書く（シンボリックリンクを解決しない不具合が「[実機で確かめた事実][f10]」で見つかった）。ホームの中を指すリンクは、`denyRead` の `~/`（SAFE-10）で覆われる（FACT-22）
-- SAFE-6 作業 AI・計画 AI・レビュー AI・批評 AIに渡すのはコラボレータが書いた文だけ。外の人の文は渡さない。受付 AI だけは、道具を持たずに外の文を読み、下書きを返す（TEXT-12）。渡す文も作業の内容であって、動き方を変える指示にはしない（「[Issue と PR の本文の扱い][f04]」）
+- SAFE-6 作業 AI・計画 AI・レビュー AI・批評 AI に渡すのはコラボレータが書いた文だけ。外の人の文は渡さない。受付 AI だけは、道具を持たずに外の文を読み、下書きを返す（TEXT-12）。渡す文も作業の内容であって、動き方を変える指示にはしない（「[Issue と PR の本文の扱い][f04]」）
 - SAFE-7 AI に渡す文は、書いた人を問わず、渡す直前に毎回、進行ボットの検疫を通す。検疫の限界と、検疫の代わりに頼る主の防衛は TEXT-11 に書く
 - SAFE-8 AI の出力が公開の場に書かれる前に、進行ボットが漏えいの検査を掛ける（diff だけでなく、すべてのコメント・PR の本文・commit メッセージ・起票する Issue。IMPL-15）
 - SAFE-9 処理対象の判断は人。AI が書けるのは worktree の中と、親 clone の `.git` の一部（「隔離と鍵の分け方」）だけで、GitHub には書けない。マージの実行は人だけが行い、進行ボットは「[マージ][f03]」の判定を印として人に渡す。方針に係る PR は判定の対象外
