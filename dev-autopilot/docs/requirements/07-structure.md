@@ -20,7 +20,7 @@ dev-autopilot/
       worker.md                作業 AI（モデルは設定で）
       reviewer.md              レビュー AI
       critic.md                批評 AI（レビューの指摘の再検証。進行ボットが別に起こす独立セッション。IMPL-22）
-      intake.md                受付 AI（道具なし。作業指示の下書き（外の人の Issue だけ）と計画の難しさの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
+      intake.md                受付 AI（道具なし。作業指示の下書きと計画の難しさの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
   src/                         進行ボット（TypeScript、Node 24 が直接実行。bash を置かない）。Plugin としては配らず、cron が直接動かす
     main.ts                    入口
     select.ts                  例：Issue の選定

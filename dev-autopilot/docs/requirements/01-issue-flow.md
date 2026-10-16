@@ -8,7 +8,7 @@
   - Project の Status が Todo
   - Issue 依存（blocked by）の相手がすべて閉じている
   - `needs-human` ラベルが無い（人が外すまで再着手しない）。Project の Agent 欄が `human`（人が引き取った）でも `paused`（人が一時停止した）でもない
-  - 受け入れの下書きコメント（進行ボットの投稿、`intake` の印。「[印と固定の見出しの一覧][f04]」）があり、人が `agent-ready` を付けている（TEXT-12）。本文を渡すか下書きだけを渡すかは、印の値ではなく、渡す直前に Issue の著者の権限（TEXT-10）から決める（印の値は編集で書き換えられるため）。ただし `quarantine=found` の Issue では、人の作業指示コメントだけを渡す（TEXT-12）
+  - 受け入れの下書きコメント（進行ボットの投稿、`intake` の印。「[印と固定の見出しの一覧][f04]」）があり、人が `agent-ready` を付けている（TEXT-12）。渡す文は、作業指示コメントがあれば作業指示コメント、無ければ承認された下書きで、Issue の本文は著者を問わず渡さない（TEXT-1、[ADR-20261016-002][adr-draft]）。ただし `quarantine=found` の Issue では、人の作業指示コメントだけを渡す（TEXT-12）
   - `agent-ready` を付けた人が push 以上の権限を持つ（Issue の timeline で確かめる。TEXT-10）
 - FLOW-2 候補を着手前の予測で待たせない。待たせるのは人が入れた依存だけ。触る範囲の重なりは着手後に実際の変更ファイルで見て、警告のコメントに留める（FLOW-8）
 - FLOW-3 1 回の実行で着手する件数に上限を持つ（最初は 1 件）。進行中の Issue（`In Progress` 以降で `Done` でない）の数にも上限を持つ（WIP の上限。段階 8 までは 1）。上限に達していれば新しい Issue に着手しない
@@ -117,4 +117,5 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
+[adr-draft]: ../adr/adr-20261016-002-intake-ai-drafts-every-issue.md
 [readme]: ./README.md
