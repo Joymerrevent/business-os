@@ -1,7 +1,7 @@
 ---
 status: proposed
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -28,7 +28,7 @@ business-os の中に置いたままにすると、3 つの問題がある。
 
 - 要件と基本設計が、置き場所の 2 通りの形を持つ。STRUCT-3（起動の仕方）・STRUCT-4（検査）・STRUCT-5（文書）・STRUCT-7（Skill の配り方）は、「分離前」と「分離後」を書き分けている。
   基本設計は、起動のパス、検査のつなぎ方、評価の置き場を書くので、2 通りを書くか、分離のときに書き直すことになる
-- 進行ボットのコードと、AI の役のエージェント定義と Skill が、AI が作業するリポの中にある。今は、IMPL-15（漏えいの検査と push）の push を止めるパスと、MERGE-4（マージを判定してよいパスの許可一覧）の「含めない」例（自己改変）に `dev-autopilot/**` を入れて止めている。
+- 進行ボットのコードと、AI のセッションに読ませるエージェント定義と Skill（`plugin/agents/` と `plugin/skills/`）が、AI が作業するリポの中にある。今は、IMPL-15（漏えいの検査と push）の push を止めるパスと、MERGE-4（マージを判定してよいパスの許可一覧）の「含めない」例（自己改変）に `dev-autopilot/**` を入れて止めている。
   IMPL-15 の一覧は設定に持つので、設定を誤ると、作業 AI が書き換えた進行ボットのコードが PR に載り、人のレビューだけが守りになる
 - business-os の ADR 20261008-01 の決定 5 は、dev-autopilot を business-os の pnpm の workspace のパッケージにし、依存を business-os の root と共有するとしている。dev-autopilot が business-os の root の依存や設定に頼っていても、別のリポに移すまで気づけない
 
@@ -76,7 +76,7 @@ business-os の中に置いたままにすると、3 つの問題がある。
   後者の時期は今の目安のまま、段階 8 の出口を越え、設定ファイルの項目だけで別のリポに当てられると確かめてから決める
 - 進行ボットが当てる先は、段階 8 の後に決めるまで business-os だけにする
 - dev-autopilot を、dev-autopilot 自身のリポに当てない。当てると、決定 1 で無くした経路（作業 AI が進行ボットのコードを書き換える）が戻る。当てるなら、別の ADR で決める
-- 進行ボットは、Plugin を marketplace から入れず、dev-autopilot のリポの clone の `plugin/` を `--plugin-dir` で読み込む。進行ボット（`src/`）とエージェント定義・Skill（`plugin/`）を同じ clone の同じ commit から使い、版がずれないようにする（STRUCT-7 で同封した理由と同じ）。
+- 進行ボットは、Plugin を marketplace から入れず、dev-autopilot のリポの clone の `plugin/` を `--plugin-dir` で読み込む。進行ボット（`src/`）と、AI のセッションに読ませるエージェント定義と Skill（`plugin/`）を、同じ clone の同じ commit から使い、版がずれないようにする（STRUCT-7 で同封した理由と同じ）。
   STRUCT-3 の「分離したら `--plugin-dir` が Marketplace からの導入に変わる」は、ほかの人に配るときに決めることに改める
 
 ### 決定 3：進行ボットのプログラムの clone と、business-os の clone を分ける
@@ -120,7 +120,7 @@ business-os の中に置いたままにすると、3 つの問題がある。
 ### 影響（Consequences）
 
 - 良い点: 基本設計を、置き場所の 1 通りの形で書ける。要件の「分離前」と「分離後」の書き分け（STRUCT-3・4・5・7）が 1 通りになる
-- 良い点: 進行ボットのコードとエージェント定義・Skill が、AI が作業する business-os から無くなる。IMPL-15 の一覧の設定を誤っても、作業 AI は進行ボットのコードを書き換えられない
+- 良い点: 進行ボットのコードと、AI のセッションに読ませるエージェント定義と Skill が、AI が作業する business-os から無くなる。IMPL-15 の一覧の設定を誤っても、作業 AI は進行ボットのコードもエージェント定義と Skill も書き換えられない
 - 良い点: 依存と検査の設定を business-os と共有しないので、business-os に頼っている箇所が、移した時点で見つかる
 - 良い点: business-os の履歴・PR の一覧・CI が、business-os の変更だけになる。CLAUDE.md の絶対ルール 3 の例外と、ADR の規則が 1 つのリポに 2 組並ぶ状態が無くなる
 - 悪い点: 新しいリポに、検査・CI・commit の規約・依存の設定を入れる手間がかかる。入れるまでの間、文書は検査の網の外にある（決定 4 と決定 6 の順で、検査を入れる前に文書を直さない）
