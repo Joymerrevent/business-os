@@ -25,6 +25,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 - 用語：**進行役**＝AI ではない Node のスクリプト。**段**＝1 回の実行で進める単位（FLOW-4）。**段階**＝導入の順（1〜9。「[段階][f06]」）。**印**＝進行役がコメントに書く、機械で読む 1 行（「[印と固定の見出しの一覧][f04]」）。**渡す文**＝AI に作業の内容として渡す文（TEXT-1）
 - まだ決めていないことは [09-undecided.md][f09] に集めてある。ADR で決めること、基本設計の中で決めてよいもの、確かめることに分けてある
 - [11-records.md][f11] は調査とレビューの記録で、要件ではない
+- 全体の構成・Issue の流れ・隔離と鍵・フォルダ構成は、[図][diagrams]で先に全体を掴める。図は要件の写しで、正本は要件
 
 ## 要件の番号の索引
 
@@ -47,6 +48,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 
 - 選ぶ判断が要るもの（[09-undecided.md][f09] の「ADR で決めること」など）は、[ADR][adr] を `proposed` で起票し、メンテナが `accepted` にしてから、関係するファイルを直す
 - 記述の誤りや言い回しは、PR で直接直す
+- [図][diagrams]が写している要件（00・01・05・07）を変えたら、同じ PR で図も直す
 - 要件の番号は振り直さない。ADR や基本設計は番号で根拠を示すので、振り直すと参照が壊れずに別の要件を指す。
   要件を消すときは、番号の行（箇条か表の行）と元の文を残し、元の文に取り消し線（`~~…~~`）を引く。番号のすぐ後に「欠番」と書き、消した理由か決めた ADR を添える（例：`- UNDECIDED-24 **欠番**（ADR-<番号> で決めた）：~~元の文~~`）。元の文を残すのは、何が書いてあって何を決めたのかを、要件のファイルだけで読めるようにするため。
   足すときは、欠番を含めてファイルの中でいちばん大きい番号の次を使う（節の途中に置くときも、番号は変えない）。欠番の番号は、別の要件に使い回さない
@@ -69,5 +71,6 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 [f10]: ./10-verified-facts.md
 [f11]: ./11-records.md
 [adr]: ../adr/README.md
+[diagrams]: ../diagrams/README.md
 [memo]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/dev-autopilot-requirements.md
 [req]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/requirements.md

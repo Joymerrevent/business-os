@@ -29,7 +29,7 @@ dev-autopilot/
     check.ts                   点検の正本（進行役が毎回の最初に回す）
   fixtures/                    結合テストの前提データ（偽の gh の応答、使い捨てリポの雛形、Issue と PR の本文の例）
   test/                        結合テストだけ（偽の gh を差し替えて進行役を端から端まで回す）。単体テストは置かない
-  docs/                        要件（requirements/）、設計判断（adr/）、構造仕様（design/）
+  docs/                        要件（requirements/）、設計判断（adr/）、構造仕様（design/）、図（diagrams/。要件の写し）
   README.md                    使い方。業務の固有名詞を書かない
   .markdownlint-cli2.jsonc     参照スタイルのリンクを許す入れ子の設定
 ```
