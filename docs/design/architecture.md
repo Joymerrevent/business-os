@@ -3,7 +3,7 @@ type: knowledge
 business: n/a
 status: active
 created: 2026-09-30
-updated: 2026-10-09
+updated: 2026-10-17
 as_of: n/a
 verified: n/a
 ---
@@ -108,7 +108,6 @@ business-os/
 ├── fixtures/                    # vitest と eval が共有する前提データ（company/ が土台の検証用 company）
 ├── test/                        # hook の fail-closed テスト、check の単体テスト（vitest）
 ├── evals/                       # Skill の動作の検証。lib/ が共通の道具、skills/<Skill 名>/<ケース名>/ がケース
-├── dev-autopilot/               # 自律開発ループの開発物（ADR 20261008-01）。文書と ADR の規則はフォルダの中の規則に従う
 ├── docs/
 │   ├── README.md                # 開発者向け入口
 │   ├── adr/                     # 設計判断記録
@@ -128,12 +127,11 @@ business-os/
 
 | 配布物（`plugin/` の下。Plugin に含まれる） | 開発物（それ以外。business-os の開発にだけ使う） |
 |---|---|
-| `plugin/.claude-plugin/plugin.json` `plugin/skills/` `plugin/agents/` `plugin/hooks/` `plugin/scripts/` `plugin/templates/` `plugin/adapters/` | `.claude-plugin/marketplace.json` `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` `dev-autopilot/` 設定ファイル群 |
+| `plugin/.claude-plugin/plugin.json` `plugin/skills/` `plugin/agents/` `plugin/hooks/` `plugin/scripts/` `plugin/templates/` `plugin/adapters/` | `.claude-plugin/marketplace.json` `.claude/` `.changeset/` `.github/` `fixtures/` `test/` `evals/` `docs/` 設定ファイル群 |
 
 マーケットプレイスの `source` は `./plugin` で、導入と更新で利用者の環境に写るのは `plugin/` の下だけ（ADR 20261009-02）。
 利用者の環境では `${CLAUDE_PLUGIN_ROOT}` が `plugin/` の中を指すので、Skill と hook の中のパスは `plugin/` を付けずに書く。
 2026-10 以前の ADR の本文に書かれた `skills/` `hooks/` などのパスは、`plugin/` を省いた当時の形（accepted の ADR は書き換えない）。
-`dev-autopilot/` の文書と ADR の規則は、そのフォルダの中の規則に従う（ADR 20261008-01）。
 配布専用 Skill は `plugin/skills/`、開発専用 Skill は `.claude/skills/` に置き、混ぜない。
 `plugin/agents/` には作業者エージェント `worker` だけを置く。役割（視点）エージェントは同梱しない（ADR 20261002-01）。
 business-os の開発リポジトリでは sandbox を使わない。sandbox で守るのは、business-os を入れて運用する company の側。
