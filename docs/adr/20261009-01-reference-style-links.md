@@ -5,13 +5,15 @@ type: decision
 business: n/a
 status: accepted
 created: 2026-10-09
-updated: 2026-10-09
+updated: 2026-10-17
 as_of: 2026-10-09
 verified: 2026-10-09
 supersedes: n/a
 ---
 
 # 20261009-01: business-os の Markdown のリンクは inline のままにし、dev-autopilot/ だけを規則の対象外にする
+
+> **［2026-10-17 改めた］** 決定 2（規則の対象外は `dev-autopilot/` だけ）は、[ADR 20261017-01](20261017-01-dev-autopilot-moved-out.md) で改めた。dev-autopilot を別のリポジトリに移したので、規則の対象外のフォルダは無い。決定 1・3・4 と、決定 2 の「対象外のフォルダを増やすときは、同じ基準で ADR を起票する」は据え置く。
 
 ## 背景と問い
 

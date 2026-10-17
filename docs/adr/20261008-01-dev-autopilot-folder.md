@@ -3,9 +3,9 @@ id: 20261008-01
 title: 自律開発ループ dev-autopilot を開発物のフォルダ dev-autopilot/ に置き、設計判断と文書の規則をそのフォルダに閉じる
 type: decision
 business: n/a
-status: accepted
+status: superseded
 created: 2026-10-08
-updated: 2026-10-09
+updated: 2026-10-17
 as_of: 2026-10-08
 verified: 2026-10-09
 supersedes: n/a
@@ -46,6 +46,8 @@ dev-autopilot の中身の設計判断（進行役の形、信頼の境界、鍵
 - 案 C：最初から別のリポジトリにし、business-os には設定ファイルだけを置く
 
 ## 決定
+
+> **［2026-10-17 追記・置き換え］** ADR 20261008-01 の決定は、[ADR 20261017-01](20261017-01-dev-autopilot-moved-out.md) で置き換えた。dev-autopilot は別のリポジトリ `Joymerrevent/dev-autopilot` に移し、business-os から `dev-autopilot/` を消した（決定 7 が予定していた置き換え）。以下の記述は当時の決定の記録として残す。
 
 採用：**案 A**。分離を見越した要件（要件メモの 10 節）を満たしつつ、business-os の `pnpm check` 1 回で dev-autopilot も検査される網を外さずに済むため。
 
