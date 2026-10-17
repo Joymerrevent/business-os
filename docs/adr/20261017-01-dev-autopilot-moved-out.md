@@ -3,11 +3,11 @@ id: 20261017-01
 title: dev-autopilot を別のリポジトリ Joymerrevent/dev-autopilot に移したので、business-os から dev-autopilot/ と規則の例外を外す
 type: decision
 business: n/a
-status: proposed
+status: accepted
 created: 2026-10-17
 updated: 2026-10-17
 as_of: n/a
-verified: n/a
+verified: 2026-10-17
 supersedes: 20261008-01
 ---
 
